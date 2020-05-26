@@ -8,30 +8,37 @@ public class SongItem {
     information useful for the session state and the playback state
      */
 
-    private long id;            //Unique for every song
+    private long id;//Unique for every song
+    private String idString;
     private String title;
     private String artist;
+    private long artistId;
     private String album;
     private long albumId;       //Unique for every album
     private long duration;
     private Uri songUri;        //Uri of the song
     private Uri albumArtUri;    //Uri of the album art (the cover of the album)
 
-    public SongItem(long id, String title, String artist, String album, long albumId, long duration,
+    public SongItem(long id, String title, String artist, long artistId, String album, long albumId, long duration,
                     Uri songUri, Uri albumArtUri){
         this.id = id;
         this.title = title;
         this.artist = artist;
+        this.artistId = artistId;
         this.album = album;
         this.albumId = albumId;
         this.duration = duration;
         this.songUri = songUri;
         this.albumArtUri = albumArtUri;
+
+        idString = String.format("song_%d", id);
     }
 
     public long getId() {
         return id;
     }
+
+    public String getIdString(){return idString;}
 
     public String getTitle() {
         return title;
@@ -40,6 +47,8 @@ public class SongItem {
     public String getArtist() {
         return artist;
     }
+
+    public long getArtistId(){return artistId;}
 
     public String getAlbum() {
         return album;
