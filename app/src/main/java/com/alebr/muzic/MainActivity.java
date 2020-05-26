@@ -8,7 +8,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //Imposta il tema principale dell'applicazione
+        //Sets the main theme for the activity
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
 

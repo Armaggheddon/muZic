@@ -4,19 +4,18 @@ import android.net.Uri;
 
 public class SongItem {
     /*
-    Questa classe fornisce un oggetto di tipo SongItem che contiene tutte le
-    principali informazioni su un brano necessarie alla riproduzione ed
-    all'impostazione dei corretti metdati per la sessione
+    This class represent a single song in the library, it holds all the main
+    information useful for the session state and the playback state
      */
 
-    private long id;            //Univoco per ogni brano
+    private long id;            //Unique for every song
     private String title;
     private String artist;
     private String album;
-    private long albumId;       //Univoco per ogni album
-    private long duration;      //Durata del brano
-    private Uri songUri;        //Uri del brano
-    private Uri albumArtUri;    //Uri dell'immagine dell'album
+    private long albumId;       //Unique for every album
+    private long duration;
+    private Uri songUri;        //Uri of the song
+    private Uri albumArtUri;    //Uri of the album art (the cover of the album)
 
     public SongItem(long id, String title, String artist, String album, long albumId, long duration,
                     Uri songUri, Uri albumArtUri){

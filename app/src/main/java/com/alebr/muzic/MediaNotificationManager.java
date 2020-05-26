@@ -2,16 +2,18 @@ package com.alebr.muzic;
 
 public class MediaNotificationManager {
     /*
-    Gestisce l'invio delle notifiche multimediali
-    Si occupa di creare un nuovo canale per le notifiche se non già creato
-    e permette la modifica delle notifiche pubblicate per rappresentare lo
-    stato corrente della riproduzione
+    Handle sending multimedia notifications
+    It manages the creation of a new channel (if not already created) and
+    allows to edit the already published notification in order to represent correctly
+    the current playback state
      */
     private static final String TAG = "MediaNotificationManager";
     public static final String CHANNEL_ID = "muZic";
-    //L'id delle notifiche è un intero diverso da 0
-    //Poiche non usiamo più notifiche contemporaneamente non è necessario
-    //generare gli ID dinamicamente, anzi, utilizzando lo stesso ID per tutte
-    //le notifiche possiamo aggiornare la notifica che è attualmente mostrata
+    /*
+    NOTIFICATION_ID cannot be 0
+    Since we use only one notification at a time, we don't need to generate the ID,
+    in fact by using the same ID we can update the notification that is currently
+    being shown
+     */
     public static final int NOTIFICATION_ID = 100;
 }

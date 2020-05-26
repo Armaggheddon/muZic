@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:opacity="opaque">
 
-    <!-- Sfondo dello splashscreen -->
+    <!-- splash screen background -->
     <item>
         <color android:color="@color/colorPrimary"/>
     </item>
@@ -10,7 +10,7 @@
     <item android:drawable="@drawable/ic_launcher_foreground"
         android:gravity="center"/>
 
-    <!--TODO: aggiungere l'icona dell'applicazione
+    <!--TODO: add application icon
     <item>
         <bitmap android:src="@drawable/ic_play"
             android:gravity="center"/>
