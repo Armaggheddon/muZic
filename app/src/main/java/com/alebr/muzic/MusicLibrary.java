@@ -45,6 +45,7 @@ public class MusicLibrary {
     public static final int FLAG_PLAYLIST = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE | MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
 
     //This are the categories that the user sees when opens the app on his phone or on Android Auto
+    public static final String EMPTY_ROOT = "EMPTY_ROOT";
     public static final String BROWSER_ROOT = "root";
     public static final String ALBUMS = "Albums";
     public static final String ARTISTS = "Artists";

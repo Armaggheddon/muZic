@@ -83,6 +83,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     private MediaNotificationManager mMediaNotificationManager;
     private MusicLibrary mMusicLibrary;
     private MusicPlayer mMusicPlayer;
+    private PackageValidator mPackageValidator;
 
     @Override
     public void onCreate() {
@@ -117,6 +118,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         mMediaNotificationManager = new MediaNotificationManager(this);
         mMusicLibrary = new MusicLibrary(this);
         mMusicPlayer = new MusicPlayer(this);
+        mPackageValidator = new PackageValidator(this);
     }
 
     @Override
@@ -128,6 +130,14 @@ public class MusicService extends MediaBrowserServiceCompat {
     public BrowserRoot onGetRoot(@NonNull String clientPackageName,
                                  int clientUid,
                                  Bundle rootHints) {
+        //To allow just certain apps check if the package name of the client is allowed
+        if (!mPackageValidator.isCallerAllowed(this, clientPackageName, clientUid)){
+            //The request comes from an untrusted source, return an empty browser root
+            return new MediaBrowserServiceCompat.BrowserRoot(MusicLibrary.EMPTY_ROOT, null);
+        }
+        if (mPackageValidator.isValidCarPackage(clientPackageName)){
+            //Here we can adapt the music library to show a different subset when connected to the car
+        }
         return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
     }
 
@@ -138,49 +148,54 @@ public class MusicService extends MediaBrowserServiceCompat {
         final List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Given parentMediaId we return the correct children to show
         //Detach the result to load the data in another thread and send the data when all is loaded
+        if (parentMediaId.equals(MusicLibrary.EMPTY_ROOT)) {
+            //Return an empty list since the caller is an untrusted client
+            result.sendResult(mediaItems);
+        }
+        else {
+            //The caller is a trusted client we then return the appropriate MediaItems
+            switch (parentMediaId) {
+                case MusicLibrary.BROWSER_ROOT:
+                    mediaItems.addAll(mMusicLibrary.getRootItems());
+                    result.sendResult(mediaItems);
+                    break;
+                case MusicLibrary.ALBUMS:
+                    result.detach();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ALBUMS));
+                            result.sendResult(mediaItems);
+                        }
+                    }).start();
 
-        switch (parentMediaId){
-            case MusicLibrary.BROWSER_ROOT:
-                mediaItems.addAll(mMusicLibrary.getRootItems());
-                result.sendResult(mediaItems);
-                break;
-            case MusicLibrary.ALBUMS:
-                result.detach();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ALBUMS));
-                        result.sendResult(mediaItems);
-                    }
-                }).start();
+                    break;
+                case MusicLibrary.ARTISTS:
 
-                break;
-            case MusicLibrary.ARTISTS:
+                    result.detach();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
+                            result.sendResult(mediaItems);
+                        }
+                    }).start();
 
-                result.detach();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
-                        result.sendResult(mediaItems);
-                    }
-                }).start();
-
-                break;
-            case MusicLibrary.SONGS:
-                result.detach();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.SONGS));
-                        result.sendResult(mediaItems);
-                    }
-                }).start();
-                break;
-            default:
-                //The user clicked on an album, artist or a single song.
-                //So we search in the music library for all the related elements
-                //given the parentMediaId clicked
+                    break;
+                case MusicLibrary.SONGS:
+                    result.detach();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.SONGS));
+                            result.sendResult(mediaItems);
+                        }
+                    }).start();
+                    break;
+                default:
+                    //The user clicked on an album, artist or a single song.
+                    //So we search in the music library for all the related elements
+                    //given the parentMediaId clicked
                 /*
                 result.detach();
                 new Thread(new Runnable() {
@@ -194,8 +209,9 @@ public class MusicService extends MediaBrowserServiceCompat {
                 break;
 
                  */
+            }
+            //result.sendResult(mediaItems);
         }
-        //result.sendResult(mediaItems);
     }
 
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
