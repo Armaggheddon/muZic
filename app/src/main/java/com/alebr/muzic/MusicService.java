@@ -90,6 +90,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY|
                                 PlaybackStateCompat.ACTION_PAUSE|
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE|
                                 PlaybackStateCompat.ACTION_STOP|
                                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT|
@@ -129,29 +130,56 @@ public class MusicService extends MediaBrowserServiceCompat {
     public void onLoadChildren(@NonNull final String parentMediaId,
                                @NonNull final Result<List<MediaItem>> result) {
 
-        List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
+        final List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Given parentMediaId we return the correct children to show
+        /*
+        TODO: if the caller is android auto, do not return the list of all the songs
+         return queue in which are present all the songs to avoid showing big lists.
+         As well when an album or artist is clicked in android auto,
+         start the related playlist instead of showing the songs in the album/artist
+         */
         switch (parentMediaId){
             case MusicLibrary.BROWSER_ROOT:
-                mediaItems = mMusicLibrary.getRootItems();
+                mediaItems.addAll(mMusicLibrary.getRootItems());
+                result.sendResult(mediaItems);
                 break;
             case MusicLibrary.ALBUMS:
-                mediaItems = mMusicLibrary.getBrowsableItems(MusicLibrary.ALBUMS);
+                result.detach();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ALBUMS));
+                        result.sendResult(mediaItems);
+                    }
+                }).start();
+
                 break;
             case MusicLibrary.ARTISTS:
-                mediaItems = mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS);
+
+                //Artists is just a list of strings to elaborate, so there is no need to detach the
+                //result from this thread
+                mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
+                result.sendResult(mediaItems);
                 break;
             case MusicLibrary.SONGS:
-                mediaItems = mMusicLibrary.getBrowsableItems(MusicLibrary.SONGS);
+                result.detach();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.SONGS));
+                        result.sendResult(mediaItems);
+                    }
+                }).start();
                 break;
             default:
                 //The user clicked on an album, artist or a single song.
                 //So we search in the music library for all the related elements
                 //given the parentMediaId clicked
-                mediaItems = mMusicLibrary.getMediaItemsFromParentId(parentMediaId);
+                mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
+                result.sendResult(mediaItems);
                 break;
         }
-        result.sendResult(mediaItems);
+        //result.sendResult(mediaItems);
     }
 
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {

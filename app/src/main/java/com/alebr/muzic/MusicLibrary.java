@@ -6,13 +6,19 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.media.session.MediaSession;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+
+import androidx.core.graphics.BitmapCompat;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -30,6 +36,10 @@ public class MusicLibrary {
      */
 
     private static final String TAG = "MusicLibrary";
+
+    //Android auto styling for grids instead of list
+    public static final String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
+    public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
 
     //This are the categories that the user sees when opens the app on his phone or on Android Auto
     public static final String BROWSER_ROOT = "root";
@@ -157,7 +167,11 @@ public class MusicLibrary {
                     ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(albumArtUri, "r");
                     if(pfd != null){
                         FileDescriptor fd = pfd.getFileDescriptor();
-                        album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd));
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        //Reduce the sampling size to reduce memory consumption
+                        //read one pixel every 4
+                        options.inSampleSize = 4;
+                        album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options));
                     }
                 }catch (IOException e){
                     e.printStackTrace();
@@ -166,13 +180,33 @@ public class MusicLibrary {
         }).start();
     }
 
+    /*
+    private Bitmap loadAlbumArt(Uri albumArtUri){
+        Bitmap bitmap = null;
+        try{
+            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(albumArtUri, "r");
+            if(pfd != null){
+                FileDescriptor fd = pfd.getFileDescriptor();
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                //Reduce the sampling size to reduce memory consumption
+                //read one pixel every 2
+                options.inSampleSize = 2;
+                bitmap = BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options);
+                //album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options));
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return bitmap;
+    }
+     */
+
     public List<MediaBrowserCompat.MediaItem> getRootItems(){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Create the main categories for the media
-        mediaItems.add(generateBrowsableMediaItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_pause)));
-        mediaItems.add(generateBrowsableMediaItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_pause)));
-        mediaItems.add(generateBrowsableMediaItem(SONGS, SONGS, String.valueOf(songs.size()), BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_pause)));
-
+        mediaItems.add(generateBrowsableMediaItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album")));
+        mediaItems.add(generateBrowsableMediaItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist")));
+        mediaItems.add(generateBrowsableMediaItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack")));
         return mediaItems;
     }
 
@@ -186,7 +220,8 @@ public class MusicLibrary {
                              album.getIdString(),
                              album.getName(),
                              "",
-                             album_art.get(album.getAlbumArtUriAsString())));
+                             album_art.get(album.getAlbumArtUriAsString()),
+                             null));
                 }
                 break;
             case ARTISTS:
@@ -195,6 +230,7 @@ public class MusicLibrary {
                             artist.getIdString(),
                             artist.getName(),
                             "",
+                            null,
                             null));
                 }
                 break;
@@ -206,6 +242,7 @@ public class MusicLibrary {
                             song.getArtist(),
                             song.getAlbum(),
                             album_art.get(song.getAlbumArtUri().toString()),
+                            song.getAlbumArtUri(),
                             song.getSongUri()));
                 }
                 break;
@@ -241,9 +278,11 @@ public class MusicLibrary {
                             songItem.getArtist(),
                             songItem.getAlbum(),
                             album_art_local,
+                            songItem.getAlbumArtUri(),
                             songItem.getSongUri()));
                 }
             }
+            album_art_local = null;
         }
         else if(parentId.contains(artist_string)){
             String string_id = parentId.substring(artist_string.length());
@@ -255,6 +294,7 @@ public class MusicLibrary {
                             songItem.getArtist(),
                             songItem.getAlbum(),
                             album_art.get(songItem.getAlbumArtUri().toString()),
+                            songItem.getAlbumArtUri(),
                             songItem.getSongUri()));
                 }
             }
@@ -269,38 +309,70 @@ public class MusicLibrary {
                             songItem.getArtist(),
                             songItem.getAlbum(),
                             album_art.get(songItem.getAlbumArtUri().toString()),
+                            songItem.getAlbumArtUri(),
                             songItem.getSongUri()));
                 }
             }
         }
-
         return mediaItems;
     }
 
-    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri mediaUri){
+    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri albumUri, Uri mediaUri){
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
 
         mediaDescriptionBuilder.setMediaId(id)
+                //Set the title of the song
                 .setTitle(title)
+                //Set the artist name
                 .setSubtitle(artist)
+                //Set the album name
                 .setDescription(album)
+                //Set the icon bitmap of the song
                 .setIconBitmap(icon)
+                //Set the iconUri of the bitmap
+                //.setIconUri(albumUri)
+                //Set the mediaUri of the song itself
                 .setMediaUri(mediaUri);
+        //Return a new MediaItem with the flag PLAYABLE indicating that the item can be playable
+        //so se MediaBrowserServiceCompat can start the player screen
         return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
+    }
+
+    //TODO: implement queueItems correctly
+    public List<MediaSessionCompat.QueueItem> getQueue(MediaDescriptionCompat descriptionCompat){
+        List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+        queueItems.add(
+                new MediaSessionCompat.QueueItem(
+                        descriptionCompat,
+                        1));
+        return queueItems;
     }
 
     /*
     Generates browsable media item given an id and a count
      */
-    private MediaBrowserCompat.MediaItem generateBrowsableMediaItem(String id, String title, String subtitle, Bitmap icon){
+    private MediaBrowserCompat.MediaItem generateBrowsableMediaItem(String id, String title, String subtitle,Bitmap icon, Uri iconUri){
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
         //Set the id to category name, set the title to category, the subtitle to che number of items
         //in the category and the icon
         mediaDescriptionBuilder.setMediaId(id)
                 .setTitle(title)
                 .setSubtitle( subtitle);
+        int flags = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
         if(icon != null)
             mediaDescriptionBuilder.setIconBitmap(icon);
-        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
+        if(iconUri != null)
+            mediaDescriptionBuilder.setIconUri(iconUri);
+        if(id.contains("album_") || id.contains("artist_")){
+            Bundle extras = new Bundle();
+            extras.putInt(CONTENT_STYLE_PLAYABLE_HINT, CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
+            mediaDescriptionBuilder.setExtras(extras);
+        }
+        //To avoid showing a large list for the SONG category, set both the flags to handle the item
+        //as a playlist, so when clicked we start playing audio from the first item.
+        //In this way we can also load one image at a time using resources in a more frendly way
+        if (id.equals(SONGS) || id.contains("song_"))
+            flags |= MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
+        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flags);
     }
 }

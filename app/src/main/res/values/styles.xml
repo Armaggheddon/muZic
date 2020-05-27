@@ -22,14 +22,14 @@
              - Notification icon badge tinting
              - Overview “now playing” icon tinting
          -->
-        <item name="android:colorPrimaryDark">#ffbf360c</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
 
         <!-- colorAccent is used in Android Auto for:
              - Spinner
              - progress bar
              - floating action button background (Play/Pause in media apps)
          -->
-        <item name="android:colorAccent">#00B8D4</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
     </style>
 
 </resources>
