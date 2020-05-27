@@ -40,6 +40,9 @@ public class MusicLibrary {
     //Android auto styling for grids instead of list
     public static final String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
     public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
+    public static final int FLAG_PLAYABLE = MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
+    public static final int FLAG_BROWSABLE = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
+    public static final int FLAG_PLAYLIST = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE | MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
 
     //This are the categories that the user sees when opens the app on his phone or on Android Auto
     public static final String BROWSER_ROOT = "root";
@@ -58,7 +61,7 @@ public class MusicLibrary {
     private List<ArtistItem> artists= new ArrayList<>();
     private List<Long> artistIds = new ArrayList<>();
     //Map containing as the key the album URI and as value the bitmap of the album itself
-    private Map<String, Bitmap> album_art = new HashMap<>();
+    //private Map<String, Bitmap> album_art = new HashMap<>();
 
     private final Context context;
 
@@ -119,7 +122,7 @@ public class MusicLibrary {
                             albumArtUri));
                     //Update the list of added albums
                     albumIds.add(albumId);
-                    loadAlbumArtAsync(albumArtUri);
+                    //loadAlbumArtAsync(albumArtUri);
                 }
 
                 songs.add(
@@ -158,7 +161,7 @@ public class MusicLibrary {
             }
         });
     }
-
+    /*
     private void loadAlbumArtAsync(final Uri albumArtUri){
         new Thread(new Runnable() {
             @Override
@@ -179,9 +182,10 @@ public class MusicLibrary {
             }
         }).start();
     }
+     */
 
-    /*
-    private Bitmap loadAlbumArt(Uri albumArtUri){
+
+    public Bitmap loadAlbumArt(Uri albumArtUri){
         Bitmap bitmap = null;
         try{
             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(albumArtUri, "r");
@@ -190,7 +194,7 @@ public class MusicLibrary {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 //Reduce the sampling size to reduce memory consumption
                 //read one pixel every 2
-                options.inSampleSize = 2;
+                options.inSampleSize = 1;
                 bitmap = BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options);
                 //album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options));
             }
@@ -199,14 +203,14 @@ public class MusicLibrary {
         }
         return bitmap;
     }
-     */
+
 
     public List<MediaBrowserCompat.MediaItem> getRootItems(){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Create the main categories for the media
-        mediaItems.add(generateBrowsableMediaItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album")));
-        mediaItems.add(generateBrowsableMediaItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist")));
-        mediaItems.add(generateBrowsableMediaItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack")));
+        mediaItems.add(generateBrowsableMediaItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album"), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableMediaItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist"), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableMediaItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack"), FLAG_PLAYLIST));
         return mediaItems;
     }
 
@@ -220,8 +224,9 @@ public class MusicLibrary {
                              album.getIdString(),
                              album.getName(),
                              "",
-                             album_art.get(album.getAlbumArtUriAsString()),
-                             null));
+                             null,
+                             null,
+                             FLAG_PLAYLIST));
                 }
                 break;
             case ARTISTS:
@@ -231,9 +236,11 @@ public class MusicLibrary {
                             artist.getName(),
                             "",
                             null,
-                            null));
+                            null,
+                            FLAG_PLAYLIST));
                 }
                 break;
+                /*
             case SONGS:
                 for(SongItem song : songs){
                     mediaItems.add(generatePlayableItem(
@@ -241,17 +248,22 @@ public class MusicLibrary {
                             song.getTitle(),
                             song.getArtist(),
                             song.getAlbum(),
-                            album_art.get(song.getAlbumArtUri().toString()),
+                            loadAlbumArt(song.getAlbumArtUri()),
                             song.getAlbumArtUri(),
-                            song.getSongUri()));
+                            song.getSongUri(),
+                            FLAG_PLAYABLE));
                 }
                 break;
+
+                 */
             default:
                 //This should not happen, if we get in here there is an error with the parentId value
         }
         return mediaItems;
     }
 
+
+/*
     public List<MediaBrowserCompat.MediaItem> getMediaItemsFromParentId(String parentId){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
 
@@ -267,7 +279,14 @@ public class MusicLibrary {
         if(parentId.contains(album_string)){
             String string_id = parentId.substring(album_string.length());
             //Since the album art is the same for all the songs in the album, we can cache it
-            Bitmap album_art_local = album_art.get(String.format("%s/%s", ALBUM_ART_URI, string_id));
+            Bitmap album_art_local = null;
+            for(AlbumItem album : albums){
+                if (album.getIdString().equals(parentId)) {
+                    album_art_local = loadAlbumArt(album.getAlbumArtUri());
+                    //We can break the loop since all the songs in one album have the same art
+                    break;
+                }
+            }
             //The parent id is an album, we then send back the songs that share the same album
             for(SongItem songItem : songs){
                 //If the album ID (long) equals the ID at the end of the parentID "album_id"
@@ -279,7 +298,8 @@ public class MusicLibrary {
                             songItem.getAlbum(),
                             album_art_local,
                             songItem.getAlbumArtUri(),
-                            songItem.getSongUri()));
+                            songItem.getSongUri(),
+                            FLAG_PLAYLIST));
                 }
             }
             album_art_local = null;
@@ -293,14 +313,16 @@ public class MusicLibrary {
                             songItem.getTitle(),
                             songItem.getArtist(),
                             songItem.getAlbum(),
-                            album_art.get(songItem.getAlbumArtUri().toString()),
+                            loadAlbumArt(songItem.getAlbumArtUri()),
                             songItem.getAlbumArtUri(),
-                            songItem.getSongUri()));
+                            songItem.getSongUri(),
+                            FLAG_PLAYLIST));
                 }
             }
         }
         else{
             //The parent id clicked was a song, just return the song with the id specified
+            /*
             for(SongItem songItem : songs){
                 if(songItem.getIdString().equals(parentId)){
                     mediaItems.add(generatePlayableItem(
@@ -313,11 +335,13 @@ public class MusicLibrary {
                             songItem.getSongUri()));
                 }
             }
+             */
+/*
         }
         return mediaItems;
     }
-
-    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri albumUri, Uri mediaUri){
+*/
+    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri albumUri, Uri mediaUri, int flag){
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
 
         mediaDescriptionBuilder.setMediaId(id)
@@ -335,44 +359,136 @@ public class MusicLibrary {
                 .setMediaUri(mediaUri);
         //Return a new MediaItem with the flag PLAYABLE indicating that the item can be playable
         //so se MediaBrowserServiceCompat can start the player screen
-        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
+        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }
 
-    //TODO: implement queueItems correctly
-    public List<MediaSessionCompat.QueueItem> getQueue(MediaDescriptionCompat descriptionCompat){
+    public List<MediaSessionCompat.QueueItem> getSongsQueue(){
+        /*
+        Returns a list of QueueItem for the playback with all the information useful for the metadata
+        and the playback itself
+         */
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
-        queueItems.add(
-                new MediaSessionCompat.QueueItem(
-                        descriptionCompat,
-                        1));
+        int queuePosition = 0;
+        for(SongItem songItem : songs){
+
+            Bundle extras = new Bundle();
+            extras.putLong("DURATION", songItem.getDuration());
+            extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+
+            queueItems.add(
+                    new MediaSessionCompat.QueueItem(
+                            new MediaDescriptionCompat.Builder().setMediaId(songItem.getIdString())
+                                    .setMediaUri(songItem.getSongUri())
+                            .setTitle(songItem.getTitle())
+                            .setSubtitle(songItem.getArtist())
+                            .setDescription(songItem.getAlbum())
+                            .setExtras(extras).build(),
+                            queuePosition++));
+        }
         return queueItems;
+    }
+
+    public List<MediaSessionCompat.QueueItem> getAlbumIdQueue(String albumId){
+        //albumId is in the form "album_id" where id is the unique number
+        List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+        int queuePosition = 0;
+        for(SongItem songItem : songs){
+            if(albumId.equals(String.format("album_%d", songItem.getAlbumId()))) {
+                Bundle extras = new Bundle();
+                extras.putLong("DURATION", songItem.getDuration());
+                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+
+                queueItems.add(
+                        new MediaSessionCompat.QueueItem(
+                                new MediaDescriptionCompat.Builder().setMediaId(songItem.getIdString())
+                                        .setMediaUri(songItem.getSongUri())
+                                        .setTitle(songItem.getTitle())
+                                        .setSubtitle(songItem.getArtist())
+                                        .setDescription(songItem.getAlbum())
+                                        .setExtras(extras).build(),
+                                queuePosition++));
+            }
+        }
+        return queueItems;
+    }
+
+    public List<MediaSessionCompat.QueueItem> getArtistIdQueue(String artistId){
+        List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+        int queuePosition = 0;
+        for(SongItem songItem : songs){
+            if(artistId.equals(String.format("artist_%d", songItem.getArtistId()))) {
+                Bundle extras = new Bundle();
+                extras.putLong("DURATION", songItem.getDuration());
+                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+
+                queueItems.add(
+                        new MediaSessionCompat.QueueItem(
+                                new MediaDescriptionCompat.Builder().setMediaId(songItem.getIdString())
+                                        .setMediaUri(songItem.getSongUri())
+                                        .setTitle(songItem.getTitle())
+                                        .setSubtitle(songItem.getArtist())
+                                        .setDescription(songItem.getAlbum())
+                                        .setExtras(extras).build(),
+                                queuePosition++));
+            }
+        }
+        return queueItems;
+    }
+
+    public List<MediaSessionCompat.QueueItem> getSearchResult(String query){
+        /*
+        The query gets filtered by the data in the list,
+        -if a song title matches the query, we return a List of QueueItems holding the song as the first and only item
+        -if a song artist matches the query we return a list of QueueItems holding all the songs of that artist
+        -if a song album mathces the query we return a list of QueueItems holding all the songs in the album
+         */
+        List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+        for(SongItem songItem : songs){
+            if(songItem.getTitle().equalsIgnoreCase(query)){
+                Bundle extras = new Bundle();
+                extras.putLong("DURATION", songItem.getDuration());
+                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+
+                queueItems.add(
+                        new MediaSessionCompat.QueueItem(
+                                new MediaDescriptionCompat.Builder().setMediaId(songItem.getIdString())
+                                        .setMediaUri(songItem.getSongUri())
+                                        .setTitle(songItem.getTitle())
+                                        .setSubtitle(songItem.getArtist())
+                                        .setDescription(songItem.getAlbum())
+                                        .setExtras(extras).build(),
+                                0));
+                return queueItems;
+            }if (songItem.getAlbum().equalsIgnoreCase(query)){
+                Log.d(TAG, "getSearchResult: ALBUM" + query);
+                return getAlbumIdQueue(String.format("album_%d", songItem.getAlbumId()));
+            }if(songItem.getArtist().equalsIgnoreCase(query)){
+                Log.d(TAG, "getSearchResult: ARTIST" + query);
+                 return getArtistIdQueue(String.format("artist_%d", songItem.getArtistId()));
+            }
+        }
+        return null;
     }
 
     /*
     Generates browsable media item given an id and a count
      */
-    private MediaBrowserCompat.MediaItem generateBrowsableMediaItem(String id, String title, String subtitle,Bitmap icon, Uri iconUri){
+    private MediaBrowserCompat.MediaItem generateBrowsableMediaItem(String id, String title, String subtitle,Bitmap icon, Uri iconUri, int flag){
+
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
         //Set the id to category name, set the title to category, the subtitle to che number of items
         //in the category and the icon
         mediaDescriptionBuilder.setMediaId(id)
                 .setTitle(title)
                 .setSubtitle( subtitle);
-        int flags = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
         if(icon != null)
             mediaDescriptionBuilder.setIconBitmap(icon);
         if(iconUri != null)
             mediaDescriptionBuilder.setIconUri(iconUri);
-        if(id.contains("album_") || id.contains("artist_")){
-            Bundle extras = new Bundle();
-            extras.putInt(CONTENT_STYLE_PLAYABLE_HINT, CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
-            mediaDescriptionBuilder.setExtras(extras);
-        }
+
         //To avoid showing a large list for the SONG category, set both the flags to handle the item
         //as a playlist, so when clicked we start playing audio from the first item.
         //In this way we can also load one image at a time using resources in a more frendly way
-        if (id.equals(SONGS) || id.contains("song_"))
-            flags |= MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
-        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flags);
+        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }
 }

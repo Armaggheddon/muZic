@@ -1,5 +1,7 @@
 package com.alebr.muzic;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -9,8 +11,11 @@ import android.support.v4.media.MediaBrowserCompat.MediaItem;
 
 import androidx.media.MediaBrowserServiceCompat;
 
+import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,7 +107,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         mStateBuilder.addCustomAction( new PlaybackStateCompat.CustomAction.Builder(
                 "STRING_ACTION",
                 "Charsequence_name",
-                R.drawable.ic_settings
+                R.drawable.ic_action
         ).build());
          */
         mSession.setPlaybackState(mStateBuilder.build());
@@ -132,12 +137,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         final List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Given parentMediaId we return the correct children to show
-        /*
-        TODO: if the caller is android auto, do not return the list of all the songs
-         return queue in which are present all the songs to avoid showing big lists.
-         As well when an album or artist is clicked in android auto,
-         start the related playlist instead of showing the songs in the album/artist
-         */
+        //Detach the result to load the data in another thread and send the data when all is loaded
+
         switch (parentMediaId){
             case MusicLibrary.BROWSER_ROOT:
                 mediaItems.addAll(mMusicLibrary.getRootItems());
@@ -156,10 +157,15 @@ public class MusicService extends MediaBrowserServiceCompat {
                 break;
             case MusicLibrary.ARTISTS:
 
-                //Artists is just a list of strings to elaborate, so there is no need to detach the
-                //result from this thread
-                mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
-                result.sendResult(mediaItems);
+                result.detach();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
+                        result.sendResult(mediaItems);
+                    }
+                }).start();
+
                 break;
             case MusicLibrary.SONGS:
                 result.detach();
@@ -175,20 +181,43 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //The user clicked on an album, artist or a single song.
                 //So we search in the music library for all the related elements
                 //given the parentMediaId clicked
-                mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
-                result.sendResult(mediaItems);
+                /*
+                result.detach();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
+                        result.sendResult(mediaItems);
+                    }
+                }).start();
+
                 break;
+
+                 */
         }
         //result.sendResult(mediaItems);
     }
 
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
+
+        private List<MediaSessionCompat.QueueItem> mQueue = new ArrayList<>();
+        private int mQueuePosition = 0;
+
         @Override
         public void onPlay() {
         }
 
         @Override
         public void onSkipToQueueItem(long queueId) {
+            /*
+            Called when the user clicks on a queue item in the view showing all the songs in the queue
+            the call gives a queueId representing the position of the item clicked, we then
+            retrieve the item from the queue and play it
+             */
+            Log.d(TAG, "onSkipToQueueItem: " + queueId);
+            setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+            setMetadataFromQueueItem(mQueue.get((int)queueId));
+            mQueuePosition = (int) queueId;
         }
 
         @Override
@@ -197,6 +226,44 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            /*
+            This method gets called whenever a PLAYABLE item is clicked or an item with both the
+            flags PLAYABLE and BROWSABLE is clicked, since in our library the only item with both
+            these flags is the list of all songs, we check if the mediaId is SONGS.
+            In this case we prepare a Queue to play and assign it to the session (methods)
+             */
+            Log.d(TAG, "onPlayFromMediaId: " + mediaId);
+            //If the mediaId equals MusicLibrary.SONGS the user clicked
+            //the song playlist in the root so we set a queue to play all the songs in the selection
+            if(mediaId.equals(MusicLibrary.SONGS)) {
+                mQueue.clear();
+                mQueue.addAll(mMusicLibrary.getSongsQueue());
+                mSession.setQueue(mQueue);
+                mQueuePosition = 0;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            }
+            else if(mediaId.contains("album_")){
+                mQueue.clear();
+                mQueue.addAll(mMusicLibrary.getAlbumIdQueue(mediaId));
+                mSession.setQueue(mQueue);
+                mQueuePosition = 0;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+
+            }else if(mediaId.contains("artist_")){
+                mQueue.clear();
+                mQueue.addAll(mMusicLibrary.getArtistIdQueue(mediaId));
+                mSession.setQueue(mQueue);
+                mQueuePosition = 0;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            }
+            else{
+                //A single item is clicked, perhaps a song in an album, so we load the song with the
+                //appropriate queue
+                //Most likely the smartphone UI asked something to play
+            }
         }
 
         @Override
@@ -209,18 +276,84 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSkipToNext() {
+            if(mQueuePosition == mQueue.size()){
+                //cant skip to next song we are at the last one
+            }else{
+                //Move to the next QueueItem
+                mQueuePosition++;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            }
         }
 
         @Override
         public void onSkipToPrevious() {
+            if(mQueuePosition == 0){
+                //Can't skip to previous song, we are already at first one (0th item)
+            }else{
+                //Move to the previous QueueItem
+                mQueuePosition--;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            }
         }
 
         @Override
         public void onCustomAction(String action, Bundle extras) {
         }
 
+
         @Override
         public void onPlayFromSearch(final String query, final Bundle extras) {
+
+            Log.d(TAG, "onPlayFromSearch: " + query);
+            List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSearchResult(query);
+            if (queueItems.size() == 0)
+                return;
+            mQueue.clear();
+            mQueuePosition = 0;
+            mQueue.addAll(queueItems);
+            mSession.setQueue(mQueue);
+            setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+            setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+        }
+
+        private void setCorrectPlaybackState(int playbackState, long timeElapsed){
+            //Since playback speed is always 1.0 no need to pass it as a parameter
+            mStateBuilder.setState(
+                    playbackState,
+                    timeElapsed,
+                    1.0f
+            );
+            mSession.setPlaybackState(mStateBuilder.build());
+        }
+
+        private void setMetadataFromQueueItem(MediaSessionCompat.QueueItem queueItem){
+            /*
+            Given a queueItem this method loads all the data and passes it to the setMetadata method
+             */
+            MediaDescriptionCompat data = queueItem.getDescription();
+            setMetadata(
+                    data.getTitle().toString(),
+                    data.getSubtitle().toString(),
+                    data.getDescription().toString(),
+                    data.getExtras().getLong("DURATION"),
+                    data.getMediaUri().toString(),
+                    mMusicLibrary.loadAlbumArt(Uri.parse(data.getExtras().getString("ALBUM_URI")))
+            );
+        }
+
+        private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt){
+            /*
+            Builds a MediaMetadata object that holds all the information about the song being played
+             */
+            MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
+            metadataBuilder.putText(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                    .putText(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+                    .putText(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, mediaUri)
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
+            mSession.setMetadata(metadataBuilder.build());
         }
     }
 }
