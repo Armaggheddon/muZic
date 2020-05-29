@@ -1,11 +1,13 @@
 package com.alebr.muzic;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 
@@ -117,7 +119,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         mMediaNotificationManager = new MediaNotificationManager(this);
         mMusicLibrary = new MusicLibrary(this);
-        mMusicPlayer = new MusicPlayer(this);
+        mMusicPlayer = new MusicPlayer(this, mSession);
         mPackageValidator = new PackageValidator(this);
     }
 
@@ -218,13 +220,27 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
 
+        //Instances of the QueueItem used for queue management
         private List<MediaSessionCompat.QueueItem> mQueue = new ArrayList<>();
+        //Position of the item that is being currently played
         private int mQueuePosition = 0;
 
+        /**
+         * When the play button is clicked, it might be the notification play button, the one on the
+         * car, the one on headphones or every connected device sending a play command
+         */
         @Override
         public void onPlay() {
+            setCorrectPlaybackState(
+                    PlaybackStateCompat.STATE_PLAYING,
+                    mMusicPlayer.getPosition());
+            mMusicPlayer.play();
         }
 
+        /**
+         * When a queue item is clicked in the queue view of Android Auto, this method is called
+         * @param queueId the position in the queue of the item selected
+         */
         @Override
         public void onSkipToQueueItem(long queueId) {
             /*
@@ -235,13 +251,22 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
             setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
             setMetadataFromQueueItem(mQueue.get((int)queueId));
+            mMusicPlayer.play(mQueue.get(((int) queueId)).getDescription().getMediaUri());
             mQueuePosition = (int) queueId;
         }
 
         @Override
         public void onSeekTo(long position) {
+            mMusicPlayer.seekTo(position);
         }
 
+        /**
+         * This method is called when a Playable item is clicked, or when a PLAYLIST is clicked.
+         * Handle correctly the playback and the queue set-up based on what type of client is
+         * connected
+         * @param mediaId the mediaId of the item clicked, it is unique for every element
+         * @param extras bundle extra with styling and other components, not used in this implementation
+         */
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
             /*
@@ -251,56 +276,53 @@ public class MusicService extends MediaBrowserServiceCompat {
             In this case we prepare a Queue to play and assign it to the session (methods)
              */
             Log.d(TAG, "onPlayFromMediaId: " + mediaId);
-            //If the mediaId equals MusicLibrary.SONGS the user clicked
-            //the song playlist in the root so we set a queue to play all the songs in the selection
-            if(mediaId.equals(MusicLibrary.SONGS)) {
-                mQueue.clear();
-                mQueue.addAll(mMusicLibrary.getSongsQueue());
-                mSession.setQueue(mQueue);
-                mQueuePosition = 0;
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
-                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-            }
-            else if(mediaId.contains("album_")){
-                mQueue.clear();
-                mQueue.addAll(mMusicLibrary.getAlbumIdQueue(mediaId));
-                mSession.setQueue(mQueue);
-                mQueuePosition = 0;
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
-                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-
-            }else if(mediaId.contains("artist_")){
-                mQueue.clear();
-                mQueue.addAll(mMusicLibrary.getArtistIdQueue(mediaId));
-                mSession.setQueue(mQueue);
-                mQueuePosition = 0;
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
-                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-            }
-            else{
-                //A single item is clicked, perhaps a song in an album, so we load the song with the
-                //appropriate queue
-                //Most likely the smartphone UI asked something to play
+            //If the connected client is Android Auto
+            if(MusicLibrary.IS_AUTO_CONNECTED) {
+                //If the mediaId equals MusicLibrary.SONGS the user clicked
+                //the song playlist in the root so we set a queue to play all the songs in the selection
+                if (mediaId.equals(MusicLibrary.SONGS)) {
+                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue());
+                } else if (mediaId.contains("album_")) {
+                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue());
+                } else if (mediaId.contains("artist_")) {
+                    initQueueAndStartPlayback(mMusicLibrary.getArtistIdQueue(mediaId));
+                } else {
+                    //A single item is clicked, perhaps a song in an album, so we load the song with the
+                    //appropriate queue
+                    //Most likely the smartphone UI asked something to play
+                }
+            }else{
+                //The client is no Android Auto so the mediaId represents a song
             }
         }
 
         @Override
         public void onPause() {
+            setCorrectPlaybackState(
+                    PlaybackStateCompat.STATE_PAUSED,
+                    mMusicPlayer.getPosition());
+            mMusicPlayer.pause();
         }
 
         @Override
         public void onStop() {
+            setCorrectPlaybackState(
+                    PlaybackStateCompat.STATE_STOPPED,
+                    mMusicPlayer.getPosition());
+            mSession.setActive(false);
+            mMusicPlayer.stop();
         }
 
         @Override
         public void onSkipToNext() {
             if(mQueuePosition == mQueue.size()){
-                //cant skip to next song we are at the last one
+                //cant skip to next song we are at the last one, then we do nothing
             }else{
                 //Move to the next QueueItem
                 mQueuePosition++;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
             }
         }
 
@@ -313,27 +335,62 @@ public class MusicService extends MediaBrowserServiceCompat {
                 mQueuePosition--;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
             }
         }
 
+        /**
+         * Used to respond to custom actions in the Android Auto UI or other custom events
+         * @param action the string representing the action, the same used when setting the custom
+         *               action
+         * @param extras Bundle holding extra data useful to better respond to the event
+         */
         @Override
         public void onCustomAction(String action, Bundle extras) {
         }
 
-
+        /**
+         * Called when the user uses Google Assistant to query for something
+         * @param query the raw query string the user say to the Assistant
+         * @param extras Bundle holding extra information such as EXTRA_MEDIA_FOCUS to understand,
+         *               if available (is not always available), if the query refers to Album, Artist
+         *               Song item, or other categories described in the class MediaStore
+         */
         @Override
         public void onPlayFromSearch(final String query, final Bundle extras) {
 
             Log.d(TAG, "onPlayFromSearch: " + query);
+            Log.d(TAG, "onPlayFromSearch: " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
             List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSearchResult(query);
-            if (queueItems.size() == 0)
+            if (queueItems == null || queueItems.size() == 0){
+                //No results were available we do nothing
                 return;
+            }
+
+            initQueueAndStartPlayback(queueItems);
+        }
+
+        /**
+         * Sets the Queue for the session in the correct way given a list of QueueItems and starts
+         * the playback setting the mPlayer correctly
+         * @param queueItems the list of the QueueItems to set
+         */
+        private void initQueueAndStartPlayback(List<MediaSessionCompat.QueueItem> queueItems){
+            //TODO: see if is possible to assign duration here instead of passing trougth MediaStore
+            // since the field DURATION is available only on Android 10+
+            //Clear the previous queue
             mQueue.clear();
+            //Set the new queue position to 0 since we are initializing the queue
             mQueuePosition = 0;
             mQueue.addAll(queueItems);
+            //Set the queue to the session
             mSession.setQueue(mQueue);
+            //Update the playback state of the session as playing
             setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+            //Update the metadata for the item that will be played
             setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            //TODO: add AudioFocus request and listener for AUDIO_BECOMING_NOISY
+            mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
         }
 
         private void setCorrectPlaybackState(int playbackState, long timeElapsed){
@@ -346,25 +403,35 @@ public class MusicService extends MediaBrowserServiceCompat {
             mSession.setPlaybackState(mStateBuilder.build());
         }
 
+        /**
+         * Parses all the data needed to setMetadata from a QueueItem
+         * @param queueItem the QueueItem itself
+         */
         private void setMetadataFromQueueItem(MediaSessionCompat.QueueItem queueItem){
-            /*
-            Given a queueItem this method loads all the data and passes it to the setMetadata method
-             */
+
             MediaDescriptionCompat data = queueItem.getDescription();
             setMetadata(
-                    data.getTitle().toString(),
-                    data.getSubtitle().toString(),
-                    data.getDescription().toString(),
-                    data.getExtras().getLong("DURATION"),
-                    data.getMediaUri().toString(),
-                    mMusicLibrary.loadAlbumArt(Uri.parse(data.getExtras().getString("ALBUM_URI")))
+                    (data.getTitle()!=null)?data.getTitle().toString():"",
+                    (data.getSubtitle()!=null)?data.getSubtitle().toString():"",
+                    (data.getDescription()!=null)?data.getDescription().toString():"",
+                    (data.getExtras()!=null)?data.getExtras().getLong("DURATION"):0,
+                    (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
+                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
             );
         }
 
+        /**
+         * Builds a MediametadataCompat with all the data necessary to display and consume by clients
+         * and assigns it to the session
+         * @param title of the song
+         * @param artist name of the song
+         * @param album name
+         * @param duration in long milliseconds of the song
+         * @param mediaUri Uri of the song itself
+         * @param albumArt the album art of the song
+         */
         private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt){
-            /*
-            Builds a MediaMetadata object that holds all the information about the song being played
-             */
+
             MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
             metadataBuilder.putText(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                     .putText(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)

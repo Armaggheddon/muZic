@@ -195,6 +195,10 @@ public class MusicLibrary {
      * @return bitmap the bitmap pointed by the albumArtUri, null if an IOException occurs
      */
     public Bitmap loadAlbumArt(Uri albumArtUri){
+        //If albumArtUri is null return the default album icon
+        if (albumArtUri == null)
+            return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_album);
+
         Bitmap bitmap = null;
         try{
             ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(albumArtUri, "r");
