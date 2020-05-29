@@ -1,14 +1,12 @@
 package com.alebr.muzic;
 
+import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -16,61 +14,76 @@ import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.util.Log;
-
-import androidx.core.graphics.BitmapCompat;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MusicLibrary {
-    /*
-    This class handles all the music library related tasks, such as retrieving the data,
-    creating the content tree, ...
+    /**
+     * Holds all the information about the music data in the device storage, it handles the retrieving
+     * and all operations related to the library, it also allows for helper methods to get the
+     * items already prebuilt/pre-formatted for the MediaSessionCompat in the MusicService class
      */
 
     private static final String TAG = "MusicLibrary";
 
-    //Android auto styling for grids instead of list
+    //Android auto styling for grids instead of list, in order are the KEY and the VALUE to
+    //assign to the bundle of the MediaItem when built
     public static final String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
     public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
+    //Cache the FLAGS since they are used often, also creates a custom flag FLAG_PLAYLIST holding
+    // both the flags telling Android Auto that the items in the MediaItems should
+    // be treated as a Playlist instead of a list (or grid)
     public static final int FLAG_PLAYABLE = MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
     public static final int FLAG_BROWSABLE = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
     public static final int FLAG_PLAYLIST = MediaBrowserCompat.MediaItem.FLAG_BROWSABLE | MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
 
-    //This are the categories that the user sees when opens the app on his phone or on Android Auto
+    //Main categories of the media library, it is navigated from the BROWSER_ROOT ->(ALBUMS & ARTIST & SONGS)
+    //The EMPTY_ROOT is used for clients that are not allowed to use the MusicService
     public static final String EMPTY_ROOT = "EMPTY_ROOT";
     public static final String BROWSER_ROOT = "root";
     public static final String ALBUMS = "Albums";
     public static final String ARTISTS = "Artists";
     public static final String SONGS = "Songs";
 
+    //Album art path to build the path to the album art
     public static final String ALBUM_ART_URI = "content://media/external/audio/albumart";
 
-    //Save the songs in a Map where the key is the song ID which is unique
+    //Holds all the songs on the device
     private List<SongItem> songs = new ArrayList<>();
-    //List of the available album names
+    //Holds all the albums main data on the device
     private List<AlbumItem> albums = new ArrayList<>();
-    //Used to know which albums are already in the list
+    //Holds just the albumID value which is a Long for faster check in the albums
     private List<Long> albumIds = new ArrayList<>();
+    //Same as for albums and albumIds
     private List<ArtistItem> artists= new ArrayList<>();
     private List<Long> artistIds = new ArrayList<>();
-    //Map containing as the key the album URI and as value the bitmap of the album itself
-    //private Map<String, Bitmap> album_art = new HashMap<>();
 
     private final Context context;
 
+    /**
+     * Constructor of the class, it also initialize the media retrieving process to avoid waiting
+     * @param context is used to retrieve the data from the memory since we need a contentResolver
+     */
     public MusicLibrary(Context context){
         this.context = context;
         initLibrary();
     }
 
+    /**
+     * Retrieve the data for all the songs in the device storage
+     * -ID : unique identifier of the song
+     * -TITLE : the title of the song
+     * -ALBUM : the album name of the song
+     * -ARTIST : the artist name of the song
+     * -ARTIST_ID : unique identifier of the artist
+     * -ALBUM_ID : unique identifier of the album
+     * -DURATION : the length in ms of the song
+     */
     private void initLibrary(){
         final String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
@@ -81,7 +94,6 @@ public class MusicLibrary {
                 MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.DURATION
         };
-        //final String sortOrder = MediaStore.Audio.Media.DEFAULT_SORT_ORDER + " ASC";
 
         try(Cursor cursor = context.getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -89,7 +101,7 @@ public class MusicLibrary {
                 null,
                 null,
                 null)){
-            //Cache the column ids since they are always the same
+            //Cache the column ids since they are always the same and used in every iteration
             int idCol = cursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
             int artistIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST_ID);
@@ -105,15 +117,22 @@ public class MusicLibrary {
                 long artistId = cursor.getLong(artistIdCol);
                 long albumId = cursor.getLong(albumIdCol);
                 long duration = cursor.getLong(durationCol);
+                //Build the songUri (the song itself to play) and the albumArtUri (the image of the album)
                 Uri songUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                 Uri albumArtUri = ContentUris.withAppendedId(Uri.parse(ALBUM_ART_URI), albumId);
 
-                //Check in the list of artists if we added the artist, if not add it
+                //If artistIds doesn't have this artistId add the artist data to a list of
+                //ArtistItems that contains the artistId (unique) and the artist name.
+                //The class (ArtistItem) also generates an IdString that is used to understand
+                // what it is being asked from the MusicService (later in the class).
+                //The artistId is also added to the list of artistIds for a faster comparison.
+                //The same applies fot the album data in AlbumItem (+ the Uri of the album art)
                 if(!artistIds.contains(artistId)){
                     artists.add(
                             new ArtistItem(
                                     artistId,
                                     artist));
+
                     artistIds.add(artistId);
                 }
                 if(!albumIds.contains(albumId)){
@@ -121,11 +140,10 @@ public class MusicLibrary {
                             albumId,
                             album,
                             albumArtUri));
-                    //Update the list of added albums
                     albumIds.add(albumId);
-                    //loadAlbumArtAsync(albumArtUri);
                 }
-
+                //Add to the songs list a new instance of SongItem that holds all the useful
+                //information about the song itself
                 songs.add(
                         new SongItem(
                                 id,
@@ -140,9 +158,9 @@ public class MusicLibrary {
                         ));
             }
         }
-        Log.d(TAG, "run: LOADING FINISHED");
 
-        //Sort the songs alphabetically, do the same for the other lists
+        //Sort the songs, albums and artists alphabetically using a comparator.
+        //Since the comparator is only used at this point there is no need to cache it
         Collections.sort(songs, new Comparator<SongItem>() {
             @Override
             public int compare(SongItem o1, SongItem o2) {
@@ -162,7 +180,8 @@ public class MusicLibrary {
             }
         });
     }
-    /*
+    /**LOAD ALBUM ART ASYNC METHOD
+     *
     private void loadAlbumArtAsync(final Uri albumArtUri){
         new Thread(new Runnable() {
             @Override
@@ -186,6 +205,11 @@ public class MusicLibrary {
      */
 
 
+    /**
+     * Returns a bitmap representation of the Uri given as parameter. The image is also resized to be 320x320 to match Android Auto default size
+     * @param albumArtUri the uri pointing to the album art image in the storage
+     * @return bitmap the bitmap pointed by the albumArtUri, null if an IOException occurs
+     */
     public Bitmap loadAlbumArt(Uri albumArtUri){
         Bitmap bitmap = null;
         try{
@@ -194,10 +218,9 @@ public class MusicLibrary {
                 FileDescriptor fd = pfd.getFileDescriptor();
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 //Reduce the sampling size to reduce memory consumption
-                //read one pixel every 2
+                //read 1 pixel every options.inSampleSize pixel/pixels
                 options.inSampleSize = 1;
                 bitmap = BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options);
-                //album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options));
             }
         }catch (IOException e){
             e.printStackTrace();
@@ -205,23 +228,32 @@ public class MusicLibrary {
         return bitmap;
     }
 
-
+    /**
+     * Creates the browsable root elements from where to start to navigate for Android Auto UI
+     * @return a list of mediaItems that holds the information of the categories
+     */
     public List<MediaBrowserCompat.MediaItem> getRootItems(){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
-        //Create the main categories for the media
-        mediaItems.add(generateBrowsableMediaItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album"), FLAG_BROWSABLE));
-        mediaItems.add(generateBrowsableMediaItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist"), FLAG_BROWSABLE));
-        mediaItems.add(generateBrowsableMediaItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack"), FLAG_PLAYLIST));
+        //Create the main categories for the media: Albums, Artists, Songs
+        mediaItems.add(generateBrowsableOrPlaylistItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album"), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist"), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack"), FLAG_PLAYLIST));
         return mediaItems;
     }
 
+    /**
+     * Creates the browsable items for Android Auto, in particular since Songs is a Playlist it
+     * creates the browsable items only for Albums and Artists for every Album and Artist available
+     * @param parentId the parent ID clicked to get in this category which can be ALBUMS or ARTISTS
+     * @return the mediaItems as Playlists playable, an empty list if the parentId does not exist
+     */
     public List<MediaBrowserCompat.MediaItem> getBrowsableItems(String parentId){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         switch (parentId){
             case ALBUMS:
                 //Add the mediaItems as albums
                 for(AlbumItem album : albums){
-                     mediaItems.add(generateBrowsableMediaItem(
+                     mediaItems.add(generateBrowsableOrPlaylistItem(
                              album.getIdString(),
                              album.getName(),
                              "",
@@ -232,7 +264,7 @@ public class MusicLibrary {
                 break;
             case ARTISTS:
                 for(ArtistItem artist : artists){
-                    mediaItems.add(generateBrowsableMediaItem(
+                    mediaItems.add(generateBrowsableOrPlaylistItem(
                             artist.getIdString(),
                             artist.getName(),
                             "",
@@ -241,7 +273,7 @@ public class MusicLibrary {
                             FLAG_PLAYLIST));
                 }
                 break;
-                /*
+                /*TODO: move this method in the getBrowsableItems for NOT ANDROID AUTO
             case SONGS:
                 for(SongItem song : songs){
                     mediaItems.add(generatePlayableItem(
@@ -342,6 +374,7 @@ public class MusicLibrary {
         return mediaItems;
     }
 */
+    //TODO: comments and implementation for non ANDROID AUTO clients
     private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri albumUri, Uri mediaUri, int flag){
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
 
@@ -363,19 +396,23 @@ public class MusicLibrary {
         return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }
 
+    /**
+     * Creates the QueueItem for the MusicService for all the songs ready to be assigned to the MediaSessionCompat
+     * @return a list of QueueItems that holds the information for all the songs in the queue
+     */
     public List<MediaSessionCompat.QueueItem> getSongsQueue(){
-        /*
-        Returns a list of QueueItem for the playback with all the information useful for the metadata
-        and the playback itself
-         */
+
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+        //Assign a position to every QueueItem to know its position in the queue
         int queuePosition = 0;
         for(SongItem songItem : songs){
 
+            //Add extra data as DURATION and ALBUM_URI
             Bundle extras = new Bundle();
             extras.putLong("DURATION", songItem.getDuration());
             extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
+            //Build the queueItem from MediaSessionCompat.Builder()
             queueItems.add(
                     new MediaSessionCompat.QueueItem(
                             new MediaDescriptionCompat.Builder().setMediaId(songItem.getIdString())
@@ -389,12 +426,21 @@ public class MusicLibrary {
         return queueItems;
     }
 
+    /**
+     * Creates the queue for the album given as parameter with the songs in that album
+     * @param albumId the albumId string as <album_id> (es "album_1")
+     * @return the list of QueueItems with all the songs in the albumId album
+     */
+    //No need for default locale since it is an internal string and not user visible
+    @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getAlbumIdQueue(String albumId){
-        //albumId is in the form "album_id" where id is the unique number
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
         int queuePosition = 0;
         for(SongItem songItem : songs){
+            //Check if the song album matches the same albumId building the albumId string from the
+            //songItem as "album_" + the albumId in the songItem
             if(albumId.equals(String.format("album_%d", songItem.getAlbumId()))) {
+                //Create the QueueItem and add some extra data
                 Bundle extras = new Bundle();
                 extras.putLong("DURATION", songItem.getDuration());
                 extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
@@ -413,10 +459,19 @@ public class MusicLibrary {
         return queueItems;
     }
 
+    /**
+     * Does the same as getAlbumIdQueue but with the artists (see method above)
+     * @param artistId the artistId string as <artist_id> (es "artist_1")
+     * @return the list of QueueItems with all the songs with artistId as artist
+     */
+    //No need for default locale since it is an internal string and not user visible
+    @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getArtistIdQueue(String artistId){
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
         int queuePosition = 0;
         for(SongItem songItem : songs){
+            //Check if the song artist matches the same artistId building the artistId string from the
+            //songItem as "artist_" + the artistId in the songItem
             if(artistId.equals(String.format("artist_%d", songItem.getArtistId()))) {
                 Bundle extras = new Bundle();
                 extras.putLong("DURATION", songItem.getDuration());
@@ -436,17 +491,27 @@ public class MusicLibrary {
         return queueItems;
     }
 
+    /**
+     * Returns a list of QueueItem holding all the data that matches the query. The query is an user given string
+     * that does not match the internal ID scheme ("album_id", "artist_id", "song_id") so we need to check in all
+     * the library for a match.
+     * The query gets filtered in the following order:
+     *         -if a song title matches the query, we return a List of QueueItems holding the song as the first and only item
+     *         -if a song artist matches the query we return a list of QueueItems holding all the songs of that artist
+     *         -if a song album mathces the query we return a list of QueueItems holding all the songs in the album
+     * @param query the query string containing the raw data passed from user or Google Assistant
+     * @return a list of QueueItems with all the matches, if no matches an empty list is returned
+     */
+    //No need for default locale since it is an internal string and not user visible
+    @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getSearchResult(String query){
-        /*
-        The query gets filtered by the data in the list,
-        -if a song title matches the query, we return a List of QueueItems holding the song as the first and only item
-        -if a song artist matches the query we return a list of QueueItems holding all the songs of that artist
-        -if a song album mathces the query we return a list of QueueItems holding all the songs in the album
-         */
+
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+
         for(SongItem songItem : songs){
             if(songItem.getTitle().equalsIgnoreCase(query)){
                 Bundle extras = new Bundle();
+                //Add the extras for DURATION and ALBUM_URI
                 extras.putLong("DURATION", songItem.getDuration());
                 extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
@@ -461,20 +526,30 @@ public class MusicLibrary {
                                 0));
                 return queueItems;
             }if (songItem.getAlbum().equalsIgnoreCase(query)){
-                Log.d(TAG, "getSearchResult: ALBUM" + query);
+                //Just need to return the result that the method give us passing as parameter the
+                //album_id build from the match, same applies for the artist match
                 return getAlbumIdQueue(String.format("album_%d", songItem.getAlbumId()));
             }if(songItem.getArtist().equalsIgnoreCase(query)){
-                Log.d(TAG, "getSearchResult: ARTIST" + query);
                  return getArtistIdQueue(String.format("artist_%d", songItem.getArtistId()));
             }
         }
+        //No matches in the library
         return null;
     }
 
-    /*
-    Generates browsable media item given an id and a count
+    /**
+     * Creates a custom MediaItem from the data passed setting all the necessary data,
+     * icon and iconUri are exclusive as parameters to avoid issues in the showing of the
+     * data in Android Auto UI
+     * @param id the id to assign to the item
+     * @param title the title to give to the item
+     * @param subtitle the subtitle to give to the item
+     * @param icon the icon in bitmap to use for the item (es album image in bitmap)
+     * @param iconUri the icon Uri for the icon (used for the main categories, ALBUMS, ARTISTS, SONGS)
+     * @param flag the flags to use to build the MediaItem as shown in the top of the class
+     * @return the MediaItem built from the data given
      */
-    private MediaBrowserCompat.MediaItem generateBrowsableMediaItem(String id, String title, String subtitle,Bitmap icon, Uri iconUri, int flag){
+    private MediaBrowserCompat.MediaItem generateBrowsableOrPlaylistItem(String id, String title, String subtitle, Bitmap icon, Uri iconUri, int flag){
 
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
         //Set the id to category name, set the title to category, the subtitle to che number of items
