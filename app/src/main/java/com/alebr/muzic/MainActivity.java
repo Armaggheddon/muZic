@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
+    //Request code for permission, can be any arbitrary number
     private final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 101;
 
     private MediaBrowserCompat mMediaBrowser;
@@ -87,39 +88,36 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
-            case READ_EXTERNAL_STORAGE_REQUEST_CODE:
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    //We have the permission to read to external storage
-                    Log.d(TAG, "onRequestPermissionsResult: PERMISSION GRANTED");
-                    mMediaBrowser.connect();
-                }
-                else{
-                    //TODO: add strings to strings.xml
-                    // the user denied the permission no permission
-                    Log.d(TAG, "onRequestPermissionsResult: PERMISSION_DENIED");
-                    AlertDialog.Builder alert = new AlertDialog.Builder(this);
-                    alert.setTitle("Permission")
-                            .setMessage("Read external storage permission is required to play music")
-                            .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                            READ_EXTERNAL_STORAGE_REQUEST_CODE);
-                                }
-                            })
-                            .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //Quit the application, it does not work without the permission
-                                    finish();
-                                }
-                            });
-                    alert.create().show();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //We have the permission to read to external storage
+                Log.d(TAG, "onRequestPermissionsResult: PERMISSION GRANTED");
+                mMediaBrowser.connect();
+            } else {
+                //TODO: add strings to strings.xml
+                // the user denied the permission no permission
+                Log.d(TAG, "onRequestPermissionsResult: PERMISSION_DENIED");
+                AlertDialog.Builder alert = new AlertDialog.Builder(this);
+                alert.setTitle("Permission")
+                        .setMessage("Read external storage permission is required to play music")
+                        .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        READ_EXTERNAL_STORAGE_REQUEST_CODE);
+                            }
+                        })
+                        .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //Quit the application, it does not work without the permission
+                                finish();
+                            }
+                        });
+                alert.create().show();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 

@@ -136,7 +136,13 @@ public class MusicService extends MediaBrowserServiceCompat {
             return new MediaBrowserServiceCompat.BrowserRoot(MusicLibrary.EMPTY_ROOT, null);
         }
         if (mPackageValidator.isValidCarPackage(clientPackageName)){
-            //Here we can adapt the music library to show a different subset when connected to the car
+            //The client is Android Auto
+            Log.d(TAG, "onGetRoot: ANDROID AUTO CONNECTED");
+            MusicLibrary.IS_AUTO_CONNECTED = true;
+        }else {
+            //The client is the phone app
+            Log.d(TAG, "onGetRoot: APPLICATION CONNECTED");
+            MusicLibrary.IS_AUTO_CONNECTED = false;
         }
         return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
     }
@@ -164,7 +170,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ALBUMS));
+                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ALBUMS));
                             result.sendResult(mediaItems);
                         }
                     }).start();
@@ -176,7 +182,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.ARTISTS));
+                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ARTISTS));
                             result.sendResult(mediaItems);
                         }
                     }).start();
@@ -187,30 +193,26 @@ public class MusicService extends MediaBrowserServiceCompat {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            mediaItems.addAll(mMusicLibrary.getBrowsableItems(MusicLibrary.SONGS));
+                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.SONGS));
                             result.sendResult(mediaItems);
                         }
                     }).start();
                     break;
                 default:
-                    //The user clicked on an album, artist or a single song.
+                    //The user clicked on an album, artist or a single song in a NON Android Auto UI
                     //So we search in the music library for all the related elements
                     //given the parentMediaId clicked
-                /*
-                result.detach();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
-                        result.sendResult(mediaItems);
-                    }
-                }).start();
-
-                break;
-
-                 */
+                    result.detach();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
+                            result.sendResult(mediaItems);
+                        }
+                    }).start();
+                    break;
             }
-            //result.sendResult(mediaItems);
+            //Do not return anything since we detach the result to be updated on its separated thread
         }
     }
 

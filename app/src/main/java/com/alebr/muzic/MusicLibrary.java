@@ -14,6 +14,7 @@ import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -45,10 +46,18 @@ public class MusicLibrary {
     //Main categories of the media library, it is navigated from the BROWSER_ROOT ->(ALBUMS & ARTIST & SONGS)
     //The EMPTY_ROOT is used for clients that are not allowed to use the MusicService
     public static final String EMPTY_ROOT = "EMPTY_ROOT";
-    public static final String BROWSER_ROOT = "root";
+    public static final String BROWSER_ROOT = "ROOT_AUTO";
     public static final String ALBUMS = "Albums";
     public static final String ARTISTS = "Artists";
     public static final String SONGS = "Songs";
+
+    private static final String IC_ALBUM = "android.resource://com.alebr.muzic/drawable/ic_album";
+    private static final String IC_ARTIST = "android.resource://com.alebr.muzic/drawable/ic_artist";
+    private static final String IC_SONG = "android.resource://com.alebr.muzic/drawable/ic_audiotrack";
+
+    //True if the client is Android Auto, else is false, used to differentiate the library being
+    //built between the two type of clients (Auto and phone app)
+    public static boolean IS_AUTO_CONNECTED = false;
 
     //Album art path to build the path to the album art
     public static final String ALBUM_ART_URI = "content://media/external/audio/albumart";
@@ -158,7 +167,6 @@ public class MusicLibrary {
                         ));
             }
         }
-
         //Sort the songs, albums and artists alphabetically using a comparator.
         //Since the comparator is only used at this point there is no need to cache it
         Collections.sort(songs, new Comparator<SongItem>() {
@@ -180,30 +188,6 @@ public class MusicLibrary {
             }
         });
     }
-    /**LOAD ALBUM ART ASYNC METHOD
-     *
-    private void loadAlbumArtAsync(final Uri albumArtUri){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(albumArtUri, "r");
-                    if(pfd != null){
-                        FileDescriptor fd = pfd.getFileDescriptor();
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        //Reduce the sampling size to reduce memory consumption
-                        //read one pixel every 4
-                        options.inSampleSize = 4;
-                        album_art.put(String.valueOf(albumArtUri), BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options));
-                    }
-                }catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-     */
-
 
     /**
      * Returns a bitmap representation of the Uri given as parameter. The image is also resized to be 320x320 to match Android Auto default size
@@ -229,37 +213,96 @@ public class MusicLibrary {
     }
 
     /**
-     * Creates the browsable root elements from where to start to navigate for Android Auto UI
-     * @return a list of mediaItems that holds the information of the categories
+     * Based on the type of client connected returns different root items to better represent
+     * the client needs and guidelines
+     * @return a list of MediaItem with the main categories, the same for both configurations (ALBUMS, ARTISTS, SONGS)
      */
     public List<MediaBrowserCompat.MediaItem> getRootItems(){
+        return IS_AUTO_CONNECTED ? getAutoRootItems() : getDefaultRootItems();
+    }
+
+    /**
+     * Creates the browsable root elements from where to start to navigate for Android Auto UI.
+     * The main difference between the default library is that the SONGS category is
+     * browsable instead of a playlist
+     * @return a list of mediaItems that holds the information of the categories
+     */
+    private List<MediaBrowserCompat.MediaItem> getAutoRootItems(){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         //Create the main categories for the media: Albums, Artists, Songs
-        mediaItems.add(generateBrowsableOrPlaylistItem(ALBUMS, ALBUMS, String.valueOf(albums.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_album"), FLAG_BROWSABLE));
-        mediaItems.add(generateBrowsableOrPlaylistItem(ARTISTS, ARTISTS, String.valueOf(artists.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_artist"), FLAG_BROWSABLE));
-        mediaItems.add(generateBrowsableOrPlaylistItem(SONGS, SONGS, String.valueOf(songs.size()), null, Uri.parse("android.resource://com.alebr.muzic/drawable/ic_audiotrack"), FLAG_PLAYLIST));
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                ALBUMS,
+                ALBUMS,
+                String.valueOf(albums.size()),
+                null,
+                Uri.parse(IC_ALBUM), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                ARTISTS,
+                ARTISTS,
+                String.valueOf(artists.size()),
+                null,
+                Uri.parse(IC_ARTIST), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                SONGS,
+                SONGS,
+                String.valueOf(songs.size()),
+                null,
+                Uri.parse(IC_SONG), FLAG_PLAYLIST));
         return mediaItems;
     }
 
     /**
-     * Creates the browsable items for Android Auto, in particular since Songs is a Playlist it
-     * creates the browsable items only for Albums and Artists for every Album and Artist available
-     * @param parentId the parent ID clicked to get in this category which can be ALBUMS or ARTISTS
+     * Creates the browsable root elements from where to start to navigate for a default client, not Android Auto
+     * @return a list of mediaItems that holds the information of the categories
+     */
+    private List<MediaBrowserCompat.MediaItem> getDefaultRootItems(){
+        List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
+        //Create the main categories for the media: Albums, Artists, Songs
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                ALBUMS,
+                ALBUMS,
+                String.valueOf(albums.size()),
+                null,
+                Uri.parse(IC_ALBUM), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                ARTISTS,
+                ARTISTS,
+                String.valueOf(artists.size()),
+                null,
+                Uri.parse(IC_ARTIST), FLAG_BROWSABLE));
+        mediaItems.add(generateBrowsableOrPlaylistItem(
+                SONGS,
+                SONGS,
+                String.valueOf(songs.size()),
+                null,
+                Uri.parse(IC_SONG), FLAG_BROWSABLE));
+        return mediaItems;
+    }
+
+    /**
+     * Creates the items for Android Auto and default clients. For Android Auto,
+     * since Songs is a Playlist it creates the PLAYLIST items only for Albums and Artists for
+     * the parentId given (Android Auto never gets in "case SONGS").
+     * For default clients it creates the items as BROWSABLE for ALBUMS and ARTISTS
+     * (with an added image Uri for the artist) and as PLAYABLE for the songs
+     * @param parentId the parent ID clicked to get in this category which can be ALBUMS or ARTISTS or SONGS
      * @return the mediaItems as Playlists playable, an empty list if the parentId does not exist
      */
-    public List<MediaBrowserCompat.MediaItem> getBrowsableItems(String parentId){
+    public List<MediaBrowserCompat.MediaItem> getItemsFromParentId(String parentId){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
         switch (parentId){
             case ALBUMS:
-                //Add the mediaItems as albums
+                //Create the children for ALBUMS, for every album in albums create the item as
+                //BROWSABLE or PLAYLIST, and if is NOT Android Auto assign the iconUri to the item
+                //to allow later retrieving in the UI to show the right album image. Same applies for ARTISTS
                 for(AlbumItem album : albums){
                      mediaItems.add(generateBrowsableOrPlaylistItem(
                              album.getIdString(),
                              album.getName(),
                              "",
                              null,
-                             null,
-                             FLAG_PLAYLIST));
+                             IS_AUTO_CONNECTED ? null : album.getAlbumArtUri(),
+                             IS_AUTO_CONNECTED ? FLAG_PLAYLIST : FLAG_BROWSABLE));
                 }
                 break;
             case ARTISTS:
@@ -269,38 +312,37 @@ public class MusicLibrary {
                             artist.getName(),
                             "",
                             null,
-                            null,
-                            FLAG_PLAYLIST));
+                            IS_AUTO_CONNECTED ? null : Uri.parse(IC_ARTIST),
+                            IS_AUTO_CONNECTED ? FLAG_PLAYLIST : FLAG_BROWSABLE));
                 }
                 break;
-                /*TODO: move this method in the getBrowsableItems for NOT ANDROID AUTO
             case SONGS:
+                //This case never happens in Android Auto clients
                 for(SongItem song : songs){
                     mediaItems.add(generatePlayableItem(
                             song.getIdString(),
                             song.getTitle(),
                             song.getArtist(),
                             song.getAlbum(),
-                            loadAlbumArt(song.getAlbumArtUri()),
                             song.getAlbumArtUri(),
-                            song.getSongUri(),
-                            FLAG_PLAYABLE));
+                            song.getSongUri()));
                 }
                 break;
-
-                 */
             default:
                 //This should not happen, if we get in here there is an error with the parentId value
+                Log.d(TAG, "getItemsFromParentId: DEFAULT ERROR" + parentId);
         }
         return mediaItems;
     }
 
-
-/*
+    /**
+     * This method is called only if the client is NOT Android Auto. Based on the parentId we receive
+     * we build the children to be displayed/played
+     * @param parentId the parentId as a String, it is the unique identifier of the item
+     * @return a list of MediaItems with the children of the parentId given
+     */
     public List<MediaBrowserCompat.MediaItem> getMediaItemsFromParentId(String parentId){
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
-
-        Log.d(TAG, "getMediaItemsFromParentId: " + parentId);
 
         //The item is none of the above, we look then at the parentId to understand what is
         //the item clicked, since the ids are in the form "song_id", "album_id", "artist_id"
@@ -312,14 +354,7 @@ public class MusicLibrary {
         if(parentId.contains(album_string)){
             String string_id = parentId.substring(album_string.length());
             //Since the album art is the same for all the songs in the album, we can cache it
-            Bitmap album_art_local = null;
-            for(AlbumItem album : albums){
-                if (album.getIdString().equals(parentId)) {
-                    album_art_local = loadAlbumArt(album.getAlbumArtUri());
-                    //We can break the loop since all the songs in one album have the same art
-                    break;
-                }
-            }
+
             //The parent id is an album, we then send back the songs that share the same album
             for(SongItem songItem : songs){
                 //If the album ID (long) equals the ID at the end of the parentID "album_id"
@@ -329,13 +364,10 @@ public class MusicLibrary {
                             songItem.getTitle(),
                             songItem.getArtist(),
                             songItem.getAlbum(),
-                            album_art_local,
                             songItem.getAlbumArtUri(),
-                            songItem.getSongUri(),
-                            FLAG_PLAYLIST));
+                            songItem.getSongUri()));
                 }
             }
-            album_art_local = null;
         }
         else if(parentId.contains(artist_string)){
             String string_id = parentId.substring(artist_string.length());
@@ -346,16 +378,13 @@ public class MusicLibrary {
                             songItem.getTitle(),
                             songItem.getArtist(),
                             songItem.getAlbum(),
-                            loadAlbumArt(songItem.getAlbumArtUri()),
                             songItem.getAlbumArtUri(),
-                            songItem.getSongUri(),
-                            FLAG_PLAYLIST));
+                            songItem.getSongUri()));
                 }
             }
         }
         else{
             //The parent id clicked was a song, just return the song with the id specified
-            /*
             for(SongItem songItem : songs){
                 if(songItem.getIdString().equals(parentId)){
                     mediaItems.add(generatePlayableItem(
@@ -363,21 +392,30 @@ public class MusicLibrary {
                             songItem.getTitle(),
                             songItem.getArtist(),
                             songItem.getAlbum(),
-                            album_art.get(songItem.getAlbumArtUri().toString()),
                             songItem.getAlbumArtUri(),
                             songItem.getSongUri()));
                 }
             }
-             */
-/*
         }
         return mediaItems;
     }
-*/
-    //TODO: comments and implementation for non ANDROID AUTO clients
-    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Bitmap icon, Uri albumUri, Uri mediaUri, int flag){
+
+
+    /**
+     * Creates a MediaItem that is flagged as PLAYABLE with all the parameters given
+     * @param id the unique id of the playable item, since is a song is in the form <song_id> (es "song_1")
+     * @param title the title of the song
+     * @param artist the name of the artist
+     * @param album the name of the album
+     * @param albumUri the Uri to the album image
+     * @param mediaUri the Uri to the song itself
+     * @return a MediaItem with all the data given with the PLAYABLE flag set
+     */
+    private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Uri albumUri, Uri mediaUri){
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
 
+        //Dont set mediaDescriptionBuilder.setIconBitmap() to preserve resource consumption, it can
+        //loaded from the memory one at a time when needed, just set the uri to get the image
         mediaDescriptionBuilder.setMediaId(id)
                 //Set the title of the song
                 .setTitle(title)
@@ -385,15 +423,13 @@ public class MusicLibrary {
                 .setSubtitle(artist)
                 //Set the album name
                 .setDescription(album)
-                //Set the icon bitmap of the song
-                .setIconBitmap(icon)
                 //Set the iconUri of the bitmap
-                //.setIconUri(albumUri)
+                .setIconUri(albumUri)
                 //Set the mediaUri of the song itself
                 .setMediaUri(mediaUri);
         //Return a new MediaItem with the flag PLAYABLE indicating that the item can be playable
         //so se MediaBrowserServiceCompat can start the player screen
-        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
+        return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), FLAG_PLAYABLE);
     }
 
     /**
