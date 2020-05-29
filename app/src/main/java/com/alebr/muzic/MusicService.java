@@ -283,7 +283,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 if (mediaId.equals(MusicLibrary.SONGS)) {
                     initQueueAndStartPlayback(mMusicLibrary.getSongsQueue());
                 } else if (mediaId.contains("album_")) {
-                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue());
+                    initQueueAndStartPlayback(mMusicLibrary.getAlbumIdQueue(mediaId));
                 } else if (mediaId.contains("artist_")) {
                     initQueueAndStartPlayback(mMusicLibrary.getArtistIdQueue(mediaId));
                 } else {
@@ -315,7 +315,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSkipToNext() {
-            if(mQueuePosition == mQueue.size()){
+            //mQueuePosition + 1 since it starts from 0 but the the size starts from 1 unless empty
+            if(mQueuePosition+1 == mQueue.size()){
                 //cant skip to next song we are at the last one, then we do nothing
             }else{
                 //Move to the next QueueItem
