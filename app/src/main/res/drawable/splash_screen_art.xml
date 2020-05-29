@@ -7,14 +7,8 @@
         <color android:color="@color/colorPrimary"/>
     </item>
 
-    <item android:drawable="@drawable/ic_launcher_foreground"
+    <!-- splashscreen icon, which is the app icon -->
+    <item android:drawable="@drawable/ic_app_icon"
         android:gravity="center"/>
-
-    <!--TODO: add application icon
-    <item>
-        <bitmap android:src="@drawable/ic_play"
-            android:gravity="center"/>
-    </item>
-    -->
 
 </layer-list>

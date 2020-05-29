@@ -316,6 +316,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onSkipToNext() {
             //mQueuePosition + 1 since it starts from 0 but the the size starts from 1 unless empty
+            //so the last item in the queue is represented by mQueuePosition + 1
             if(mQueuePosition+1 == mQueue.size()){
                 //cant skip to next song we are at the last one, then we do nothing
             }else{
