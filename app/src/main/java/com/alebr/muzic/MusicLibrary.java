@@ -13,6 +13,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
@@ -404,6 +405,24 @@ public class MusicLibrary {
         return mediaItems;
     }
 
+    //TODO: do method comments
+    public MediaMetadataCompat getMediaMetadataFromId(String mediaId){
+        for (SongItem songItem : songs){
+            //Both strings are in the form <song_id> (es "song_1")
+            if (songItem.getIdString().equals(mediaId)){
+                MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
+                 return builder.putText(MediaMetadataCompat.METADATA_KEY_TITLE, songItem.getTitle())
+                        .putText(MediaMetadataCompat.METADATA_KEY_ARTIST, songItem.getArtist())
+                        .putText(MediaMetadataCompat.METADATA_KEY_ALBUM, songItem.getAlbum())
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, songItem.getDuration())
+                        .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, String.valueOf(songItem.getSongUri()))
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, String.valueOf(songItem.getAlbumArtUri()))
+                        .build();
+            }
+        }
+        //No match in the library
+        return null;
+    }
 
     /**
      * Creates a MediaItem that is flagged as PLAYABLE with all the parameters given

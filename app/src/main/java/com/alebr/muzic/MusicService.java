@@ -1,12 +1,17 @@
 package com.alebr.muzic;
 
-import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
@@ -140,7 +145,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         if (mPackageValidator.isValidCarPackage(clientPackageName)){
             //The client is Android Auto
             Log.d(TAG, "onGetRoot: ANDROID AUTO CONNECTED");
-            MusicLibrary.IS_AUTO_CONNECTED = true;
+            MusicLibrary.IS_AUTO_CONNECTED = false;
         }else {
             //The client is the phone app
             Log.d(TAG, "onGetRoot: APPLICATION CONNECTED");
@@ -220,6 +225,48 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
 
+        private Handler mHandler = new Handler();
+        private Runnable delayedStopRunnable = new Runnable() {
+            @Override
+            public void run() {
+                onStop();
+            }
+        };
+        private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+            @Override
+            public void onAudioFocusChange(int focusChange) {
+                switch (focusChange){
+                    case AudioManager.AUDIOFOCUS_GAIN:
+                        onPlay();
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS:
+                        //Pause the playback for 30 seconds, if no state changes happens, call onStop()
+                        onPause();
+                        mHandler.postDelayed(delayedStopRunnable, 30000);
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                        onPause();
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                        //Lower the volume to allow ducking
+                        //TODO: implement method to lower the volume in MusicPlayer.java
+                        break;
+                }
+            }
+        };
+
+        private IntentFilter mNoisyFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        private BecomingNoisyReceiver mNoisyReceiver = new BecomingNoisyReceiver();
+        private final class BecomingNoisyReceiver extends BroadcastReceiver{
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())){
+                    //Pause the playback, call pause to also set the correct PlaybackState
+                    onPause();
+                }
+            }
+        };
+
         //Instances of the QueueItem used for queue management
         private List<MediaSessionCompat.QueueItem> mQueue = new ArrayList<>();
         //Position of the item that is being currently played
@@ -235,6 +282,9 @@ public class MusicService extends MediaBrowserServiceCompat {
                     PlaybackStateCompat.STATE_PLAYING,
                     mMusicPlayer.getPosition());
             mMusicPlayer.play();
+
+            //If play action happens, remove the stop runnable
+            mHandler.removeCallbacks(delayedStopRunnable);
         }
 
         /**
@@ -251,8 +301,11 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
             setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
             setMetadataFromQueueItem(mQueue.get((int)queueId));
-            mMusicPlayer.play(mQueue.get(((int) queueId)).getDescription().getMediaUri());
+            startMusicPlayer(mQueue.get(((int) queueId)).getDescription().getMediaUri());
             mQueuePosition = (int) queueId;
+
+            //If play action happens, remove the stop runnable
+            mHandler.removeCallbacks(delayedStopRunnable);
         }
 
         @Override
@@ -281,18 +334,35 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //If the mediaId equals MusicLibrary.SONGS the user clicked
                 //the song playlist in the root so we set a queue to play all the songs in the selection
                 if (mediaId.equals(MusicLibrary.SONGS)) {
-                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue());
+                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue(), true);
                 } else if (mediaId.contains("album_")) {
-                    initQueueAndStartPlayback(mMusicLibrary.getAlbumIdQueue(mediaId));
+                    initQueueAndStartPlayback(mMusicLibrary.getAlbumIdQueue(mediaId), true);
                 } else if (mediaId.contains("artist_")) {
-                    initQueueAndStartPlayback(mMusicLibrary.getArtistIdQueue(mediaId));
+                    initQueueAndStartPlayback(mMusicLibrary.getArtistIdQueue(mediaId), true);
                 } else {
-                    //A single item is clicked, perhaps a song in an album, so we load the song with the
-                    //appropriate queue
-                    //Most likely the smartphone UI asked something to play
+                    //This case should not happen
                 }
             }else{
-                //The client is no Android Auto so the mediaId represents a song
+                //The client is not Android Auto so the mediaId represents a songId
+                //Get the MediaMetadata of the mediaId, set the metadata to the session, set the
+                //playbackstate, set the session as active and start the player
+                //For the smartphone no smart queue is implemented, we just return a list of QueueItems
+                //from songs and set the current mQueuePosition to the mediaId selected
+                List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSongsQueue();
+                mQueuePosition = 0;
+                for(MediaSessionCompat.QueueItem queueItem : queueItems){
+                    if(queueItem.getDescription().getMediaId().equals(mediaId)){
+                        //Stop the search so the mQueuePosition is the position of the mediaId clicked
+                        break;
+                    }
+                    //Update the current QueueItem checked
+                    mQueuePosition++;
+                }
+                initQueueAndStartPlayback(queueItems, false);
+                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+
+                //If play action happens, remove the stop runnable
+                mHandler.removeCallbacks(delayedStopRunnable);
             }
         }
 
@@ -311,33 +381,36 @@ public class MusicService extends MediaBrowserServiceCompat {
                     mMusicPlayer.getPosition());
             mSession.setActive(false);
             mMusicPlayer.stop();
+            //Unregister the receiver, since the playback is paused
+            unregisterReceiver(mNoisyReceiver);
         }
 
         @Override
         public void onSkipToNext() {
             //mQueuePosition + 1 since it starts from 0 but the the size starts from 1 unless empty
             //so the last item in the queue is represented by mQueuePosition + 1
-            if(mQueuePosition+1 == mQueue.size()){
+            //TODO: check for end of song and end of queue set the playback as stopped
+            if (mQueuePosition + 1 == mQueue.size()) {
                 //cant skip to next song we are at the last one, then we do nothing
-            }else{
+            } else {
                 //Move to the next QueueItem
                 mQueuePosition++;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
             }
         }
 
         @Override
         public void onSkipToPrevious() {
-            if(mQueuePosition == 0){
+            if (mQueuePosition == 0) {
                 //Can't skip to previous song, we are already at first one (0th item)
-            }else{
+            } else {
                 //Move to the previous QueueItem
                 mQueuePosition--;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
             }
         }
 
@@ -369,21 +442,37 @@ public class MusicService extends MediaBrowserServiceCompat {
                 return;
             }
 
-            initQueueAndStartPlayback(queueItems);
+            initQueueAndStartPlayback(queueItems, true);
         }
+
+        /**
+         * Sets the right listeners for AUDIO_BECOMING_NOISY and asks for the AudioFocus
+         * @param path the string path of the media to play
+         */
+        private void startMusicPlayer(Uri path){
+
+            //TODO: implement method
+            //if(isAudioFocusGranted())
+            mMusicPlayer.play(path);
+
+            //Register the AUDIO_BECOMING_NOISY receiver
+            registerReceiver(mNoisyReceiver, mNoisyFilter);
+        }
+
 
         /**
          * Sets the Queue for the session in the correct way given a list of QueueItems and starts
          * the playback setting the mPlayer correctly
          * @param queueItems the list of the QueueItems to set
          */
-        private void initQueueAndStartPlayback(List<MediaSessionCompat.QueueItem> queueItems){
+        private void initQueueAndStartPlayback(List<MediaSessionCompat.QueueItem> queueItems, boolean start_playback){
             //TODO: see if is possible to assign duration here instead of passing trougth MediaStore
             // since the field DURATION is available only on Android 10+
             //Clear the previous queue
             mQueue.clear();
             //Set the new queue position to 0 since we are initializing the queue
-            mQueuePosition = 0;
+            if(start_playback)
+                mQueuePosition = 0;
             mQueue.addAll(queueItems);
             //Set the queue to the session
             mSession.setQueue(mQueue);
@@ -392,7 +481,11 @@ public class MusicService extends MediaBrowserServiceCompat {
             //Update the metadata for the item that will be played
             setMetadataFromQueueItem(mQueue.get(mQueuePosition));
             //TODO: add AudioFocus request and listener for AUDIO_BECOMING_NOISY
-            mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+            if(start_playback) {
+                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+                //If play action happens, remove the stop runnable
+                mHandler.removeCallbacks(delayedStopRunnable);
+            }
         }
 
         private void setCorrectPlaybackState(int playbackState, long timeElapsed){
@@ -438,6 +531,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             metadataBuilder.putText(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                     .putText(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                     .putText(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, mediaUri)
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
             mSession.setMetadata(metadataBuilder.build());
