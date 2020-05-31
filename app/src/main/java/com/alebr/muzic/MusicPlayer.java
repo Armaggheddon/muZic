@@ -13,6 +13,12 @@ public class MusicPlayer {
 
     private static final String TAG = "MusicPlayer";
 
+    private static final float DEFAULT_VOLUME = 1.0f;
+    public static final float DUCKING_VOLUME = 0.7f;
+
+    //Flag indicating if the current song is ended or not
+    public static boolean is_end_of_song = false;
+
     //The song path of the current song being played, used to compare with new paths to know if the
     //song to be played is a new one or the one that is/was already being played
     public static String currentSongPath;
@@ -24,6 +30,8 @@ public class MusicPlayer {
         public void onCompletion(MediaPlayer mp) {
             //When the song currently playing ends, notify the MusicService using the command
             //skipToNext(), further controls for this state are leaved to the skipToNext() method itself
+            //Update the flag to tell the end of the song is reached
+            is_end_of_song = true;
             mSession.getController().getTransportControls().skipToNext();
         }
     }
@@ -36,14 +44,6 @@ public class MusicPlayer {
     public MusicPlayer(Context context, MediaSessionCompat mediaSessionCompat){
         this.context = context;
         mSession = mediaSessionCompat;
-    }
-
-    /**
-     * Utility method to resume the playback from a paused state, just calls the play with
-     * currentSongPath parameter
-     */
-    public void play(){
-        play(currentSongPath);
     }
 
     /**
@@ -71,9 +71,11 @@ public class MusicPlayer {
             mPlayer.release();
             prepareMPlayer(path);
         }
-        //Start the playback
-        mPlayer.start();
-        //TODO: add on completation listener
+        //Start the playback if the player is not already playing
+        if(!mPlayer.isPlaying())
+            mPlayer.start();
+        //Set end of song to false
+        is_end_of_song = false;
         mPlayer.setOnCompletionListener(mCompletationListener);
     }
 
@@ -105,6 +107,9 @@ public class MusicPlayer {
             mPlayer.pause();
     }
 
+    /**
+     * Stop the mPlayer and release the resources used
+     */
     public void stop(){
         //Default way to fully release a MediaPlayer instance
         //see https://developer.android.com/guide/topics/media/mediaplayer#releaseplayer
@@ -139,5 +144,17 @@ public class MusicPlayer {
         return (mPlayer != null) ? mPlayer.getDuration() : 0;
     }
 
+    /**
+     * Set the volume to be DEFAULT_VOLUME for both left and right volumes
+     */
+    public void setDefaultVolume(){
+        mPlayer.setVolume(DEFAULT_VOLUME, DEFAULT_VOLUME);
+    }
 
+    /**
+     * Set the volume to be DUCKING_VOLUME for both left and right volumes
+     */
+    public void setDuckingVolume(){
+        mPlayer.setVolume(DUCKING_VOLUME, DUCKING_VOLUME);
+    }
 }

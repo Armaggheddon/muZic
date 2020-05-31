@@ -191,11 +191,13 @@ public class MusicLibrary {
     }
 
     /**
-     * Returns a bitmap representation of the Uri given as parameter. The image is also resized to be 320x320 to match Android Auto default size
+     * Returns a bitmap representation of the Uri given as parameter. The image is also resized to
+     * be 320x320 to match Android Auto default size
+     * https://developer.android.com/guide/topics/media-apps/working-with-a-media-session#maintain-state
      * @param albumArtUri the uri pointing to the album art image in the storage
      * @return bitmap the bitmap pointed by the albumArtUri, null if an IOException occurs
      */
-    public Bitmap loadAlbumArt(Uri albumArtUri){
+    public Bitmap loadAlbumArtForAuto(Uri albumArtUri){
         //If albumArtUri is null return the default album icon
         if (albumArtUri == null)
             return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_album);
@@ -209,6 +211,7 @@ public class MusicLibrary {
                 //Reduce the sampling size to reduce memory consumption
                 //read 1 pixel every options.inSampleSize pixel/pixels
                 options.inSampleSize = 1;
+                //Scale it down to be 320x320 since it will be anyway scaled down to that resolution
                 bitmap = BitmapFactory.decodeFileDescriptor(fd, new Rect(0, 0, 320, 320), options);
             }
         }catch (IOException e){

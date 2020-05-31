@@ -1,21 +1,27 @@
 package com.alebr.muzic;
 
+import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
 import android.os.Handler;
+import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
 
+import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 
 import android.support.v4.media.MediaDescriptionCompat;
@@ -26,6 +32,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * This class provides a MediaBrowser through a service. It exposes the media library to a browsing
@@ -99,6 +106,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         mSession = new MediaSessionCompat(this, TAG);
         //Action that an app must support for Android Auto
         //https://developer.android.com/training/cars/media#required-actions
+        //also set the initial PlaybackState to paused
         mStateBuilder = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY|
@@ -109,15 +117,14 @@ public class MusicService extends MediaBrowserServiceCompat {
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT|
                                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID|
                                 PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                );
-        //To add custom action just uncomment the following line
-        /*
-        mStateBuilder.addCustomAction( new PlaybackStateCompat.CustomAction.Builder(
-                "STRING_ACTION",
-                "Charsequence_name",
-                R.drawable.ic_action
-        ).build());
-         */
+                ).setState(PlaybackStateCompat.STATE_PAUSED,
+                        0,
+                        1.0f);
+        //To add custom action see the link below
+        //https://developer.android.com/guide/topics/media-apps/working-with-a-media-session#custom-action
+        //The following lines are necessary only for android 5.0 or before, since we are targeting
+        //android 5.0+ the call is implicit
+        //mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mSession.setPlaybackState(mStateBuilder.build());
         mSession.setCallback(new MediaSessionCallback());
         setSessionToken(mSession.getSessionToken());
@@ -131,6 +138,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         mSession.release();
+        mSession.getController().getTransportControls().stop();
     }
 
     @Override
@@ -145,7 +153,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         if (mPackageValidator.isValidCarPackage(clientPackageName)){
             //The client is Android Auto
             Log.d(TAG, "onGetRoot: ANDROID AUTO CONNECTED");
-            MusicLibrary.IS_AUTO_CONNECTED = false;
+            MusicLibrary.IS_AUTO_CONNECTED = true;
         }else {
             //The client is the phone app
             Log.d(TAG, "onGetRoot: APPLICATION CONNECTED");
@@ -223,20 +231,28 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
     }
 
+    /**
+     * Callback of MediaSession handling all the actions passed by the session such as play, pause,
+     * stop, skip to next, skip to previous ...
+     */
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
 
+        private AudioManager mAudioManager = (AudioManager) MusicService.this.getSystemService(Context.AUDIO_SERVICE);
         private Handler mHandler = new Handler();
+        //Runnable to stop the session after 30 seconds
         private Runnable delayedStopRunnable = new Runnable() {
             @Override
             public void run() {
                 onStop();
             }
         };
+        //Audio focus change listener
         private AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
             @Override
             public void onAudioFocusChange(int focusChange) {
                 switch (focusChange){
                     case AudioManager.AUDIOFOCUS_GAIN:
+                        mMusicPlayer.setDefaultVolume();
                         onPlay();
                         break;
                     case AudioManager.AUDIOFOCUS_LOSS:
@@ -249,19 +265,20 @@ public class MusicService extends MediaBrowserServiceCompat {
                         break;
                     case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                         //Lower the volume to allow ducking
-                        //TODO: implement method to lower the volume in MusicPlayer.java
+                        mMusicPlayer.setDuckingVolume();
                         break;
                 }
             }
         };
 
+        //Receiver for audio becoming noisy with filter and custom receiver class
         private IntentFilter mNoisyFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         private BecomingNoisyReceiver mNoisyReceiver = new BecomingNoisyReceiver();
         private final class BecomingNoisyReceiver extends BroadcastReceiver{
             @Override
             public void onReceive(Context context, Intent intent) {
                 if(AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())){
-                    //Pause the playback, call pause to also set the correct PlaybackState
+                    //Headphones or audio source changed to phone speakers, so pause the Playback
                     onPause();
                 }
             }
@@ -274,17 +291,79 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         /**
          * When the play button is clicked, it might be the notification play button, the one on the
-         * car, the one on headphones or every connected device sending a play command
+         * car, the one on headphones or every connected device sending a play command.
+         * The method handles the AudioFocus request and setting the notification for the media being
+         * currently played, as well as the listener for ACTION_AUDIO_BECOMIG_NOISY
          */
         @Override
         public void onPlay() {
-            setCorrectPlaybackState(
-                    PlaybackStateCompat.STATE_PLAYING,
-                    mMusicPlayer.getPosition());
-            mMusicPlayer.play();
 
-            //If play action happens, remove the stop runnable
-            mHandler.removeCallbacks(delayedStopRunnable);
+            //If the result is AUDIOFOCUS_GAIN we have the focus and can start the playback
+            if(requestAudioFocus() == AudioManager.AUDIOFOCUS_GAIN) {
+                //Update the PlaybackState
+                setCorrectPlaybackState(
+                        PlaybackStateCompat.STATE_PLAYING,
+                        mMusicPlayer.getPosition());
+                //Get the notification
+                Notification notification = mMediaNotificationManager.getNotification(
+                        mSession.getController().getMetadata(),
+                        mSession.getController().getPlaybackState(),
+                        mSession.getSessionToken());
+                //If the service is not started
+                if (!isServiceStarted) {
+                    //Start the foreground service and update the flag isServiceStarted
+                    ContextCompat.startForegroundService(
+                            MusicService.this,
+                            new Intent(MusicService.this, MusicService.class));
+                    isServiceStarted = true;
+                }
+                //Start the foreground service for the notification
+                startForeground(MediaNotificationManager.NOTIFICATION_ID, notification);
+                //Set the session as active
+                mSession.setActive(true);
+
+                //Start the playback
+                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+
+                //Register the receiver
+                registerReceiver(mNoisyReceiver, mNoisyFilter);
+                //Remove the stop runnable if is started since the user interacted with our app
+                //and we have regained AudioFocus
+                mHandler.removeCallbacks(delayedStopRunnable);
+            }
+        }
+
+        /**
+         * Asks for AudioFocus based on the version of the OS the device is running
+         * @return the int value representing the result of the request
+         */
+        private int requestAudioFocus(){
+            int focusResult = 0;
+
+            //For SDK version later than 26 (Android O and later)
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                //Build the attributes for the request
+                AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build();
+                //Build the request itself setting the listener for focus change
+                AudioFocusRequest audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setOnAudioFocusChangeListener(afChangeListener)
+                        .setAudioAttributes(audioAttributes)
+                        .build();
+                //Ask for the request
+                focusResult = mAudioManager.requestAudioFocus(audioFocusRequest);
+            }
+            //For SDK version before than 26 (Android N and before)
+            else{
+                //Ask for the request setting the focus change listener
+                focusResult = mAudioManager.requestAudioFocus(
+                        afChangeListener,
+                        AudioManager.STREAM_MUSIC,
+                        AudioManager.AUDIOFOCUS_GAIN);
+            }
+            return focusResult;
         }
 
         /**
@@ -301,15 +380,22 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
             setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
             setMetadataFromQueueItem(mQueue.get((int)queueId));
-            startMusicPlayer(mQueue.get(((int) queueId)).getDescription().getMediaUri());
+            onPlay();
             mQueuePosition = (int) queueId;
 
             //If play action happens, remove the stop runnable
             mHandler.removeCallbacks(delayedStopRunnable);
         }
 
+        /**
+         * Seeks to a pont in the song specified by the parameter given
+         * @param position the value in ms where to seek to
+         */
         @Override
         public void onSeekTo(long position) {
+            setCorrectPlaybackState(
+                    mSession.getController().getPlaybackState().getState(),
+                    position);
             mMusicPlayer.seekTo(position);
         }
 
@@ -334,11 +420,14 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //If the mediaId equals MusicLibrary.SONGS the user clicked
                 //the song playlist in the root so we set a queue to play all the songs in the selection
                 if (mediaId.equals(MusicLibrary.SONGS)) {
-                    initQueueAndStartPlayback(mMusicLibrary.getSongsQueue(), true);
+                    initQueue(mMusicLibrary.getSongsQueue(), true);
+                    onPlay();
                 } else if (mediaId.contains("album_")) {
-                    initQueueAndStartPlayback(mMusicLibrary.getAlbumIdQueue(mediaId), true);
+                    initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
+                    onPlay();
                 } else if (mediaId.contains("artist_")) {
-                    initQueueAndStartPlayback(mMusicLibrary.getArtistIdQueue(mediaId), true);
+                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId), true);
+                    onPlay();
                 } else {
                     //This case should not happen
                 }
@@ -358,59 +447,130 @@ public class MusicService extends MediaBrowserServiceCompat {
                     //Update the current QueueItem checked
                     mQueuePosition++;
                 }
-                initQueueAndStartPlayback(queueItems, false);
-                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
-
-                //If play action happens, remove the stop runnable
-                mHandler.removeCallbacks(delayedStopRunnable);
+                initQueue(queueItems, false);
+                onPlay();
             }
         }
 
+        /**
+         * The client asked to pause the playback so update the playback state accordingly
+         */
         @Override
         public void onPause() {
+            //Set the session state to Paused
             setCorrectPlaybackState(
                     PlaybackStateCompat.STATE_PAUSED,
                     mMusicPlayer.getPosition());
+            //Update the notification status with the pause button
+            Notification notification = mMediaNotificationManager.getNotification(
+                    mSession.getController().getMetadata(),
+                    mSession.getController().getPlaybackState(),
+                    mSession.getSessionToken());
+            //Update the currently showing notification
+            mMediaNotificationManager.getNotificationManager()
+                    .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
+            //Pause the playback
             mMusicPlayer.pause();
+            //Unregister the receiver since no audio is being played
+            unregisterReceiver(mNoisyReceiver);
+
+            stopForeground(false);
         }
 
+        /**
+         * The service is asked to stop, so release all the resources that holds and setting the
+         * data and state correctly
+         */
         @Override
         public void onStop() {
+            //The order used is the same specified in the below developer resource
+            //https://developer.android.com/guide/topics/media-apps/audio-app/mediasession-callbacks
+            //Remove the notification and abandon audio focus
+            mAudioManager.abandonAudioFocus(afChangeListener);
+            stopSelf();
+            mSession.setActive(false);
             setCorrectPlaybackState(
                     PlaybackStateCompat.STATE_STOPPED,
                     mMusicPlayer.getPosition());
             mSession.setActive(false);
             mMusicPlayer.stop();
+
+            stopForeground(false);
+
+            isServiceStarted = false;
             //Unregister the receiver, since the playback is paused
             unregisterReceiver(mNoisyReceiver);
         }
 
+        /**
+         * Handle prepare request to prepare the playback state, queue and metadata
+         */
+        @Override
+        public void onPrepare() {
+            super.onPrepare();
+            //Called from both Android Auto and phone initialize a playback queue
+            //with a random position
+            //If the queue is null or empty initialize the queue with a queue from all the songs
+            //this allow the pressing play button starts the playback with no issue
+            if(mQueue == null || mQueue.isEmpty()) {
+                List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSongsQueue();
+                Random random = new Random();
+                mQueuePosition = random.nextInt(queueItems.size() - 1);
+                initQueue(queueItems, false);
+            }
+            //Else the queue is not empty so there is no need to initialize the queue and just set
+            //the state as Paused as described in the Android Auto guidelines
+            //https://developer.android.com/training/cars/media#initial-playback-state
+            setCorrectPlaybackState(
+                    PlaybackStateCompat.STATE_PAUSED,
+                    0);
+            mSession.setActive(false);
+        }
+
+        /**
+         * The client asked the next item in the queue to play, check if we reached the end of the
+         * song being played, if is the case, set the state to paused
+         */
         @Override
         public void onSkipToNext() {
             //mQueuePosition + 1 since it starts from 0 but the the size starts from 1 unless empty
             //so the last item in the queue is represented by mQueuePosition + 1
-            //TODO: check for end of song and end of queue set the playback as stopped
+
             if (mQueuePosition + 1 == mQueue.size()) {
                 //cant skip to next song we are at the last one, then we do nothing
+                //If is the end of queue end the song has finished playing call onStop() if it
+                //was not already in the stopped state
+                if (MusicPlayer.is_end_of_song &&
+                        (mSession.getController().getPlaybackState().getState() != PlaybackStateCompat.STATE_STOPPED))
+                    onStop();
             } else {
                 //Move to the next QueueItem
                 mQueuePosition++;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+                onPlay();
             }
         }
 
+        /**
+         * The client asked the previous item in the queue to play, handles the case when we are
+         * playing the first item in the queue, where the playback is brought back to 0ms
+         */
         @Override
         public void onSkipToPrevious() {
             if (mQueuePosition == 0) {
                 //Can't skip to previous song, we are already at first one (0th item)
+                //we can rewind the current song to the begin
+                setCorrectPlaybackState(
+                        PlaybackStateCompat.STATE_PLAYING,
+                        0);
+                mMusicPlayer.seekTo(0);
             } else {
                 //Move to the previous QueueItem
                 mQueuePosition--;
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+                onPlay();
             }
         }
 
@@ -442,50 +602,31 @@ public class MusicService extends MediaBrowserServiceCompat {
                 return;
             }
 
-            initQueueAndStartPlayback(queueItems, true);
-        }
-
-        /**
-         * Sets the right listeners for AUDIO_BECOMING_NOISY and asks for the AudioFocus
-         * @param path the string path of the media to play
-         */
-        private void startMusicPlayer(Uri path){
-
-            //TODO: implement method
-            //if(isAudioFocusGranted())
-            mMusicPlayer.play(path);
-
-            //Register the AUDIO_BECOMING_NOISY receiver
-            registerReceiver(mNoisyReceiver, mNoisyFilter);
+            initQueue(queueItems, true);
+            onPlay();
         }
 
 
         /**
-         * Sets the Queue for the session in the correct way given a list of QueueItems and starts
-         * the playback setting the mPlayer correctly
+         * Sets the Queue for the session in the correct way given a list of QueueItems and a flag
+         * indicating if the current mQueuePosition is to be set to 0 or not, it also manages setting
+         * the metadata for the session with the method setMetadataFromQueueItem
          * @param queueItems the list of the QueueItems to set
+         * @param default_queue_position true if mQueuePosition is 0, false if is not to set
          */
-        private void initQueueAndStartPlayback(List<MediaSessionCompat.QueueItem> queueItems, boolean start_playback){
+        private void initQueue(List<MediaSessionCompat.QueueItem> queueItems, boolean default_queue_position){
             //TODO: see if is possible to assign duration here instead of passing trougth MediaStore
             // since the field DURATION is available only on Android 10+
             //Clear the previous queue
             mQueue.clear();
             //Set the new queue position to 0 since we are initializing the queue
-            if(start_playback)
+            if(default_queue_position)
                 mQueuePosition = 0;
             mQueue.addAll(queueItems);
             //Set the queue to the session
             mSession.setQueue(mQueue);
-            //Update the playback state of the session as playing
-            setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
             //Update the metadata for the item that will be played
             setMetadataFromQueueItem(mQueue.get(mQueuePosition));
-            //TODO: add AudioFocus request and listener for AUDIO_BECOMING_NOISY
-            if(start_playback) {
-                startMusicPlayer(mQueue.get(mQueuePosition).getDescription().getMediaUri());
-                //If play action happens, remove the stop runnable
-                mHandler.removeCallbacks(delayedStopRunnable);
-            }
         }
 
         private void setCorrectPlaybackState(int playbackState, long timeElapsed){
@@ -511,7 +652,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     (data.getDescription()!=null)?data.getDescription().toString():"",
                     (data.getExtras()!=null)?data.getExtras().getLong("DURATION"):0,
                     (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
-                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
+                    mMusicLibrary.loadAlbumArtForAuto(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
             );
         }
 

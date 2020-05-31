@@ -101,8 +101,8 @@ public class MediaNotificationManager {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mService, CHANNEL_ID);
         //Set in order the: title, album name, artist, and the album cover
         builder.setContentTitle(description.getTitle())
-                .setContentText(description.getSubtitle())
-                .setSubText(description.getDescription())
+                .setContentText(description.getDescription())
+                .setSubText(description.getSubtitle())
                 .setLargeIcon(description.getIconBitmap());
         builder.setStyle(
                 new androidx.media.app.NotificationCompat.MediaStyle()
@@ -116,7 +116,7 @@ public class MediaNotificationManager {
                                 mService,
                                 PlaybackStateCompat.ACTION_STOP)))
                 .setColor(ContextCompat.getColor(mService, R.color.colorPrimary))
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_app_icon)
                 .setContentIntent(createContentIntent())
                 /*For android 6 and later since the user can swype away the notification*/
                 .setDeleteIntent(

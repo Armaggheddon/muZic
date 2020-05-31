@@ -178,4 +178,13 @@ limitations under the License.
         Qe3aDQsQcafEQPD+nqActifKZ0Np0IS9L9kR/wbNvyz6ENwPiTrjV2KRkEjH78ZM
         cUQXg0L3BYHJ3lc69Vs5Ddf9uUGGMYldX3WfMBEmh/9iFBDAaTCK
     </signing_certificate>
+
+    <!--
+    <signing_certificate name="Google Assistant on Android Automotive OS" package="com.google.android.carassistant">
+        <key release="false">17:E2:81:11:06:2F:97:A8:60:79:7A:83:70:5B:F8:2C:7C:C0:29:35:56:6D:46:22:BC:4E:CF:EE:1B:EB:F8:15</key>
+        <key release="true">74:B6:FB:F7:10:E8:D9:0D:44:D3:40:12:58:89:B4:23:06:A6:2C:43:79:D0:E5:A6:62:20:E3:A6:8A:BF:90:E2</key>
+    </signing_certificate>
+
+    -->
+
 </allowed_callers>
