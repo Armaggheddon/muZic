@@ -113,9 +113,11 @@ public class MusicPlayer {
     public void stop(){
         //Default way to fully release a MediaPlayer instance
         //see https://developer.android.com/guide/topics/media/mediaplayer#releaseplayer
-        mPlayer.stop();
-        mPlayer.release();
-        mPlayer = null;
+        if(mPlayer != null) {
+            mPlayer.stop();
+            mPlayer.release();
+            mPlayer = null;
+        }
 
     }
 

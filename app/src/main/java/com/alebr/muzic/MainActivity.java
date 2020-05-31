@@ -1,9 +1,14 @@
 package com.alebr.muzic;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -14,13 +19,25 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.widget.MediaController;
-import android.widget.Toast;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,6 +47,62 @@ public class MainActivity extends AppCompatActivity {
     private final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 101;
 
     private MediaBrowserCompat mMediaBrowser;
+    private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()){
+                case R.id.albums:
+                    mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
+                    LAST_ITEM_CLICKED = R.id.albums;
+                    return true;
+                case R.id.artists:
+                    mMediaBrowser.subscribe(MusicLibrary.ARTISTS, mSubscriptionCallback);
+                    LAST_ITEM_CLICKED = R.id.artists;
+                    return true;
+                case R.id.songs:
+                    mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
+                    LAST_ITEM_CLICKED = R.id.songs;
+                    return true;
+                case R.id.settings:
+                    //TODO: start fragment with settings
+                    return true;
+            }
+            return false;
+        }
+    };
+
+    private int LAST_ITEM_CLICKED;
+    private ArrayList<String> navigationHistory = new ArrayList<>();
+
+    private ListView listview;
+    private ArrayAdapter<CustomListItem> listAdapter;
+    private List<CustomListItem> elements = new ArrayList<>();
+
+    private MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback = new MediaBrowserCompat.SubscriptionCallback() {
+        @Override
+        public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaBrowserCompat.MediaItem> children) {
+            super.onChildrenLoaded(parentId, children);
+
+            Log.d(TAG, "onChildrenLoaded: " + parentId);
+            List<CustomListItem> tempElements = new ArrayList<>();
+            for(MediaBrowserCompat.MediaItem item : children){
+                tempElements.add(
+                        new CustomListItem(
+                                item.getMediaId(),
+                                item.getDescription().getTitle().toString()
+                        )
+                );
+            }
+
+            elements.clear();
+            elements.addAll(tempElements);
+            listAdapter.notifyDataSetChanged();
+
+
+            mMediaBrowser.unsubscribe(parentId);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +111,57 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
         //If we are here we have the permission to read external storage
         mMediaBrowser = new MediaBrowserCompat(
                 this,
                 new ComponentName( this, MusicService.class),
                 mConnectionCallback,
                 null);
+
+        final BottomNavigationView navigationView = findViewById(R.id.navigation);
+        navigationView.setOnNavigationItemSelectedListener(mOnNavigationListener);
+
+
+        listview = findViewById(R.id.listView);
+        listAdapter = new ArrayAdapter<CustomListItem>(
+                this,
+                android.R.layout.simple_list_item_1,
+                elements){
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView text = view.findViewById(android.R.id.text1);
+                text.setText(elements.get(position).getTitle());
+                return view;
+            }
+        };
+        listview.setAdapter(listAdapter);
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //TODO: fix MusicService.java
+                if (listAdapter.getItem(position).getId().contains(MusicLibrary.ALBUM_) || listAdapter.getItem(position).getId().contains(MusicLibrary.ARTIST_)){
+                    navigationHistory.add(listAdapter.getItem(position).getId());
+                    mMediaBrowser.subscribe(listAdapter.getItem(position).getId(), mSubscriptionCallback);
+                }
+                else if (listAdapter.getItem(position).getId().contains(MusicLibrary.SONG_)){
+
+                    //If the last subscription we make was songs
+                    if(LAST_ITEM_CLICKED == R.id.songs){
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(MusicLibrary.SONGS, null);
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                    }else {
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(navigationHistory.get(navigationHistory.size()-1), null);
+                        navigationHistory.clear();
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                    }
+                }
+            }
+        });
+
     }
 
     private final MediaBrowserCompat.ConnectionCallback mConnectionCallback = new MediaBrowserCompat.ConnectionCallback(){
@@ -61,7 +177,8 @@ public class MainActivity extends AppCompatActivity {
             }
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
             buildTransportControls();
-            //super.onConnected();
+            mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
+            super.onConnected();
         }
     };
 

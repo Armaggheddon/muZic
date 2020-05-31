@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
+    android:id="@+id/app_bar_layout"
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="56dp"
+    android:layout_height="0dp"
     android:background="@color/colorPrimary">
 
     <ImageView
@@ -28,6 +29,6 @@
         android:layout_height="match_parent"
         android:layout_marginEnd="8dp"
         android:gravity="center_vertical"
-        android:src="@drawable/ic_settings"/>
+        android:src="@drawable/ic_outline_settings"/>
 
 </LinearLayout>

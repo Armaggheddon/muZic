@@ -12,23 +12,19 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-
 import android.os.Handler;
-import android.os.ResultReceiver;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserCompat.MediaItem;
-
-import androidx.core.content.ContextCompat;
-import androidx.media.MediaBrowserServiceCompat;
-
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.media.MediaBrowserServiceCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,6 +94,9 @@ public class MusicService extends MediaBrowserServiceCompat {
     private MusicLibrary mMusicLibrary;
     private MusicPlayer mMusicPlayer;
     private PackageValidator mPackageValidator;
+    //True if the client is Android Auto, else is false, used to differentiate how to handle
+    //the call to onPlayFromMediaId(...)
+    private boolean IS_CAR_CONNECTED;
 
     @Override
     public void onCreate() {
@@ -115,6 +114,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                                 PlaybackStateCompat.ACTION_STOP|
                                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT|
+                                PlaybackStateCompat.ACTION_SEEK_TO|
                                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID|
                                 PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
                 ).setState(PlaybackStateCompat.STATE_PAUSED,
@@ -141,6 +141,15 @@ public class MusicService extends MediaBrowserServiceCompat {
         mSession.getController().getTransportControls().stop();
     }
 
+    /**
+     * Called on connection with a client, returns a browsable root only if the client is allowed.
+     * The allowed clients are described in allowed_media_browser_callers.xml
+     * @param clientPackageName the package name of the client
+     * @param clientUid the client unique id
+     * @param rootHints a hint for building the browser root
+     * @return a browser root, is a valid one BROWSER_ROOT if the client is a valid one,
+     * or EMPTY_ROOT if the client is not allowed
+     */
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName,
                                  int clientUid,
@@ -153,15 +162,20 @@ public class MusicService extends MediaBrowserServiceCompat {
         if (mPackageValidator.isValidCarPackage(clientPackageName)){
             //The client is Android Auto
             Log.d(TAG, "onGetRoot: ANDROID AUTO CONNECTED");
-            MusicLibrary.IS_AUTO_CONNECTED = true;
+            IS_CAR_CONNECTED = true;
         }else {
             //The client is the phone app
             Log.d(TAG, "onGetRoot: APPLICATION CONNECTED");
-            MusicLibrary.IS_AUTO_CONNECTED = false;
+            IS_CAR_CONNECTED = false;
         }
         return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
     }
 
+    /**
+     * Called every time the clients clicks on an item with the flag BROWSABLE
+     * @param parentMediaId the id if the item clicked
+     * @param result the list of MediaItems with the result
+     */
     @Override
     public void onLoadChildren(@NonNull final String parentMediaId,
                                @NonNull final Result<List<MediaItem>> result) {
@@ -214,9 +228,10 @@ public class MusicService extends MediaBrowserServiceCompat {
                     }).start();
                     break;
                 default:
-                    //The user clicked on an album, artist or a single song in a NON Android Auto UI
+                    //The user clicked on an album, artist or a single song
                     //So we search in the music library for all the related elements
-                    //given the parentMediaId clicked
+                    //given the parentMediaId clicked and return a list of MediaItems representing
+                    //the parentMediaId
                     result.detach();
                     new Thread(new Runnable() {
                         @Override
@@ -253,7 +268,8 @@ public class MusicService extends MediaBrowserServiceCompat {
                 switch (focusChange){
                     case AudioManager.AUDIOFOCUS_GAIN:
                         mMusicPlayer.setDefaultVolume();
-                        onPlay();
+                        //Dont call onPlay, otherwise the playback will start automatically as soon
+                        //as we get the focus
                         break;
                     case AudioManager.AUDIOFOCUS_LOSS:
                         //Pause the playback for 30 seconds, if no state changes happens, call onStop()
@@ -300,10 +316,18 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             //If the result is AUDIOFOCUS_GAIN we have the focus and can start the playback
             if(requestAudioFocus() == AudioManager.AUDIOFOCUS_GAIN) {
+
+                //Set the session as active
+                mSession.setActive(true);
+
+                //Start the playback
+                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
+
                 //Update the PlaybackState
                 setCorrectPlaybackState(
                         PlaybackStateCompat.STATE_PLAYING,
                         mMusicPlayer.getPosition());
+
                 //Get the notification
                 Notification notification = mMediaNotificationManager.getNotification(
                         mSession.getController().getMetadata(),
@@ -319,11 +343,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                 }
                 //Start the foreground service for the notification
                 startForeground(MediaNotificationManager.NOTIFICATION_ID, notification);
-                //Set the session as active
-                mSession.setActive(true);
-
-                //Start the playback
-                mMusicPlayer.play(mQueue.get(mQueuePosition).getDescription().getMediaUri());
 
                 //Register the receiver
                 registerReceiver(mNoisyReceiver, mNoisyFilter);
@@ -379,12 +398,10 @@ public class MusicService extends MediaBrowserServiceCompat {
              */
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
             setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
-            setMetadataFromQueueItem(mQueue.get((int)queueId));
-            onPlay();
             mQueuePosition = (int) queueId;
+            setMetadataFromQueueItem(mQueue.get(mQueuePosition));
 
-            //If play action happens, remove the stop runnable
-            mHandler.removeCallbacks(delayedStopRunnable);
+            onPlay();
         }
 
         /**
@@ -408,47 +425,40 @@ public class MusicService extends MediaBrowserServiceCompat {
          */
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
-            /*
-            This method gets called whenever a PLAYABLE item is clicked or an item with both the
-            flags PLAYABLE and BROWSABLE is clicked, since in our library the only item with both
-            these flags is the list of all songs, we check if the mediaId is SONGS.
-            In this case we prepare a Queue to play and assign it to the session (methods)
-             */
-            Log.d(TAG, "onPlayFromMediaId: " + mediaId);
+
             //If the connected client is Android Auto
-            if(MusicLibrary.IS_AUTO_CONNECTED) {
+            if(IS_CAR_CONNECTED) {
                 //If the mediaId equals MusicLibrary.SONGS the user clicked
                 //the song playlist in the root so we set a queue to play all the songs in the selection
                 if (mediaId.equals(MusicLibrary.SONGS)) {
                     initQueue(mMusicLibrary.getSongsQueue(), true);
                     onPlay();
-                } else if (mediaId.contains("album_")) {
+                } else if (mediaId.contains(MusicLibrary.ALBUM_)) {
                     initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
                     onPlay();
-                } else if (mediaId.contains("artist_")) {
+                } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
                     initQueue(mMusicLibrary.getArtistIdQueue(mediaId), true);
                     onPlay();
                 } else {
-                    //This case should not happen
+                    //This case should not happen in an Android Auto client
+                    Log.d(TAG, "onPlayFromMediaId: " + mediaId);
                 }
             }else{
-                //The client is not Android Auto so the mediaId represents a songId
-                //Get the MediaMetadata of the mediaId, set the metadata to the session, set the
-                //playbackstate, set the session as active and start the player
-                //For the smartphone no smart queue is implemented, we just return a list of QueueItems
-                //from songs and set the current mQueuePosition to the mediaId selected
-                List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSongsQueue();
-                mQueuePosition = 0;
-                for(MediaSessionCompat.QueueItem queueItem : queueItems){
-                    if(queueItem.getDescription().getMediaId().equals(mediaId)){
-                        //Stop the search so the mQueuePosition is the position of the mediaId clicked
-                        break;
-                    }
-                    //Update the current QueueItem checked
-                    mQueuePosition++;
+                //If the mediaId equals MusicLibrary.SONGS the user subscribed for the songs library
+                //so initialize the queue with the requested items, the same applies for the others.
+                //The main difference from Android Auto is that the playback is not automatically started,
+                //this is in order to allow the service to track what items are being browsed and
+                //create the appropriate queue based on the item clicked
+                if (mediaId.equals(MusicLibrary.SONGS)) {
+                    initQueue(mMusicLibrary.getSongsQueue(), true);
+                } else if (mediaId.contains(MusicLibrary.ALBUM_)) {
+                    initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
+                } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
+                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId), true);
+                } else {
+                    //This case should never happen
+                    Log.d(TAG, "onPlayFromMediaId: " + mediaId);
                 }
-                initQueue(queueItems, false);
-                onPlay();
             }
         }
 
@@ -498,8 +508,6 @@ public class MusicService extends MediaBrowserServiceCompat {
             stopForeground(false);
 
             isServiceStarted = false;
-            //Unregister the receiver, since the playback is paused
-            unregisterReceiver(mNoisyReceiver);
         }
 
         /**
@@ -546,6 +554,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             } else {
                 //Move to the next QueueItem
                 mQueuePosition++;
+                //TODO: set state plyaing only if the current state was playing
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
                 onPlay();
@@ -605,7 +614,6 @@ public class MusicService extends MediaBrowserServiceCompat {
             initQueue(queueItems, true);
             onPlay();
         }
-
 
         /**
          * Sets the Queue for the session in the correct way given a list of QueueItems and a flag

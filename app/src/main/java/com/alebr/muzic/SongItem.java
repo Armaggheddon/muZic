@@ -1,5 +1,6 @@
 package com.alebr.muzic;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
 
 public class SongItem {
@@ -19,6 +20,7 @@ public class SongItem {
     private Uri songUri;        //Uri of the song
     private Uri albumArtUri;    //Uri of the album art (the cover of the album)
 
+    @SuppressLint("DefaultLocale")
     public SongItem(long id, String title, String artist, long artistId, String album, long albumId, long duration,
                     Uri songUri, Uri albumArtUri){
         this.id = id;
@@ -31,7 +33,7 @@ public class SongItem {
         this.songUri = songUri;
         this.albumArtUri = albumArtUri;
 
-        idString = String.format("song_%d", id);
+        idString = String.format("%s%d", MusicLibrary.SONG_, id);
     }
 
     public long getId() {

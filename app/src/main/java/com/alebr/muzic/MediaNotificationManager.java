@@ -152,7 +152,8 @@ public class MediaNotificationManager {
             CharSequence name = "muZic";
             //User visible channel description
             String description = "Channel description";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            //TODO: find why it reproduces the notification sound on notification update
+            int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     name,
