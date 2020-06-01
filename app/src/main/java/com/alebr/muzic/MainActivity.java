@@ -3,6 +3,8 @@ package com.alebr.muzic;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -16,6 +18,7 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
@@ -31,10 +34,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            navigationHistory.clear();
             switch (item.getItemId()){
                 case R.id.albums:
                     mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
@@ -64,8 +71,9 @@ public class MainActivity extends AppCompatActivity {
                     mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
                     LAST_ITEM_CLICKED = R.id.songs;
                     return true;
-                case R.id.settings:
-                    //TODO: start fragment with settings
+                case R.id.app_bar_search:
+                    //TODO: add search for songs
+                    mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
                     return true;
             }
             return false;
@@ -74,6 +82,12 @@ public class MainActivity extends AppCompatActivity {
 
     private int LAST_ITEM_CLICKED;
     private ArrayList<String> navigationHistory = new ArrayList<>();
+
+    private TextView title_text;
+    private ImageView album_image;
+    private FloatingActionButton play_pause_button;
+    private ConstraintLayout smallPlayerLayout;
+    private MotionLayout motionLayout;
 
     private ListView listview;
     private ArrayAdapter<CustomListItem> listAdapter;
@@ -121,6 +135,15 @@ public class MainActivity extends AppCompatActivity {
         final BottomNavigationView navigationView = findViewById(R.id.navigation);
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationListener);
 
+        smallPlayerLayout = findViewById(R.id.small_player);
+        smallPlayerLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Launch full screen player", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        motionLayout = findViewById(R.id.main_layout);
 
         listview = findViewById(R.id.listView);
         listAdapter = new ArrayAdapter<CustomListItem>(
@@ -152,11 +175,12 @@ public class MainActivity extends AppCompatActivity {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(MusicLibrary.SONGS, null);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                        motionLayout.transitionToEnd();
                     }else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(navigationHistory.get(navigationHistory.size()-1), null);
-                        navigationHistory.clear();
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                        motionLayout.transitionToEnd();
                     }
                 }
             }
@@ -184,8 +208,43 @@ public class MainActivity extends AppCompatActivity {
 
     private void buildTransportControls(){
         //TODO: init the UI accordingly to the current playbackstate
+
+        album_image = findViewById(R.id.album_art_small_player);
+        title_text = findViewById(R.id.title_small_player);
+        play_pause_button = findViewById(R.id.play_pause_small_player);
+
+        play_pause_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
+                    play_pause_button.setImageResource(R.drawable.ic_play);
+                }else{
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                    play_pause_button.setImageResource(R.drawable.ic_pause);
+                }
+            }
+        });
         MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(MainActivity.this);
         //TODO: sync initial state of the UI
+        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+            play_pause_button.setImageResource(R.drawable.ic_pause);
+            motionLayout.transitionToEnd();
+            title_text.setText(mediaController.getMetadata().getDescription().getTitle());
+            album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
+        }
+
+        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PAUSED){
+            MediaMetadataCompat metadata = mediaController.getMetadata();
+            if (metadata != null) {
+                play_pause_button.setImageResource(R.drawable.ic_play);
+                title_text.setText(mediaController.getMetadata().getDescription().getTitle());
+                album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
+                motionLayout.transitionToEnd();
+            }
+
+        }
+
         mediaController.registerCallback(mControllerCallback);
     }
 
@@ -193,13 +252,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
-            //TODO: handle playbackstate change
+            play_pause_button.setImageResource((state.getState()==PlaybackStateCompat.STATE_PLAYING) ? R.drawable.ic_pause : R.drawable.ic_play);
         }
 
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            //TODO: handle metadata change, use to update ui accordingly
+
+            album_image.setImageBitmap(metadata.getDescription().getIconBitmap());
+            title_text.setText(metadata.getDescription().getTitle());
+
         }
     };
 
