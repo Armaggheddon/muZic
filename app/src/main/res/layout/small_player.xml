@@ -21,6 +21,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:text="TITLE placeholder"
+        android:gravity="center_vertical"
         android:textColor="@android:color/white"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"

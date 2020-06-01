@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             navigationHistory.clear();
+            //listview.setVisibility(View.VISIBLE);
             switch (item.getItemId()){
                 case R.id.albums:
                     mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
@@ -71,9 +73,25 @@ public class MainActivity extends AppCompatActivity {
                     mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
                     LAST_ITEM_CLICKED = R.id.songs;
                     return true;
-                case R.id.app_bar_search:
-                    //TODO: add search for songs
-                    mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
+                case R.id.queue_nav:
+                    List<MediaSessionCompat.QueueItem> queueItems = MediaControllerCompat.getMediaController(MainActivity.this).getQueue();
+                    if(queueItems == null ||queueItems.size() == 0) {
+                        elements.clear();
+                        listAdapter.notifyDataSetChanged();
+                    }
+                    else {
+                        List<CustomListItem> tempElements = new ArrayList<>();
+                        for (MediaSessionCompat.QueueItem queueItem : queueItems) {
+                            tempElements.add(
+                                    new CustomListItem(
+                                            queueItem.getDescription().getMediaId(),
+                                            queueItem.getDescription().getTitle().toString()));
+                        }
+                        elements.clear();
+                        elements.addAll(tempElements);
+                        listAdapter.notifyDataSetChanged();
+                    }
+                    LAST_ITEM_CLICKED = R.id.queue_nav;
                     return true;
             }
             return false;
@@ -175,12 +193,11 @@ public class MainActivity extends AppCompatActivity {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(MusicLibrary.SONGS, null);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
-                        motionLayout.transitionToEnd();
                     }else {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(navigationHistory.get(navigationHistory.size()-1), null);
+                        if(LAST_ITEM_CLICKED != R.id.queue_nav)
+                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(navigationHistory.get(navigationHistory.size()-1), null);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
-                        motionLayout.transitionToEnd();
                     }
                 }
             }
@@ -253,6 +270,8 @@ public class MainActivity extends AppCompatActivity {
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
             play_pause_button.setImageResource((state.getState()==PlaybackStateCompat.STATE_PLAYING) ? R.drawable.ic_pause : R.drawable.ic_play);
+            if(motionLayout.getCurrentState() == motionLayout.getStartState())
+                motionLayout.transitionToEnd();
         }
 
         @Override

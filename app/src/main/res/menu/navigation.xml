@@ -16,8 +16,7 @@
         android:icon="@drawable/ic_audiotrack"
         android:title="Songs" />
     <item
-        android:id="@+id/app_bar_search"
-        android:icon="@drawable/ic_search_black_24dp"
-        android:title="Search"
-        app:actionViewClass="android.widget.SearchView" />
+        android:id="@+id/queue_nav"
+        android:icon="@drawable/ic_baseline_queue_music"
+        android:title="Queue" />
 </menu>

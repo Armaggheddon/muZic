@@ -22,15 +22,12 @@
         app:layout_constraintBottom_toTopOf="@id/small_player"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" >
-
-    </ListView>
-
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <include
         android:id="@+id/small_player"
         layout="@layout/small_player"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_width="match_parent"
         app:layout_constraintBottom_toTopOf="@id/navigation"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,18 +45,5 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:menu="@menu/navigation" />
-
-    <!--
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_height="0dp"
-        android:layout_width="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/navigation"/>
-        -->
-
-
 
 </androidx.constraintlayout.motion.widget.MotionLayout>
