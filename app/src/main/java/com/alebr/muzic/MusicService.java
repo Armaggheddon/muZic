@@ -20,6 +20,7 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -605,11 +606,21 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             Log.d(TAG, "onPlayFromSearch: " + query);
             Log.d(TAG, "onPlayFromSearch: " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
+
             List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSearchResult(query);
-            if (queueItems == null || queueItems.size() == 0){
-                //No results were available we do nothing
-                return;
+
+            if(TextUtils.isEmpty(query)){
+                // The user provided generic string e.g. 'Play music'
+                // Build appropriate playlist queue
+            }else{
+                if(TextUtils.equals(MediaStore.EXTRA_MEDIA_FOCUS,
+                        MediaStore.Audio.Artists.ENTRY_CONTENT_TYPE)) {
+                    //Build a queue based on artist name in the query
+                }
             }
+
+            //TODO: finish fixing method
+
 
             initQueue(queueItems, true);
             onPlay();

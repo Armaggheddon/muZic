@@ -1,52 +1,74 @@
 package com.alebr.muzic;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.media.MediaMetadata;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueListener{
+
+    @Override
+    public void onItemClicked(String id, long position) {
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(id, null);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+    }
+
+    @Override
+    public MediaBrowserCompat getMediaBrowser() {
+        return mMediaBrowser;
+    }
+
+    @Override
+    public void onQueueItemClicked(String id, long position) {
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(position+1);
+    }
+
+    @Override
+    public void setToolbarTitle(String title) {
+        mToolbar.setTitle(title);
+    }
+
+    private final ListFragment albumFragment = ListFragment.newInstance(MusicLibrary.ALBUMS);
+    private final ListFragment artistFragment = ListFragment.newInstance(MusicLibrary.ARTISTS);
+    private final ListFragment songsFragment = ListFragment.newInstance(MusicLibrary.SONGS);
+    private final QueueFragment queueFragment = new QueueFragment();
 
     private static final String TAG = "MainActivity";
 
@@ -56,42 +78,50 @@ public class MainActivity extends AppCompatActivity {
     private MediaBrowserCompat mMediaBrowser;
     private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @SuppressLint("DefaultLocale")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             navigationHistory.clear();
-            //listview.setVisibility(View.VISIBLE);
+            mToolbar.setTitle(R.string.app_name);
+            FragmentManager manager = getSupportFragmentManager();
             switch (item.getItemId()){
                 case R.id.albums:
+                    /*
                     mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
                     LAST_ITEM_CLICKED = R.id.albums;
+
+                     */
+
+
+                    manager.beginTransaction()
+                            .replace(R.id.fragment_container, albumFragment)
+                            .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit();
+
                     return true;
                 case R.id.artists:
-                    mMediaBrowser.subscribe(MusicLibrary.ARTISTS, mSubscriptionCallback);
+                    //mMediaBrowser.subscribe(MusicLibrary.ARTISTS, mSubscriptionCallback);
                     LAST_ITEM_CLICKED = R.id.artists;
+                    manager.beginTransaction()
+                            .replace(R.id.fragment_container, artistFragment)
+                            .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit();
                     return true;
                 case R.id.songs:
-                    mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
+                    //mMediaBrowser.subscribe(MusicLibrary.SONGS, mSubscriptionCallback);
                     LAST_ITEM_CLICKED = R.id.songs;
+                    manager.beginTransaction()
+                            .replace(R.id.fragment_container, songsFragment)
+                            .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit();
                     return true;
                 case R.id.queue_nav:
-                    List<MediaSessionCompat.QueueItem> queueItems = MediaControllerCompat.getMediaController(MainActivity.this).getQueue();
-                    if(queueItems == null ||queueItems.size() == 0) {
-                        elements.clear();
-                        listAdapter.notifyDataSetChanged();
-                    }
-                    else {
-                        List<CustomListItem> tempElements = new ArrayList<>();
-                        for (MediaSessionCompat.QueueItem queueItem : queueItems) {
-                            tempElements.add(
-                                    new CustomListItem(
-                                            queueItem.getDescription().getMediaId(),
-                                            queueItem.getDescription().getTitle().toString()));
-                        }
-                        elements.clear();
-                        elements.addAll(tempElements);
-                        listAdapter.notifyDataSetChanged();
-                    }
+
                     LAST_ITEM_CLICKED = R.id.queue_nav;
+                    manager.beginTransaction()
+                            .replace(R.id.fragment_container, queueFragment)
+                            .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit();
                     return true;
             }
             return false;
@@ -101,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     private int LAST_ITEM_CLICKED;
     private ArrayList<String> navigationHistory = new ArrayList<>();
 
+    private MaterialToolbar mToolbar;
     private TextView title_text;
     private ImageView album_image;
     private FloatingActionButton play_pause_button;
@@ -111,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<CustomListItem> listAdapter;
     private List<CustomListItem> elements = new ArrayList<>();
 
+    /*
     private MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback = new MediaBrowserCompat.SubscriptionCallback() {
         @Override
         public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaBrowserCompat.MediaItem> children) {
@@ -131,10 +163,9 @@ public class MainActivity extends AppCompatActivity {
             elements.addAll(tempElements);
             listAdapter.notifyDataSetChanged();
 
-
             mMediaBrowser.unsubscribe(parentId);
         }
-    };
+    };*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +173,10 @@ public class MainActivity extends AppCompatActivity {
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        mToolbar = findViewById(R.id.toolbar);
+        //mToolbar.setTitle(R.string.app_name);
 
         //If we are here we have the permission to read external storage
         mMediaBrowser = new MediaBrowserCompat(
@@ -152,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
         final BottomNavigationView navigationView = findViewById(R.id.navigation);
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationListener);
+        navigationView.setOnNavigationItemReselectedListener(null);
 
         smallPlayerLayout = findViewById(R.id.small_player);
         smallPlayerLayout.setOnClickListener(new View.OnClickListener() {
@@ -163,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
 
         motionLayout = findViewById(R.id.main_layout);
 
+
+        /*
         listview = findViewById(R.id.listView);
         listAdapter = new ArrayAdapter<CustomListItem>(
                 this,
@@ -203,6 +241,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+         */
+
     }
 
     private final MediaBrowserCompat.ConnectionCallback mConnectionCallback = new MediaBrowserCompat.ConnectionCallback(){
@@ -217,8 +257,10 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    albumFragment).commit();
             buildTransportControls();
-            mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
+            //mMediaBrowser.subscribe(MusicLibrary.ALBUMS, mSubscriptionCallback);
             super.onConnected();
         }
     };
@@ -352,4 +394,5 @@ public class MainActivity extends AppCompatActivity {
         //Disconnect from the MusicService
         mMediaBrowser.disconnect();
     }
+
 }
