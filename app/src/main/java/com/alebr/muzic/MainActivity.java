@@ -1,6 +1,8 @@
 package com.alebr.muzic;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -12,13 +14,16 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -262,6 +267,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     };
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE) {
@@ -273,24 +279,42 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 //TODO: add strings to strings.xml
                 // the user denied the permission no permission
                 Log.d(TAG, "onRequestPermissionsResult: PERMISSION_DENIED");
-                AlertDialog.Builder alert = new AlertDialog.Builder(this);
-                alert.setTitle("Permission")
-                        .setMessage("Read external storage permission is required to play music")
-                        .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                        READ_EXTERNAL_STORAGE_REQUEST_CODE);
-                            }
-                        })
-                        .setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //Quit the application, it does not work without the permission
-                                finish();
-                            }
-                        });
-                alert.create().show();
+                //Since permissions are requested at runtime only on Android API 23+
+
+                boolean showRationale = shouldShowRequestPermissionRationale(permissions[0]);
+                if(!showRationale){
+                    //The user clicked on the "never show again" checkbox on the dialog for permissions
+                    androidx.appcompat.app.AlertDialog.Builder alert = new androidx.appcompat.app.AlertDialog.Builder(this);
+                    alert.setTitle("Permission")
+                            .setMessage("In order to play the music on your device the app requires the permission to read external storage.")
+                            .setPositiveButton("GO TO SETTINGS", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //Set a dialog to
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                                    intent.setData(uri);
+                                    startActivity(intent);
+                                }
+                            }).setCancelable(false);
+                    alert.create().show();
+                }
+                else {
+                    androidx.appcompat.app.AlertDialog.Builder alert = new AlertDialog.Builder(this);
+                    alert.setTitle("Permission")
+                            .setMessage("In order to play the music on your device the app needs the permission to read external storage.")
+                            .setPositiveButton("Try again", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                            READ_EXTERNAL_STORAGE_REQUEST_CODE);
+                                }
+                            });
+                    //Dont allow the user to dismiss the dialog by touching outside the dialog window
+                    alert.setCancelable(false);
+                    alert.create().show();
+                }
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
