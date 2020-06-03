@@ -21,7 +21,7 @@ import java.util.List;
 
 public class ListFragment extends Fragment{
 
-    private static String SUBSCRIPTION_ARGS_EXTRA = "sub_extra";
+    private static final String SUBSCRIPTION_ARGS_EXTRA = "sub_extra";
 
     private ListView mListView;
     private FragmentListListener mListener;
@@ -29,7 +29,8 @@ public class ListFragment extends Fragment{
     private String subscribeTo;
 
     public interface FragmentListListener extends MediaBrowserProvider{
-        void onItemClicked(String id, long position);
+        void onBrowsableItemClicked(String caller, String mediaId, long id);
+        void onPlayableItemClicked(String caller, String mediaId, long id);
         void setToolbarTitle(String title);
         //void getMediaBrowser();
     }
@@ -55,8 +56,13 @@ public class ListFragment extends Fragment{
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mListener.onItemClicked(mAdapter.getItem(position).getId(), position);
-                mListener.setToolbarTitle(mAdapter.getItem(position).getTitle());
+                String stringId = mAdapter.getItem(position).getId();
+                if(stringId.contains(MusicLibrary.SONG_)){
+                    mListener.onPlayableItemClicked(subscribeTo, stringId, id);
+                }else {
+                    mListener.onBrowsableItemClicked(subscribeTo, mAdapter.getItem(position).getId(), id);
+                    mListener.setToolbarTitle(mAdapter.getItem(position).getTitle());
+                }
             }
         });
 

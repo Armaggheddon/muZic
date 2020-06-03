@@ -398,11 +398,16 @@ public class MusicService extends MediaBrowserServiceCompat {
             retrieve the item from the queue and play it
              */
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
-            setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
-            mQueuePosition = (int) queueId;
-            setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+            if(mQueuePosition == queueId){
+                onSeekTo(0);
+            }else {
 
-            onPlay();
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                mQueuePosition = (int) queueId;
+                setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+
+                onPlay();
+            }
         }
 
         /**

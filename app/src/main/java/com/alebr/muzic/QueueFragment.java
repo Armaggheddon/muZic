@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
@@ -26,11 +27,11 @@ public class QueueFragment extends Fragment{
 
     private ListView mListView;
     private QueueListener mQueueListener;
+    private ConstraintLayout noQueueLayout;
     private BrowserAdapter mAdapter;
 
     public interface QueueListener extends MediaBrowserProvider{
-        void onQueueItemClicked(String id, long position);
-        //void getMediaBrowser();
+        void onQueueItemClicked(String stringId, long id);
     }
 
     @Nullable
@@ -38,6 +39,7 @@ public class QueueFragment extends Fragment{
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
         mListView = view.findViewById(R.id.listView);
+        noQueueLayout = view.findViewById(R.id.empty_queue);
 
         mAdapter = new BrowserAdapter(getActivity());
 
@@ -46,7 +48,7 @@ public class QueueFragment extends Fragment{
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mQueueListener.onQueueItemClicked(mAdapter.getItem(position).getId(), position);
+                mQueueListener.onQueueItemClicked(mAdapter.getItem(position).getId(), id);
             }
         });
 
@@ -67,8 +69,7 @@ public class QueueFragment extends Fragment{
 
         List<MediaSessionCompat.QueueItem> queueItems = MediaControllerCompat.getMediaController(getActivity()).getQueue();
         if(queueItems == null ||queueItems.size() == 0) {
-            Toast.makeText(getActivity(), "No items in the queue", Toast.LENGTH_SHORT).show();
-
+            noQueueLayout.setVisibility(View.VISIBLE);
         }
         else {
             mAdapter.clear();
