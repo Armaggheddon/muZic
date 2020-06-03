@@ -400,6 +400,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onSkipToQueueItem: " + queueId);
             if(mQueuePosition == queueId){
                 onSeekTo(0);
+
             }else {
 
                 setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
@@ -474,23 +475,25 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPause() {
             //Set the session state to Paused
-            setCorrectPlaybackState(
-                    PlaybackStateCompat.STATE_PAUSED,
-                    mMusicPlayer.getPosition());
-            //Update the notification status with the pause button
-            Notification notification = mMediaNotificationManager.getNotification(
-                    mSession.getController().getMetadata(),
-                    mSession.getController().getPlaybackState(),
-                    mSession.getSessionToken());
-            //Update the currently showing notification
-            mMediaNotificationManager.getNotificationManager()
-                    .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
-            //Pause the playback
-            mMusicPlayer.pause();
-            //Unregister the receiver since no audio is being played
-            unregisterReceiver(mNoisyReceiver);
+            if(mSession.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
+                setCorrectPlaybackState(
+                        PlaybackStateCompat.STATE_PAUSED,
+                        mMusicPlayer.getPosition());
+                //Update the notification status with the pause button
+                Notification notification = mMediaNotificationManager.getNotification(
+                        mSession.getController().getMetadata(),
+                        mSession.getController().getPlaybackState(),
+                        mSession.getSessionToken());
+                //Update the currently showing notification
+                mMediaNotificationManager.getNotificationManager()
+                        .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
+                //Pause the playback
+                mMusicPlayer.pause();
+                //Unregister the receiver since no audio is being played
+                unregisterReceiver(mNoisyReceiver);
 
-            stopForeground(false);
+                stopForeground(false);
+            }
         }
 
         /**
@@ -556,7 +559,8 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //was not already in the stopped state
                 if (MusicPlayer.is_end_of_song &&
                         (mSession.getController().getPlaybackState().getState() != PlaybackStateCompat.STATE_STOPPED))
-                    onStop();
+                    onSeekTo(0);
+                    onPause();
             } else {
                 //Move to the next QueueItem
                 mQueuePosition++;
@@ -614,21 +618,37 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSearchResult(query);
 
+
+
             if(TextUtils.isEmpty(query)){
                 // The user provided generic string e.g. 'Play music'
                 // Build appropriate playlist queue
+                queueItems.addAll(mMusicLibrary.getSongsQueue());
             }else{
-                if(TextUtils.equals(MediaStore.EXTRA_MEDIA_FOCUS,
+                String mediaFocus = extras.getString(MediaStore.EXTRA_MEDIA_FOCUS);
+                if(TextUtils.equals(mediaFocus,
                         MediaStore.Audio.Artists.ENTRY_CONTENT_TYPE)) {
                     //Build a queue based on artist name in the query
+                    String artistQuery = extras.getString(MediaStore.EXTRA_MEDIA_ARTIST);
+                    queueItems.addAll(mMusicLibrary.getArtistQueueFromQuery(artistQuery));
+
+                } else if (TextUtils.equals(mediaFocus,
+                        MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)){
+                    //Build the queue for a specific album name
+                    String albumQuery = extras.getString(MediaStore.EXTRA_MEDIA_ALBUM);
+                    queueItems.addAll(mMusicLibrary.getAlbumQueueFromQuery(albumQuery));
+                } else {
+
+
                 }
             }
 
-            //TODO: finish fixing method
-
-
-            initQueue(queueItems, true);
-            onPlay();
+            if(queueItems.size() != 0){
+                initQueue(queueItems, true);
+                onPlay();
+            }else {
+                onPause();
+            }
         }
 
         /**
@@ -639,8 +659,6 @@ public class MusicService extends MediaBrowserServiceCompat {
          * @param default_queue_position true if mQueuePosition is 0, false if is not to set
          */
         private void initQueue(List<MediaSessionCompat.QueueItem> queueItems, boolean default_queue_position){
-            //TODO: see if is possible to assign duration here instead of passing trougth MediaStore
-            // since the field DURATION is available only on Android 10+
             //Clear the previous queue
             mQueue.clear();
             //Set the new queue position to 0 since we are initializing the queue
@@ -663,6 +681,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             mSession.setPlaybackState(mStateBuilder.build());
         }
 
+
         /**
          * Parses all the data needed to setMetadata from a QueueItem
          * @param queueItem the QueueItem itself
@@ -676,7 +695,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     (data.getDescription()!=null)?data.getDescription().toString():"",
                     (data.getExtras()!=null)?data.getExtras().getLong("DURATION"):0,
                     (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
-                    mMusicLibrary.loadAlbumArtForAuto(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
+                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
             );
         }
 

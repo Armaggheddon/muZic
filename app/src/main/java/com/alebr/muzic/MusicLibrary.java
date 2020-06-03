@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
@@ -15,6 +16,7 @@ import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.FileDescriptor;
@@ -96,7 +98,11 @@ public class MusicLibrary {
      * -DURATION : the length in ms of the song
      */
     private void initLibrary(){
-        final String[] projection = new String[]{
+
+        //The column DURATION was added back in API level 1, the columns so exists before Q, as shown
+        //in the link below.
+        //https://github.com/AndroidSDKSources/android-sdk-sources-for-api-level-1/blob/c77731af5068b85a350e768757d229cae00f8098/android/provider/MediaStore.java#L292
+        String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ALBUM,
@@ -106,10 +112,12 @@ public class MusicLibrary {
                 MediaStore.Audio.Media.DURATION
         };
 
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "=1";
+
         try(Cursor cursor = context.getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection,
-                null,
+                selection,
                 null,
                 null)){
             //Cache the column ids since they are always the same and used in every iteration
@@ -167,6 +175,8 @@ public class MusicLibrary {
                                 albumArtUri
                         ));
             }
+        }catch (NullPointerException e){
+            Log.e(TAG, "initLibrary: ", e);
         }
         //Sort the songs, albums and artists alphabetically using a comparator.
         //Since the comparator is only used at this point there is no need to cache it
@@ -197,7 +207,7 @@ public class MusicLibrary {
      * @param albumArtUri the uri pointing to the album art image in the storage
      * @return bitmap the bitmap pointed by the albumArtUri, null if an IOException occurs
      */
-    public Bitmap loadAlbumArtForAuto(Uri albumArtUri){
+    public Bitmap loadAlbumArt(Uri albumArtUri){
         //If albumArtUri is null return the default album icon
         if (albumArtUri == null)
             return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_album);
@@ -458,6 +468,33 @@ public class MusicLibrary {
             }
         }
         return queueItems;
+    }
+
+
+    public List<MediaSessionCompat.QueueItem> getAlbumQueueFromQuery(String query){
+        String albumId = null;
+
+        for(AlbumItem item : albums){
+            if(query.equalsIgnoreCase(item.getName())){
+                albumId = item.getIdString();
+                break;
+            }
+        }
+
+        return (albumId != null) ? getAlbumIdQueue(albumId) : null;
+    }
+
+    public List<MediaSessionCompat.QueueItem> getArtistQueueFromQuery(String query){
+        String artistId = null;
+
+        for(ArtistItem item : artists){
+            if(query.equalsIgnoreCase(item.getName())){
+                artistId = item.getIdString();
+                break;
+            }
+        }
+
+        return (artistId != null) ? getArtistIdQueue(artistId) : null;
     }
 
     /**

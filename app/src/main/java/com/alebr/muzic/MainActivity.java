@@ -69,7 +69,13 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .commit();
         mToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow);
+    }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        mToolbar.setNavigationIcon(null);
+        mToolbar.setTitle(R.string.app_name);
     }
 
     @Override
@@ -267,7 +273,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     };
 
-    @RequiresApi(Build.VERSION_CODES.M)
+
+    @RequiresApi(Build.VERSION_CODES.M) //Need to check only on version later than M since before permissions are asked at install time
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE) {
@@ -279,8 +286,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 //TODO: add strings to strings.xml
                 // the user denied the permission no permission
                 Log.d(TAG, "onRequestPermissionsResult: PERMISSION_DENIED");
-                //Since permissions are requested at runtime only on Android API 23+
-
                 boolean showRationale = shouldShowRequestPermissionRationale(permissions[0]);
                 if(!showRationale){
                     //The user clicked on the "never show again" checkbox on the dialog for permissions
