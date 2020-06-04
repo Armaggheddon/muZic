@@ -429,8 +429,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             }else {
 
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 mQueuePosition = (int) queueId;
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
 
                 onPlay();
@@ -605,9 +605,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             if (mQueuePosition == 0) {
                 //Can't skip to previous song, we are already at first one (0th item)
                 //we can rewind the current song to the begin
-                setCorrectPlaybackState(
-                        PlaybackStateCompat.STATE_PLAYING,
-                        0);
+                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 mMusicPlayer.seekTo(0);
             } else {
                 //Move to the previous QueueItem
@@ -616,6 +614,12 @@ public class MusicService extends MediaBrowserServiceCompat {
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
                 onPlay();
             }
+        }
+
+        //TODO: use this method to update current queue id being played
+        private void setQueueItemId(){
+            mStateBuilder.setActiveQueueItemId(mQueuePosition);
+            mSession.setPlaybackState(mStateBuilder.build());
         }
 
         /**
@@ -641,14 +645,14 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onPlayFromSearch: " + query);
             Log.d(TAG, "onPlayFromSearch: " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
 
-            List<MediaSessionCompat.QueueItem> queueItems = mMusicLibrary.getSearchResult(query);
-
-
+            List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
+            String queueTitle = "Queue";
 
             if(TextUtils.isEmpty(query)){
                 // The user provided generic string e.g. 'Play music'
                 // Build appropriate playlist queue
                 queueItems.addAll(mMusicLibrary.getSongsQueue());
+                queueTitle = "Songs";
             }else{
                 String mediaFocus = extras.getString(MediaStore.EXTRA_MEDIA_FOCUS);
                 if(TextUtils.equals(mediaFocus,
@@ -656,20 +660,22 @@ public class MusicService extends MediaBrowserServiceCompat {
                     //Build a queue based on artist name in the query
                     String artistQuery = extras.getString(MediaStore.EXTRA_MEDIA_ARTIST);
                     queueItems.addAll(mMusicLibrary.getArtistQueueFromQuery(artistQuery));
+                    queueTitle = artistQuery;
 
                 } else if (TextUtils.equals(mediaFocus,
                         MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)){
                     //Build the queue for a specific album name
                     String albumQuery = extras.getString(MediaStore.EXTRA_MEDIA_ALBUM);
                     queueItems.addAll(mMusicLibrary.getAlbumQueueFromQuery(albumQuery));
+                    queueTitle = albumQuery;
                 } else {
-
-
+                    //TODO: add other case for a specific item being asked
                 }
             }
 
             if(queueItems.size() != 0){
                 initQueue(queueItems, true);
+                mSession.setQueueTitle(queueTitle);
                 onPlay();
             }else {
                 onPause();
@@ -690,7 +696,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             if(default_queue_position)
                 mQueuePosition = 0;
             mQueue.addAll(queueItems);
-            //Set the queue to the session
+            //Set the queue to the session and queue title
             mSession.setQueue(mQueue);
             //Update the metadata for the item that will be played
             setMetadataFromQueueItem(mQueue.get(mQueuePosition));
@@ -714,6 +720,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         private void setMetadataFromQueueItem(MediaSessionCompat.QueueItem queueItem){
 
             MediaDescriptionCompat data = queueItem.getDescription();
+            Log.d(TAG, "setMetadataFromQueueItem: " + data.getExtras().getLong("POSITION", 0));
             setMetadata(
                     (data.getTitle()!=null)?data.getTitle().toString():"",
                     (data.getSubtitle()!=null)?data.getSubtitle().toString():"",

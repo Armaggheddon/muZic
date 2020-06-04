@@ -7,6 +7,7 @@ import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -122,6 +123,8 @@ public class QueueFragment extends Fragment{
             MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();
             previousItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
 
+            //previousItem = (int) MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId();
+
             exampleAdapter.getItem( previousItem).changeImage(R.drawable.ic_audiotrack);
             exampleAdapter.notifyItemChanged( previousItem);
             MediaControllerCompat.getMediaController(getActivity()).registerCallback(mControllerCallback);
@@ -129,10 +132,12 @@ public class QueueFragment extends Fragment{
     }
 
     MediaControllerCompat.Callback mControllerCallback = new MediaControllerCompat.Callback() {
+
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            int currentItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
+            int currentItem = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS);
+            Log.d(TAG, "onMetadataChanged: " + currentItem);
             if(currentItem != previousItem){
 
                 //Remove the icon on the previous item
@@ -142,7 +147,8 @@ public class QueueFragment extends Fragment{
                 exampleAdapter.getItem( currentItem).changeImage(R.drawable.ic_audiotrack);
 
                 //Notify the adapter about the two views updated
-                exampleAdapter.notifyItemChanged(previousItem, currentItem);
+                exampleAdapter.notifyItemChanged(previousItem);
+                exampleAdapter.notifyItemChanged(currentItem);
 
                 previousItem = currentItem;
             }

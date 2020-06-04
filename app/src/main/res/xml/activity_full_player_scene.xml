@@ -53,7 +53,7 @@
     <ConstraintSet android:id="@+id/end">
         <Constraint android:id="@id/album_imageview" />
         <Constraint
-            android:id="@+id/album_textview"
+            android:id="@+id/artist_textview"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
