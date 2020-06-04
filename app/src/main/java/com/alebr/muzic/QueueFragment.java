@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +38,13 @@ public class QueueFragment extends Fragment{
 
     private boolean is_main_activity = true;
 
-    private ListView mListView;
+    private RecyclerView mRecyclerView;
+    private ExampleAdapter exampleAdapter;
+
     private QueueListener mQueueListener;
     private ConstraintLayout noQueueLayout;
-    private BrowserAdapter mAdapter;
+
+    private int previousItem = 0;
 
     public interface QueueListener extends MediaBrowserProvider{
         void onQueueItemClicked(String stringId, long id);
@@ -55,19 +62,25 @@ public class QueueFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        mListView = view.findViewById(R.id.listView);
-        noQueueLayout = view.findViewById(R.id.empty_queue);
 
-        mAdapter = new BrowserAdapter(getActivity());
+        mRecyclerView = view.findViewById(R.id.recyclerView);
+        //mRecyclerView.setHasFixedSize(true);
+        exampleAdapter = new ExampleAdapter( new ArrayList<CustomListItem>());
 
-        mListView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager( new LinearLayoutManager(getContext()));
+        mRecyclerView.setAdapter(exampleAdapter);
 
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        exampleAdapter.setOnItemClickListener(new ExampleAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mQueueListener.onQueueItemClicked(mAdapter.getItem(position).getId(), id);
+            public void onItemClick(int position) {
+                mQueueListener.onQueueItemClicked(exampleAdapter.getItem(position).getId(), position);
+                exampleAdapter.getItem(position).changeImage(R.drawable.ic_audiotrack);
+                exampleAdapter.notifyItemChanged(position);
+
             }
         });
+
+        noQueueLayout = view.findViewById(R.id.empty_queue);
 
         return view;
     }
@@ -98,16 +111,43 @@ public class QueueFragment extends Fragment{
             noQueueLayout.setVisibility(View.VISIBLE);
         }
         else {
-            mAdapter.clear();
             for (MediaSessionCompat.QueueItem queueItem : queueItems) {
-                mAdapter.add(
+                exampleAdapter.add(
                         new CustomListItem(
                                 queueItem.getDescription().getMediaId(),
                                 String.format("%d   %s", queueItem.getQueueId()+1,queueItem.getDescription().getTitle().toString())));
             }
-            mAdapter.notifyDataSetChanged();
+            exampleAdapter.notifyDataSetChanged();
+
+            MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();
+            previousItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
+
+            exampleAdapter.getItem( previousItem).changeImage(R.drawable.ic_audiotrack);
+            exampleAdapter.notifyItemChanged( previousItem);
+            MediaControllerCompat.getMediaController(getActivity()).registerCallback(mControllerCallback);
         }
     }
+
+    MediaControllerCompat.Callback mControllerCallback = new MediaControllerCompat.Callback() {
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat metadata) {
+            super.onMetadataChanged(metadata);
+            int currentItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
+            if(currentItem != previousItem){
+
+                //Remove the icon on the previous item
+                exampleAdapter.getItem( previousItem).changeImage(0);
+
+                //Add the icon on the current item
+                exampleAdapter.getItem( currentItem).changeImage(R.drawable.ic_audiotrack);
+
+                //Notify the adapter about the two views updated
+                exampleAdapter.notifyItemChanged(previousItem, currentItem);
+
+                previousItem = currentItem;
+            }
+        }
+    };
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -123,29 +163,11 @@ public class QueueFragment extends Fragment{
     public void onDetach() {
         super.onDetach();
         mQueueListener = null;
+        MediaControllerCompat.getMediaController(getActivity()).unregisterCallback(mControllerCallback);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-    }
-
-    private static class BrowserAdapter extends ArrayAdapter<CustomListItem>{
-
-        public BrowserAdapter(Activity context){
-            super(context, android.R.layout.simple_list_item_1, new ArrayList<CustomListItem>());
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            //MediaBrowserCompat.MediaItem item = getItem(position);
-            View v = super.getView(position, convertView, parent);
-            String title = getItem(position).getTitle();
-            TextView tv = v.findViewById(android.R.id.text1);
-            tv.setText(title);
-            return v;
-        }
-
     }
 }

@@ -720,8 +720,8 @@ public class MusicService extends MediaBrowserServiceCompat {
                     (data.getDescription()!=null)?data.getDescription().toString():"",
                     (data.getExtras()!=null)?data.getExtras().getLong("DURATION"):0,
                     (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
-                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null))
-            );
+                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null)),
+                    data.getExtras().getLong("POSITION", 0));
         }
 
         /**
@@ -734,7 +734,7 @@ public class MusicService extends MediaBrowserServiceCompat {
          * @param mediaUri Uri of the song itself
          * @param albumArt the album art of the song
          */
-        private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt){
+        private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt, long num_tracks){
 
             MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
             metadataBuilder.putText(MediaMetadataCompat.METADATA_KEY_TITLE, title)
@@ -742,6 +742,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     .putText(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, mediaUri)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, num_tracks)
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
             mSession.setMetadata(metadataBuilder.build());
         }

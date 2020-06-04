@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +31,12 @@ public class ListFragment extends Fragment{
 
     private static final String SUBSCRIPTION_ARGS_EXTRA = "sub_extra";
 
-    private ListView mListView;
     private FragmentListListener mListener;
-    private BrowserAdapter mAdapter;
     private String subscribeTo;
+
+    private RecyclerView mRecyclerView;
+    private ExampleAdapter exampleAdapter;
+
 
     public interface FragmentListListener extends MediaBrowserProvider{
         void onBrowsableItemClicked(String caller, String mediaId, long id);
@@ -52,21 +57,23 @@ public class ListFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
-        mListView = view.findViewById(R.id.listView);
 
-        mAdapter = new BrowserAdapter(getActivity());
+        mRecyclerView = view.findViewById(R.id.recyclerView);
+        mRecyclerView.setHasFixedSize(true);
+        exampleAdapter = new ExampleAdapter(new ArrayList<CustomListItem>());
 
-        mListView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.setAdapter(exampleAdapter);
 
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        exampleAdapter.setOnItemClickListener(new ExampleAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String stringId = mAdapter.getItem(position).getId();
-                if(stringId.contains(MusicLibrary.SONG_)){
-                    mListener.onPlayableItemClicked(subscribeTo, stringId, id);
+            public void onItemClick(int position) {
+                String mediaId = exampleAdapter.getItem(position).getId();
+                if(mediaId.contains(MusicLibrary.SONG_)){
+                    mListener.onPlayableItemClicked(subscribeTo, mediaId, position);
                 }else {
-                    mListener.onBrowsableItemClicked(subscribeTo, mAdapter.getItem(position).getId(), id);
-                    mListener.setToolbarTitle(mAdapter.getItem(position).getTitle());
+                    mListener.onBrowsableItemClicked(subscribeTo, mediaId, position);
+                    mListener.setToolbarTitle(exampleAdapter.getItem(position).getTitle());
                 }
             }
         });
@@ -99,14 +106,13 @@ public class ListFragment extends Fragment{
         public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaBrowserCompat.MediaItem> children) {
             super.onChildrenLoaded(parentId, children);
 
-            mAdapter.clear();
             for(MediaBrowserCompat.MediaItem item : children){
-                mAdapter.add(new CustomListItem(
+                exampleAdapter.add(new CustomListItem(
                         item.getMediaId(),
-                        item.getDescription().getTitle().toString()
-                ));
+                        item.getDescription().getTitle().toString()));
             }
-            mAdapter.notifyDataSetChanged();
+            exampleAdapter.notifyDataSetChanged();
+
             mListener.getMediaBrowser().unsubscribe(subscribeTo, mSubscriptionCallback);
         }
     };
@@ -135,24 +141,5 @@ public class ListFragment extends Fragment{
         if(mediaBrowser != null && mediaBrowser.isConnected()){
             mediaBrowser.unsubscribe(subscribeTo);
         }
-    }
-
-    private static class BrowserAdapter extends ArrayAdapter<CustomListItem>{
-
-        public BrowserAdapter(Activity context){
-            super(context, android.R.layout.simple_list_item_1, new ArrayList<CustomListItem>());
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            //MediaBrowserCompat.MediaItem item = getItem(position);
-            View v = super.getView(position, convertView, parent);
-            String title = getItem(position).getTitle();
-            TextView tv = v.findViewById(android.R.id.text1);
-            tv.setText(title);
-            return v;
-        }
-
     }
 }

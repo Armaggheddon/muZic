@@ -421,6 +421,7 @@ public class MusicLibrary {
             //Add extra data as DURATION and ALBUM_URI
             Bundle extras = new Bundle();
             extras.putLong("DURATION", songItem.getDuration());
+            extras.putLong("POSITION", queuePosition);
             extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
             //Build the queueItem from MediaSessionCompat.Builder()
@@ -454,6 +455,7 @@ public class MusicLibrary {
                 //Create the QueueItem and add some extra data
                 Bundle extras = new Bundle();
                 extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong("POSITION", queuePosition);
                 extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
@@ -513,6 +515,7 @@ public class MusicLibrary {
             if(artistId.equals(String.format("artist_%d", songItem.getArtistId()))) {
                 Bundle extras = new Bundle();
                 extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong("POSITION", queuePosition);
                 extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
@@ -551,6 +554,7 @@ public class MusicLibrary {
                 Bundle extras = new Bundle();
                 //Add the extras for DURATION and ALBUM_URI
                 extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong("POSITION", 0);
                 extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
