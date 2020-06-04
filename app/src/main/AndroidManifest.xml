@@ -12,10 +12,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".FullPlayerActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/FullPlayerTheme"
+            android:screenOrientation="portrait"/>
+
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
-
         <!--
              Use this meta data to override the theme from which Android Auto will
              look for colors. If you don't set this, Android Auto will look
@@ -30,7 +34,6 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-
         <!--
          Main music service, provides media browsing and media playback services to
          consumers through MediaBrowserService and MediaSession. Consumers connect to it through
@@ -46,7 +49,8 @@
 
         <activity
             android:name=".MainActivity"
-            android:theme="@style/SplashScreenTheme">
+            android:theme="@style/SplashScreenTheme"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

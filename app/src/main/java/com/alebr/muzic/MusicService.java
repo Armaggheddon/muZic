@@ -136,10 +136,36 @@ public class MusicService extends MediaBrowserServiceCompat {
         mPackageValidator = new PackageValidator(this);
     }
 
+    /**
+     * Handle case when user swipes the app away from the recents apps list by
+     * stopping the service (and any ongoing playback).
+     */
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        stopSelf();
+    }
+
+    /**
+     * Removes the notification and stops tracking the session. If the session
+     * was destroyed this has no effect.
+     */
     @Override
     public void onDestroy() {
-        mSession.release();
+
+        mMusicPlayer.stop();
+        stopNotification();
+
         mSession.getController().getTransportControls().stop();
+        mSession.release();
+    }
+
+    public void stopNotification(){
+        if(isServiceStarted){
+            isServiceStarted = false;
+            mMediaNotificationManager.getNotificationManager().cancel(MediaNotificationManager.NOTIFICATION_ID);
+            stopForeground(true);
+        }
     }
 
     /**
@@ -559,7 +585,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //was not already in the stopped state
                 if (MusicPlayer.is_end_of_song &&
                         (mSession.getController().getPlaybackState().getState() != PlaybackStateCompat.STATE_STOPPED))
-                    onSeekTo(0);
                     onPause();
             } else {
                 //Move to the next QueueItem

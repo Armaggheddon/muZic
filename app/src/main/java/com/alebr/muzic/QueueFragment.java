@@ -22,8 +22,17 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class QueueFragment extends Fragment{
+
+    public static final String QUEUE_FRAGMENT_TAG = "queue_fragment";
+
+    private static final String TAG = "QueueFragment";
+
+    public static final String IS_MAIN_ACTIVITY_ARGS_EXTRA = "is_main_activity";
+
+    private boolean is_main_activity = true;
 
     private ListView mListView;
     private QueueListener mQueueListener;
@@ -32,6 +41,14 @@ public class QueueFragment extends Fragment{
 
     public interface QueueListener extends MediaBrowserProvider{
         void onQueueItemClicked(String stringId, long id);
+    }
+
+    public static QueueFragment newInstance(boolean is_main_activity){
+        QueueFragment fragment = new QueueFragment();
+        Bundle args = new Bundle();
+        args.putBoolean(IS_MAIN_ACTIVITY_ARGS_EXTRA, is_main_activity);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Nullable
@@ -59,7 +76,16 @@ public class QueueFragment extends Fragment{
     public void onStart() {
         super.onStart();
 
-        MediaBrowserCompat mediaBrowser = ((MainActivity)getActivity()).getMediaBrowser();
+        if(getArguments() != null){
+            is_main_activity = getArguments().getBoolean(IS_MAIN_ACTIVITY_ARGS_EXTRA);
+        }
+
+        MediaBrowserCompat mediaBrowser = null;
+        if(is_main_activity){
+            mediaBrowser = ((MainActivity)getActivity()).getMediaBrowser();
+        }else{
+            mediaBrowser = ((FullPlayerActivity)getActivity()).getMediaBrowser();
+        }
         if(mediaBrowser.isConnected()){
             onConnected();
         }
@@ -81,7 +107,6 @@ public class QueueFragment extends Fragment{
             }
             mAdapter.notifyDataSetChanged();
         }
-
     }
 
     @Override

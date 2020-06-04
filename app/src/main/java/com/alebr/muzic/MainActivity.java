@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -111,36 +112,44 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             mToolbar.setTitle(R.string.app_name);
             mToolbar.setNavigationIcon(null);
+
+            String FRAGMENT_TAG = null;
             Fragment fragment = null;
             switch (item.getItemId()){
                 case R.id.albums:
 
                     fragment = albumFragment;
+                    FRAGMENT_TAG = ListFragment.ALBUM_FRAGMENT_TAG;
 
                     break;
                 case R.id.artists:
 
                     fragment = artistFragment;
+                    FRAGMENT_TAG = ListFragment.ARTIST_FRAGMENT_TAG;
 
                     break;
                 case R.id.songs:
 
                     fragment = songsFragment;
+                    FRAGMENT_TAG = ListFragment.SONG_FRAGMENT_TAG;
 
                     break;
                 case R.id.queue_nav:
 
                     fragment = queueFragment;
+                    FRAGMENT_TAG = QueueFragment.QUEUE_FRAGMENT_TAG;
 
                     break;
             }
 
             if(fragment != null){
-                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, fragment)
-                        .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .commit();
+                if(getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG) != fragment) {
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
+                            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit();
+                }
             }
 
             return true;
@@ -160,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         mToolbar = findViewById(R.id.toolbar);
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -187,7 +195,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         smallPlayerLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Launch full screen player", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, FullPlayerActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -207,8 +216,22 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 e.printStackTrace();
             }
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    albumFragment).commit();
+            boolean at_least_one_fragment = false;
+            for(Fragment fragment : getSupportFragmentManager().getFragments()){
+
+                if(fragment != null){
+                    at_least_one_fragment = true;
+                    break;
+                }
+            }
+
+            if(!at_least_one_fragment){
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, albumFragment, ListFragment.ALBUM_FRAGMENT_TAG)
+                        .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .commit();
+            }
+
             buildTransportControls();
             super.onConnected();
         }
@@ -336,8 +359,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                     READ_EXTERNAL_STORAGE_REQUEST_CODE);
         }
         else{
-            //Permission is GRANTED so we can connect to the MusicService
-            mMediaBrowser.connect();
+            //Permission is GRANTED so we can connect to the MusicService if not already connected
+            if(!mMediaBrowser.isConnected())
+                mMediaBrowser.connect();
         }
     }
 

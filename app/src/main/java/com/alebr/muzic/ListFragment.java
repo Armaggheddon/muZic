@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListFragment extends Fragment{
+
+    public static final String ALBUM_FRAGMENT_TAG = "album_fragment";
+    public static final String ARTIST_FRAGMENT_TAG = "artist_fragment";
+    public static final String SONG_FRAGMENT_TAG = "song_fragment";
 
     private static final String SUBSCRIPTION_ARGS_EXTRA = "sub_extra";
 
@@ -125,6 +130,11 @@ public class ListFragment extends Fragment{
     @Override
     public void onStop() {
         super.onStop();
+
+        MediaBrowserCompat mediaBrowser = mListener.getMediaBrowser();
+        if(mediaBrowser != null && mediaBrowser.isConnected()){
+            mediaBrowser.unsubscribe(subscribeTo);
+        }
     }
 
     private static class BrowserAdapter extends ArrayAdapter<CustomListItem>{

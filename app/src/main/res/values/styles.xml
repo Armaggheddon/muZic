@@ -14,6 +14,13 @@
         <item name="colorPrimary">@color/colorAccent</item>
     </style>
 
+    <style name="FullPlayerTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="fontFamily">@font/dosis_semibold</item>
+    </style>
+
     <!-- Splash screen theme, it allows to not have a white screen on startup -->
     <style name="SplashScreenTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>

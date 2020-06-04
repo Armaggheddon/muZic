@@ -15,6 +15,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
@@ -118,7 +119,7 @@ public class MediaNotificationManager {
                 .setColor(ContextCompat.getColor(mService, R.color.colorPrimary))
                 .setSmallIcon(R.drawable.ic_app_icon)
                 .setContentIntent(createContentIntent())
-                /*For android 6 and later since the user can swype away the notification*/
+                /*For android 5.0 since the user can swype away the notification*/
                 .setDeleteIntent(
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 mService,
@@ -136,6 +137,20 @@ public class MediaNotificationManager {
     }
 
     private PendingIntent createContentIntent(){
+        Intent openActivity = new Intent(mService, FullPlayerActivity.class);
+        openActivity.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //Open the activity as single top, to prevent the launch of multiple activities on top
+        //of each others
+        // Create the TaskStackBuilder and add the intent, which inflates the back stack
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mService);
+        stackBuilder.addNextIntentWithParentStack(openActivity);
+
+
+        return stackBuilder.getPendingIntent(
+                REQUEST_CODE, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private PendingIntent createContentIntent2(){
         Intent openActivity = new Intent(mService, MainActivity.class);
         //Open the activity as single top, to prevent the launch of multipla activities on top
         //of each others
