@@ -1,5 +1,6 @@
 package com.alebr.muzic;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -97,11 +98,13 @@ public class QueueFragment extends Fragment{
         }else{
             mediaBrowser = ((FullPlayerActivity)getActivity()).getMediaBrowser();
         }
-        if(mediaBrowser.isConnected()){
+        if(mediaBrowser != null && mediaBrowser.isConnected()){
             onConnected();
         }
     }
 
+    //Suppress because it is just a concatenation of the position of the item + its name
+    @SuppressLint("DefaultLocale")
     public void onConnected(){
 
         List<MediaSessionCompat.QueueItem> queueItems = MediaControllerCompat.getMediaController(getActivity()).getQueue();

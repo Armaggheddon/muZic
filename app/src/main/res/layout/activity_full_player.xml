@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:id="@+id/full_player_layout"
     tools:context=".FullPlayerActivity"
-    android:animateLayoutChanges="true"
     app:layoutDescription="@xml/activity_full_player_scene">
 
     <androidx.constraintlayout.widget.Guideline
@@ -19,6 +18,7 @@
 
     <ImageView
         android:id="@+id/album_imageview"
+        android:contentDescription="@string/album_image_description"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
@@ -66,7 +66,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:text="TITLE_PLACEHOLDER"
+        android:text="@string/title_text_placeholder"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintEnd_toEndOf="parent"
@@ -77,10 +77,10 @@
         android:id="@+id/artist_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="ALBUM_PLACEHOLDER"
+        android:layout_marginStart="@dimen/text_margin"
+        android:layout_marginTop="@dimen/text_margin"
+        android:layout_marginEnd="@dimen/text_margin"
+        android:text="@string/artist_text_placeholder"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -103,7 +103,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="8dp"
-        android:text="00:00"
+        android:text="@string/duration_text_placeholder"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
@@ -113,7 +113,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="32dp"
-        android:text="99:99"
+        android:text="@string/duration_text_placeholder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
@@ -134,6 +134,7 @@
         android:layout_height="30dp"
         android:layout_marginStart="32dp"
         android:tint="?attr/colorControlNormal"
+        android:contentDescription="@string/skip_next_image_description"
         app:layout_constraintBottom_toBottomOf="@+id/play_pause_button"
         app:layout_constraintStart_toEndOf="@+id/play_pause_button"
         app:layout_constraintTop_toTopOf="@+id/play_pause_button"
@@ -145,6 +146,7 @@
         android:layout_height="30dp"
         android:layout_marginEnd="32dp"
         android:tint="?attr/colorControlNormal"
+        android:contentDescription="@string/skip_previous_image_description"
         app:layout_constraintBottom_toBottomOf="@+id/play_pause_button"
         app:layout_constraintEnd_toStartOf="@+id/play_pause_button"
         app:layout_constraintTop_toTopOf="@+id/play_pause_button"
@@ -157,6 +159,7 @@
         android:tint="?attr/colorControlNormal"
         android:layout_marginEnd="24dp"
         android:alpha="0"
+        android:contentDescription="@string/close_queue_image_description"
         app:layout_constraintVertical_bias="0.9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/guideline_top"
@@ -168,6 +171,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:tint="?attr/colorControlNormal"
+        android:contentDescription="@string/open_queue_image_description"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/play_pause_button"
@@ -180,6 +184,7 @@
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:tint="?attr/colorControlNormal"
+        android:contentDescription="@string/back_image_description"
         app:srcCompat="@drawable/ic_baseline_arrow_black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

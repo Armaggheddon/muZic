@@ -1,0 +1,23 @@
+<resources>
+    <!-- Theme values for android Q and later -->
+    <string-array name="theme_q_values">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System default</item>
+    </string-array>
+
+    <!-- Theme values for android before Q -->
+    <string-array name="theme_before_q_values">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>Set by battery saver</item>
+    </string-array>
+
+    <!-- Values of the theme options -->
+    <string-array name="theme_entries">
+        <item>light</item>
+        <item>dark</item>
+        <item>default</item>
+    </string-array>
+
+</resources>

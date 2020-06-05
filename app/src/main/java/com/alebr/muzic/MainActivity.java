@@ -1,9 +1,11 @@
 package com.alebr.muzic;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -15,6 +17,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -109,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     private MediaBrowserCompat mMediaBrowser;
     private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
-        @SuppressLint("DefaultLocale")
+
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             mToolbar.setTitle(R.string.app_name);
@@ -151,7 +154,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                             .replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
                             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                             .commit();
-                }
+                }else
+                    getSupportFragmentManager().popBackStack();
             }
 
             return true;
@@ -181,6 +185,15 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 mToolbar.setTitle(R.string.app_name);
             }
         });
+        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if(item.getItemId() == R.id.option){
+                    startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                }
+                return true;
+            }
+        });
 
         //If we are here we have the permission to read external storage
         mMediaBrowser = new MediaBrowserCompat(
@@ -198,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, FullPlayerActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, FullPlayerActivity.FULL_PLAYER_ACTIVITY_RESULT);
             }
         });
 
@@ -296,6 +309,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             title_text.setText(metadata.getDescription().getTitle());
 
         }
+
+
     };
 
 
@@ -367,9 +382,12 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
+
         //Set the volume buttons to handle the multimedia stream instead of the notification or other
         //sounds coming from the device
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -386,4 +404,17 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         mMediaBrowser.disconnect();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == FullPlayerActivity.FULL_PLAYER_ACTIVITY_RESULT){
+            if(resultCode == Activity.RESULT_OK){
+                if(data.getBooleanExtra(FullPlayerActivity.METADATA_NOT_AVAILABLE, false)){
+                    motionLayout.transitionToStart();
+                }
+            }
+        }
+
+    }
 }

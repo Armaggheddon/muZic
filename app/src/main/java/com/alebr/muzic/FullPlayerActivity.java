@@ -10,7 +10,10 @@ import androidx.transition.Fade;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
@@ -39,6 +42,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.concurrent.TimeUnit;
 
 public class FullPlayerActivity extends AppCompatActivity implements QueueFragment.QueueListener{
+
+    public static int FULL_PLAYER_ACTIVITY_RESULT = 555;
+    public static final String METADATA_NOT_AVAILABLE = "is_metadata_available";
 
     @Override
     public void onQueueItemClicked(String stringId, long id) {
@@ -105,10 +111,19 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                     .commit();
 
             MediaControllerCompat.setMediaController(FullPlayerActivity.this, mediaControllerCompat);
-            buildTransportControls();
+            if(MediaControllerCompat.getMediaController(FullPlayerActivity.this).getMetadata() != null)
+                buildTransportControls();
+            else{
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra(METADATA_NOT_AVAILABLE, true);
+                setResult(Activity.RESULT_OK, returnIntent);
+                finish();
+            }
         }
     };
 
+    //Suppress because it is a string built to represent time, no need to format for "DefaultLocale"
+    @SuppressLint("DefaultLocale")
     private void buildTransportControls(){
 
         backButton = findViewById(R.id.back_button);
@@ -120,7 +135,14 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                     mSeekBarAnimator.cancel();
                     mSeekBarAnimator = null;
                 }
-                finish();
+                if(MediaControllerCompat.getMediaController(FullPlayerActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_STOPPED){
+                    Intent returnIntent = new Intent();
+                    returnIntent.putExtra(METADATA_NOT_AVAILABLE, true);
+                    setResult(Activity.RESULT_OK, returnIntent);
+                    finish();
+                }else {
+                    finish();
+                }
             }
         });
         albumImage = findViewById(R.id.album_imageview);
@@ -209,12 +231,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
         MediaMetadataCompat mediaMetadata = mediaController.getMetadata();
         PlaybackStateCompat pbState = mediaController.getPlaybackState();
-        MediaDescriptionCompat description = mediaMetadata.getDescription();
 
         String title = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
         String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
 
-        Bitmap albumArt = description.getIconBitmap();
+        Bitmap albumArt = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
 
         setBackgroundAsync(albumArt);
 
@@ -295,6 +316,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
     private AnimatorUpdateListener mAnimatorListener = new AnimatorUpdateListener();
     class AnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener{
+        //Suppress because it is a string built to represent time, no need to format for "DefaultLocale"
+        @SuppressLint("DefaultLocale")
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
             if(isTracking){

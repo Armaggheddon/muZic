@@ -144,6 +144,9 @@ public class MusicService extends MediaBrowserServiceCompat {
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         stopSelf();
+        mMusicPlayer.stop();
+        mSession.getController().getTransportControls().stop();
+        mSession.release();
     }
 
     /**
@@ -340,6 +343,11 @@ public class MusicService extends MediaBrowserServiceCompat {
          */
         @Override
         public void onPlay() {
+
+            if (mQueue.size() == 0) {
+                onPause();
+                return;
+            }
 
             //If the result is AUDIOFOCUS_GAIN we have the focus and can start the playback
             if(requestAudioFocus() == AudioManager.AUDIOFOCUS_GAIN) {
@@ -648,13 +656,12 @@ public class MusicService extends MediaBrowserServiceCompat {
             Log.d(TAG, "onPlayFromSearch: " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
 
             List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
-            String queueTitle = "Queue";
+
 
             if(TextUtils.isEmpty(query)){
                 // The user provided generic string e.g. 'Play music'
                 // Build appropriate playlist queue
                 queueItems.addAll(mMusicLibrary.getSongsQueue());
-                queueTitle = "Songs";
             }else{
                 String mediaFocus = extras.getString(MediaStore.EXTRA_MEDIA_FOCUS);
                 if(TextUtils.equals(mediaFocus,
@@ -662,14 +669,12 @@ public class MusicService extends MediaBrowserServiceCompat {
                     //Build a queue based on artist name in the query
                     String artistQuery = extras.getString(MediaStore.EXTRA_MEDIA_ARTIST);
                     queueItems.addAll(mMusicLibrary.getArtistQueueFromQuery(artistQuery));
-                    queueTitle = artistQuery;
 
                 } else if (TextUtils.equals(mediaFocus,
                         MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)){
                     //Build the queue for a specific album name
                     String albumQuery = extras.getString(MediaStore.EXTRA_MEDIA_ALBUM);
                     queueItems.addAll(mMusicLibrary.getAlbumQueueFromQuery(albumQuery));
-                    queueTitle = albumQuery;
                 } else {
                     //TODO: add other case for a specific item being asked
                 }
@@ -726,9 +731,9 @@ public class MusicService extends MediaBrowserServiceCompat {
                     (data.getTitle()!=null)?data.getTitle().toString():"",
                     (data.getSubtitle()!=null)?data.getSubtitle().toString():"",
                     (data.getDescription()!=null)?data.getDescription().toString():"",
-                    (data.getExtras()!=null)?data.getExtras().getLong("DURATION"):0,
+                    (data.getExtras()!=null)?data.getExtras().getLong(MusicLibrary.DURATION_ARGS_EXTRA):0,
                     (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
-                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString("ALBUM_URI"):null)),
+                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString(MusicLibrary.ALBUM_ART_URI_ARGS_EXTRA):null)),
                     data.getExtras().getLong("POSITION", 0));
         }
 

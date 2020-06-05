@@ -6,11 +6,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import android.media.session.PlaybackState;
 import android.os.Build;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -23,13 +18,12 @@ import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
+/**
+ * Manages the correct set up of the notification and the building process of the notification itself
+ */
+
 public class MediaNotificationManager {
-    /*
-    Handle sending multimedia notifications
-    It manages the creation of a new channel (if not already created) and
-    allows to edit the already published notification in order to represent correctly
-    the current playback state
-     */
+
     private static final String TAG = "MediaNotificationManager";
     public static final String CHANNEL_ID = "muZic";
     /*
@@ -39,11 +33,13 @@ public class MediaNotificationManager {
     being shown
      */
     public static final int NOTIFICATION_ID = 100;
-    //REQUEST_CODE can be a random number
+
+    /* Can ba a random value and it is*/
     public static final int REQUEST_CODE = 244;
 
     private MusicService mService;
 
+    /* Keep a final instance of the actions since are always the same, and are only swapped in/out */
     private final NotificationManager mNotificationManager;
     private final NotificationCompat.Action mPlayAction;
     private final NotificationCompat.Action mPauseAction;
@@ -54,41 +50,58 @@ public class MediaNotificationManager {
         mService = service;
         mNotificationManager = (NotificationManager) mService.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        //TODO: add the strings to the strings.xml file
-
-        //Build the actions that will be used for the notification
+        /* Build the actions */
         mPlayAction = new NotificationCompat.Action(
                 R.drawable.ic_play,
-                "PLAY",
+                mService.getString(R.string.play_text),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(
                         mService,
                         PlaybackStateCompat.ACTION_PLAY));
         mPauseAction = new NotificationCompat.Action(
                 R.drawable.ic_pause,
-                "PAUSE",
+                mService.getString(R.string.pause_text),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(
                         mService,
                         PlaybackStateCompat.ACTION_PAUSE));
         mSkipNextAction = new NotificationCompat.Action(
                 R.drawable.ic_skip_next,
-                "NEXT",
+                mService.getString(R.string.skip_next_text),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(
                         mService,
                         PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
         mSkipPreviousAction = new NotificationCompat.Action(
                 R.drawable.ic_skip_previous,
-                "PREVIOUS",
+                mService.getString(R.string.skip_previous_text),
                 MediaButtonReceiver.buildMediaButtonPendingIntent(
                         mService,
                         PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
 
-        //Cancel all notifications in order to handle the case where the
-        //service was killed and restarted by the system
+        /* Cancel all notifications already to handle the case where the service was killed and restarted by the system*/
         mNotificationManager.cancelAll();
     }
 
+    /**
+     * Returns the {@link MediaNotificationManager#mNotificationManager} used
+     * @return
+     *          Returns the {@link MediaNotificationManager#mNotificationManager}
+     */
     public NotificationManager getNotificationManager(){return mNotificationManager;}
 
+    /**
+     * Simplifies the process of building the notification calling
+     * {@link MediaNotificationManager#buildNotification(MediaDescriptionCompat, PlaybackStateCompat, MediaSessionCompat.Token)}
+     * @param metadata
+     *          The metadata of the song being currently played
+     * @param state
+     *          The current state of the playback:
+     *          - {@value android.support.v4.media.session.PlaybackStateCompat#STATE_PLAYING}
+     *          - {@value android.support.v4.media.session.PlaybackStateCompat#STATE_PAUSED}
+     * @param token
+     *          The session token in {@link MusicService}
+     * @return
+     *          Returns a notification with the data representing the current {@param state} with
+     *          the {@param metadata}
+     */
     public Notification getNotification(MediaMetadataCompat metadata,
                                         PlaybackStateCompat state,
                                         MediaSessionCompat.Token token){
@@ -97,40 +110,67 @@ public class MediaNotificationManager {
         return builder.build();
     }
 
+    /**
+     * Called by
+     * {@link MediaNotificationManager#getNotification(MediaMetadataCompat, PlaybackStateCompat, MediaSessionCompat.Token)}.
+     * Handles the creation of the channel if necessary and creates the notification
+     * @param description
+     *          The description extracted from {@link MediaMetadataCompat}
+     * @param state
+     *          The current state of the playback:
+     *          - {@value android.support.v4.media.session.PlaybackStateCompat#STATE_PLAYING}
+     *          - {@value android.support.v4.media.session.PlaybackStateCompat#STATE_PAUSED}
+     * @param token
+     *          The session token in {@link MusicService}
+     * @return
+     *          Returns a notification with the data representing the current {@param state} with
+     *          the {@param description}
+     */
     private NotificationCompat.Builder buildNotification(MediaDescriptionCompat description,
                                                          PlaybackStateCompat state,
                                                          MediaSessionCompat.Token token){
-        //If the device has android oreo or later we must create the channel for notification
+
+        /* If the app is running on Android O or later create the Notification channel */
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)createChannel();
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mService, CHANNEL_ID);
-        //Set in order the: title, album name, artist, and the album cover
+
+        /* Sets in order: title, album name, artist, and the album cover */
         builder.setContentTitle(description.getTitle())
                 .setContentText(description.getDescription())
                 .setSubText(description.getSubtitle())
                 .setLargeIcon(description.getIconBitmap());
+
+        /* Set the style to set the appearance of the notification based on the album art being played */
         builder.setStyle(
                 new androidx.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(token)
-                /*The number 1 represent the action play/pause, 0 for skip previous, 2 for skip next*/
+                /* The number 1 represent the action play/pause, 0 for skip previous, 2 for skip next */
                 .setShowActionsInCompactView(1)
-                /*For android L set the cancel button for the notification*/
+                /* For android L set the cancel button for the notification (notifications were not swipable) */
                 .setShowCancelButton(true)
-                .setCancelButtonIntent(
+                        /* When the cancel button is clicked call ACTION_STOP on the MusicService */
+                        .setCancelButtonIntent(
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 mService,
                                 PlaybackStateCompat.ACTION_STOP)))
+                /* Set the default notification background color */
                 .setColor(ContextCompat.getColor(mService, R.color.colorPrimary))
+                /* Set the small icon that is showed in the notification bar */
                 .setSmallIcon(R.drawable.ic_app_icon)
                 .setContentIntent(createContentIntent())
-                /*For android 5.0 since the user can swype away the notification*/
+                /* When the notification is swiped away */
                 .setDeleteIntent(
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
                                 mService,
                                 PlaybackStateCompat.ACTION_STOP))
+                /* Set visibility public to show the notification on the lock screen*/
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+
+        /* Set the actions to set to the notification */
         builder.addAction(mSkipPreviousAction);
-        //If the state is playing add the pause action, else add the play action
+
+        /* Set the action based on the current playback state, mActionPause if the state is STATE_PLAYING */
         builder.addAction(
                 state.getState() == PlaybackStateCompat.STATE_PLAYING ?
                         mPauseAction:
@@ -140,22 +180,35 @@ public class MediaNotificationManager {
         return builder;
     }
 
+    /**
+     * Build a pending intent that launches {@link FullPlayerActivity} when the notification is
+     * clicked. It also builds a back stack with {@link MainActivity} since is the parent as described
+     * in the manifest
+     * @return
+     *          Returns a PendingIntent that starts {@link FullPlayerActivity} and adds
+     *          {@link MainActivity} in the back stack
+     */
+
     private PendingIntent createContentIntent(){
+
+        //TODO : check why creating a back stack causes the activity original stack to be destroyed and recreated
+
         Intent openActivity = new Intent(mService, FullPlayerActivity.class);
+
+        /* Launch as SINGLE_TOP to prevent the launch of multiple activities on top of each other */
         openActivity.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        //Open the activity as single top, to prevent the launch of multiple activities on top
-        //of each others
-        // Create the TaskStackBuilder and add the intent, which inflates the back stack
+
+        /* Create the TaskStackBuilder that inflates the back stack adding MainActivity */
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(mService);
         stackBuilder.addNextIntentWithParentStack(openActivity);
 
-
+        /* Use UPDATE_CURRENT to update the pending intent currently pending if exists */
         return stackBuilder.getPendingIntent(
                 REQUEST_CODE, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private PendingIntent createContentIntent2(){
-        Intent openActivity = new Intent(mService, MainActivity.class);
+        Intent openActivity = new Intent(mService, FullPlayerActivity.class);
         //Open the activity as single top, to prevent the launch of multipla activities on top
         //of each others
         openActivity.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -163,27 +216,43 @@ public class MediaNotificationManager {
                 mService, REQUEST_CODE, openActivity, PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
+
+    /**
+     * Creates the notification channel for {@value Build.VERSION_CODES#O} and later if it does not
+     * already exists
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     private void createChannel(){
-        //If the channel does not already exist, we need to create it
+
+        /* If the channel does not exist */
         if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null){
-            //User visible channel name
-            CharSequence name = "muZic";
-            //User visible channel description
-            String description = "Channel description";
-            //TODO: find why it reproduces the notification sound on notification update
+
+            /* User visible channel name */
+            CharSequence name = mService.getString(R.string.app_name);
+
+            /* User visible channel description */
+            String description = mService.getString(R.string.channel_description);
+
+            /* Set the importance to LOW to not send notification sound when the notification is pushed or updated */
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     name,
                     importance
             );
-            //Disable the dot on the launcher icon
+
+            /*
+            In the latest android versions when an application has a notification a dot on the
+            application icon is shown on the launcher telling the user about the event as long
+            as the notification is removed. As a music player the notification
+            would always be available as long as the playback is active so setting the value to
+            false disables this behaviour
+            */
             channel.setShowBadge(false);
             channel.setDescription(description);
             mNotificationManager.createNotificationChannel(channel);
         }
-        //else, no need to create the channel, it already exists
+        /* Else the channel already exists, no need to create a new one */
     }
 
 

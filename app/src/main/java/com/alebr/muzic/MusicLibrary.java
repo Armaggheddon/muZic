@@ -36,8 +36,11 @@ public class MusicLibrary {
 
     //Android auto styling for grids instead of list, in order are the KEY and the VALUE to
     //assign to the bundle of the MediaItem when built
+    /*
     public static final String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
     public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
+     */
+
     //Cache the FLAGS since they are used often, also creates a custom flag FLAG_PLAYLIST holding
     // both the flags telling Android Auto that the items in the MediaItems should
     // be treated as a Playlist instead of a list (or grid)
@@ -58,12 +61,15 @@ public class MusicLibrary {
     public static final String ALBUM_ = "album_";
     public static final String ARTIST_ = "artist_";
 
+    public static final String DURATION_ARGS_EXTRA = "duration";
+    public static final String ALBUM_ART_URI_ARGS_EXTRA = "album_art_uri";
+
     private static final String IC_ALBUM = "android.resource://com.alebr.muzic/drawable/ic_album";
     private static final String IC_ARTIST = "android.resource://com.alebr.muzic/drawable/ic_artist";
     private static final String IC_SONG = "android.resource://com.alebr.muzic/drawable/ic_audiotrack";
 
     //Album art path to build the path to the album art
-    public static final String ALBUM_ART_URI = "content://media/external/audio/albumart";
+    private static final String ALBUM_ART_URI = "content://media/external/audio/albumart";
 
     //Holds all the songs on the device
     private List<SongItem> songs = new ArrayList<>();
@@ -434,9 +440,9 @@ public class MusicLibrary {
 
             //Add extra data as DURATION and ALBUM_URI
             Bundle extras = new Bundle();
-            extras.putLong("DURATION", songItem.getDuration());
+            extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
             extras.putLong("POSITION", queuePosition);
-            extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+            extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
             //Build the queueItem from MediaSessionCompat.Builder()
             queueItems.add(
@@ -457,7 +463,7 @@ public class MusicLibrary {
      * @param albumId the albumId string as <album_id> (es "album_1")
      * @return the list of QueueItems with all the songs in the albumId album
      */
-    //No need for default locale since it is an internal string and not user visible
+    //Suppress because it is not a user visible string, no need to format to "DefaultLocale"
     @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getAlbumIdQueue(String albumId){
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
@@ -465,12 +471,12 @@ public class MusicLibrary {
         for(SongItem songItem : songs){
             //Check if the song album matches the same albumId building the albumId string from the
             //songItem as "album_" + the albumId in the songItem
-            if(albumId.equals(String.format("album_%d", songItem.getAlbumId()))) {
+            if(albumId.equals(String.format("%s%d", ALBUM_, songItem.getAlbumId()))) {
                 //Create the QueueItem and add some extra data
                 Bundle extras = new Bundle();
-                extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
                 extras.putLong("POSITION", queuePosition);
-                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+                extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
                         new MediaSessionCompat.QueueItem(
@@ -518,7 +524,7 @@ public class MusicLibrary {
      * @param artistId the artistId string as <artist_id> (es "artist_1")
      * @return the list of QueueItems with all the songs with artistId as artist
      */
-    //No need for default locale since it is an internal string and not user visible
+    //Suppress because it is not a user visible string, no need to format to "DefaultLocale"
     @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getArtistIdQueue(String artistId){
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
@@ -526,11 +532,11 @@ public class MusicLibrary {
         for(SongItem songItem : songs){
             //Check if the song artist matches the same artistId building the artistId string from the
             //songItem as "artist_" + the artistId in the songItem
-            if(artistId.equals(String.format("artist_%d", songItem.getArtistId()))) {
+            if(artistId.equals(String.format("%s%d", ARTIST_, songItem.getArtistId()))) {
                 Bundle extras = new Bundle();
-                extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong( DURATION_ARGS_EXTRA, songItem.getDuration());
                 extras.putLong("POSITION", queuePosition);
-                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+                extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
                         new MediaSessionCompat.QueueItem(
@@ -557,7 +563,7 @@ public class MusicLibrary {
      * @param query the query string containing the raw data passed from user or Google Assistant
      * @return a list of QueueItems with all the matches, if no matches an empty list is returned
      */
-    //No need for default locale since it is an internal string and not user visible
+    //Suppress because it is not a user visible string, no need to format to "DefaultLocale"
     @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getSearchResult(String query){
 
@@ -567,9 +573,9 @@ public class MusicLibrary {
             if(songItem.getTitle().equalsIgnoreCase(query)){
                 Bundle extras = new Bundle();
                 //Add the extras for DURATION and ALBUM_URI
-                extras.putLong("DURATION", songItem.getDuration());
+                extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
                 extras.putLong("POSITION", 0);
-                extras.putString("ALBUM_URI", songItem.getAlbumArtUri().toString());
+                extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
                         new MediaSessionCompat.QueueItem(
@@ -584,9 +590,9 @@ public class MusicLibrary {
             }if (songItem.getAlbum().equalsIgnoreCase(query)){
                 //Just need to return the result that the method give us passing as parameter the
                 //album_id build from the match, same applies for the artist match
-                return getAlbumIdQueue(String.format("album_%d", songItem.getAlbumId()));
+                return getAlbumIdQueue(String.format("%s%d", ALBUM_, songItem.getAlbumId()));
             }if(songItem.getArtist().equalsIgnoreCase(query)){
-                 return getArtistIdQueue(String.format("artist_%d", songItem.getArtistId()));
+                 return getArtistIdQueue(String.format("%s%d", ARTIST_, songItem.getArtistId()));
             }
         }
         //No matches in the library
