@@ -430,7 +430,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             }else {
 
                 mQueuePosition = (int) queueId;
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                //setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
 
                 onPlay();
@@ -590,8 +590,9 @@ public class MusicService extends MediaBrowserServiceCompat {
                 //Move to the next QueueItem
                 mQueuePosition++;
                 //TODO: set state plyaing only if the current state was playing
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                //setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+
                 onPlay();
             }
         }
@@ -610,8 +611,9 @@ public class MusicService extends MediaBrowserServiceCompat {
             } else {
                 //Move to the previous QueueItem
                 mQueuePosition--;
-                setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
+                //setCorrectPlaybackState(PlaybackStateCompat.STATE_PLAYING, 0);
                 setMetadataFromQueueItem(mQueue.get(mQueuePosition));
+
                 onPlay();
             }
         }
@@ -675,7 +677,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             if(queueItems.size() != 0){
                 initQueue(queueItems, true);
-                mSession.setQueueTitle(queueTitle);
                 onPlay();
             }else {
                 onPause();

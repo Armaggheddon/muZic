@@ -19,6 +19,8 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -259,17 +261,17 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
             play_pause_button.setImageResource(R.drawable.ic_pause);
-            motionLayout.transitionToEnd();
             title_text.setText(mediaController.getMetadata().getDescription().getTitle());
             album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
+            motionLayout.transitionToEnd();
         }
 
         if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PAUSED){
             MediaMetadataCompat metadata = mediaController.getMetadata();
             if (metadata != null) {
                 play_pause_button.setImageResource(R.drawable.ic_play);
-                title_text.setText(mediaController.getMetadata().getDescription().getTitle());
-                album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
+                title_text.setText(metadata.getDescription().getTitle());
+                album_image.setImageBitmap(metadata.getDescription().getIconBitmap());
                 motionLayout.transitionToEnd();
             }
         }

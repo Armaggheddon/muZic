@@ -3,6 +3,7 @@ package com.alebr.muzic;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+//import androidx.palette.graphics.Palette;
 import androidx.palette.graphics.Palette;
 import androidx.transition.Fade;
 
@@ -12,8 +13,11 @@ import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadata;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
@@ -29,6 +33,7 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.concurrent.TimeUnit;
@@ -110,9 +115,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mSeekBarAnimator.removeAllUpdateListeners();
-                mSeekBarAnimator.cancel();
-                mSeekBarAnimator = null;
+                if(mSeekBarAnimator != null) {
+                    mSeekBarAnimator.removeAllUpdateListeners();
+                    mSeekBarAnimator.cancel();
+                    mSeekBarAnimator = null;
+                }
                 finish();
             }
         });
@@ -205,8 +212,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         MediaDescriptionCompat description = mediaMetadata.getDescription();
 
         String title = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
-
         String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+
         Bitmap albumArt = description.getIconBitmap();
 
         setBackgroundAsync(albumArt);
@@ -217,6 +224,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
         int currentProgress = (int) pbState.getPosition();
         int maxProgress = (int) (mediaMetadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
+        Log.d(TAG, "buildTransportControls: " + maxProgress);
 
         elapsedTimeTextView.setText(String.format("%02d:%02d",
                 (int) TimeUnit.MILLISECONDS.toMinutes(currentProgress),
@@ -241,68 +249,46 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         }else {
             playPauseButton.setImageResource(R.drawable.ic_play);
         }
-
         mediaController.registerCallback(controllerCallback);
-
     }
 
+
     private void setBackgroundAsync(Bitmap image){
+
         Palette.from(image).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(@Nullable Palette palette) {
 
+                Palette.Swatch vibrantSwatch = palette.getDominantSwatch();
 
-                Palette.Swatch vibrantSwatch = palette.getVibrantSwatch();
+                int colorTop = android.R.attr.windowBackground;
+                int colorButton = android.R.attr.colorControlNormal;
 
+                if(vibrantSwatch != null){
+                    colorTop = palette.getDominantColor(android.R.attr.colorControlNormal);
+                    colorButton = vibrantSwatch.getBodyTextColor();
 
-                if(vibrantSwatch == null){
-                    int colorTop = android.R.attr.windowBackground;
-                    int colorAccent = android.R.attr.colorControlNormal;
-
-                    backButton.setColorFilter(colorAccent);
-                    hideQueueButton.setColorFilter(colorAccent);
-
-                    final ValueAnimator colorAnimator = ValueAnimator.ofArgb(previousColor, colorTop);
-                    colorAnimator.start();
-
-                    colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            int updateColor = (int) animation.getAnimatedValue();
-                            GradientDrawable gradientDrawable = new GradientDrawable(
-                                    GradientDrawable.Orientation.TOP_BOTTOM,
-                                    new int[]{updateColor, android.R.attr.windowBackground, android.R.attr.windowBackground});
-                            motionLayout.setBackground(gradientDrawable);
-                        }
-                    });
-                    previousColor = colorTop;
-                }else {
-
-                    int colorTop = palette.getVibrantColor(android.R.attr.windowBackground);
-
-                    int colorAccent = vibrantSwatch.getBodyTextColor();
-
-                    backButton.setColorFilter(colorAccent);
-                    hideQueueButton.setColorFilter(colorAccent);
-
-                    final ValueAnimator colorAnimator = ValueAnimator.ofArgb(previousColor, colorTop);
-                    colorAnimator.start();
-
-                    colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            int updateColor = (int) animation.getAnimatedValue();
-                            GradientDrawable gradientDrawable = new GradientDrawable(
-                                    GradientDrawable.Orientation.TOP_BOTTOM,
-                                    new int[]{updateColor, android.R.attr.windowBackground, android.R.attr.windowBackground});
-                            motionLayout.setBackground(gradientDrawable);
-                        }
-                    });
-                    previousColor = colorTop;
                 }
+                backButton.setColorFilter(colorButton);
 
-                //Update the currently displayed color as previous color
+                hideQueueButton.setColorFilter(colorButton);
 
+
+                final ValueAnimator colorAnimator = ValueAnimator.ofArgb(previousColor, colorTop);
+
+
+                colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        int updateColor = (int) animation.getAnimatedValue();
+                        GradientDrawable gradientDrawable = new GradientDrawable(
+                                GradientDrawable.Orientation.TOP_BOTTOM,
+                                new int[]{updateColor, android.R.attr.windowBackground, android.R.attr.windowBackground});
+                        motionLayout.setBackground(gradientDrawable);
+                    }
+                });
+                colorAnimator.start();
+                previousColor = colorTop;
             }
         });
     }
@@ -317,7 +303,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             }
             int newValue = (Integer) animation.getAnimatedValue();
             //The value is not sent constantly for every value, so since we dont need to update the
-            //seconds displayed every second when we are at least 800ms in one seconds update the
+            //seconds displayed every second when we are at least 500ms in one seconds update the
             //values
             if(newValue%1000 >= 800) {
                 //Log.d(TAG, "onAnimationUpdate: " + newValue);
@@ -360,8 +346,12 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             super.onMetadataChanged(metadata);
 
             MediaDescriptionCompat description = metadata.getDescription();
+
+            seekBar.setMax((int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
+
             String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
             String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+
             Bitmap albumArt = description.getIconBitmap();
 
             setBackgroundAsync(albumArt);

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:opacity="opaque"
+    android:paddingBottom="5dp"
+    android:paddingStart="5dp"
+    android:paddingEnd="5dp"
+    android:paddingTop="5dp">
+
+    <item>
+        <color android:color="@color/colorPrimary"/>
+    </item>
+
+    <item android:drawable="@drawable/ic_default_album_art"
+        android:gravity="center"
+        android:bottom="20dp"
+        android:start="20dp"
+        android:end="20dp"
+        android:top="20dp"/>
+
+</layer-list>

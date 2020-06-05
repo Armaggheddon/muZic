@@ -11,7 +11,7 @@
         android:id="@+id/album_art_small_player"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:src="@drawable/ic_album"
+        android:src="@drawable/ic_default_album_art_with_bg"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"

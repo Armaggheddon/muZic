@@ -65,7 +65,7 @@ public class QueueFragment extends Fragment{
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
 
         mRecyclerView = view.findViewById(R.id.recyclerView);
-        //mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setHasFixedSize(true);
         exampleAdapter = new ExampleAdapter( new ArrayList<CustomListItem>());
 
         mRecyclerView.setLayoutManager( new LinearLayoutManager(getContext()));
@@ -75,9 +75,6 @@ public class QueueFragment extends Fragment{
             @Override
             public void onItemClick(int position) {
                 mQueueListener.onQueueItemClicked(exampleAdapter.getItem(position).getId(), position);
-                exampleAdapter.getItem(position).changeImage(R.drawable.ic_audiotrack);
-                exampleAdapter.notifyItemChanged(position);
-
             }
         });
 
@@ -123,8 +120,6 @@ public class QueueFragment extends Fragment{
             MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();
             previousItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
 
-            //previousItem = (int) MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId();
-
             exampleAdapter.getItem( previousItem).changeImage(R.drawable.ic_audiotrack);
             exampleAdapter.notifyItemChanged( previousItem);
             MediaControllerCompat.getMediaController(getActivity()).registerCallback(mControllerCallback);
@@ -137,7 +132,6 @@ public class QueueFragment extends Fragment{
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
             int currentItem = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS);
-            Log.d(TAG, "onMetadataChanged: " + currentItem);
             if(currentItem != previousItem){
 
                 //Remove the icon on the previous item

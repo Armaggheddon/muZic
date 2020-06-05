@@ -6,17 +6,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
-import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.FileDescriptor;
@@ -210,7 +209,7 @@ public class MusicLibrary {
     public Bitmap loadAlbumArt(Uri albumArtUri){
         //If albumArtUri is null return the default album icon
         if (albumArtUri == null)
-            return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_album);
+            return getDefaultLargeIcon();
 
         Bitmap bitmap = null;
         try{
@@ -228,6 +227,21 @@ public class MusicLibrary {
         }catch (IOException e){
             e.printStackTrace();
         }
+
+        return (bitmap != null) ? bitmap : getDefaultLargeIcon();
+    }
+
+    private Bitmap getDefaultLargeIcon(){
+        Drawable drawable = context.getResources().getDrawable(R.drawable.ic_default_album_art_with_bg);
+
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
         return bitmap;
     }
 
