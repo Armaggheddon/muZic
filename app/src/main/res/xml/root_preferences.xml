@@ -1,9 +1,10 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory app:title="Theme">
+    <PreferenceCategory app:title="@string/customization_header">
 
         <ListPreference
-            app:title="Application theme"
+            app:title="@string/theme_title"
             app:icon="@drawable/ic_light_dark_theme"
             app:key="@string/theme_key_shared_prefs"
             app:entries="@array/theme_before_q_values"
@@ -11,12 +12,21 @@
             app:defaultValue="@string/theme_default_entry"
             app:useSimpleSummaryProvider="true" />
 
+        <SwitchPreference
+            app:title="@string/launcher_shortcut_title"
+            app:key="@string/launcher_shortcut_key_shared_prefs"
+            app:summaryOn="@string/launcher_shortcut_summary_on"
+            app:summaryOff="@string/launcher_shortcut_summary_off"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_launch"/>
+
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="App info">
+
+    <PreferenceCategory app:title="@string/app_info_header">
 
         <Preference
-            app:title="muZic 1.0"
+            app:title="@string/app_info_title"
             app:icon="@mipmap/ic_launcher_round"/>
 
     </PreferenceCategory>

@@ -111,19 +111,19 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             String FRAGMENT_TAG = null;
             Fragment fragment = null;
             switch (item.getItemId()){
-                case R.id.albums:
+                case R.id.albums_nav:
 
                     fragment = albumFragment;
                     FRAGMENT_TAG = ListFragment.ALBUM_FRAGMENT_TAG;
 
                     break;
-                case R.id.artists:
+                case R.id.artists_nav:
 
                     fragment = artistFragment;
                     FRAGMENT_TAG = ListFragment.ARTIST_FRAGMENT_TAG;
 
                     break;
-                case R.id.songs:
+                case R.id.songs_nav:
 
                     fragment = songsFragment;
                     FRAGMENT_TAG = ListFragment.SONG_FRAGMENT_TAG;
@@ -152,12 +152,16 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     };
 
+    public static final String LAUNCHER_SHORTCUTS_INTENT_KEY = "launcher_intent_key";
     private MaterialToolbar mToolbar;
     private TextView title_text;
     private ImageView album_image;
     private FloatingActionButton play_pause_button;
     private ConstraintLayout smallPlayerLayout;
     private MotionLayout motionLayout;
+    private Fragment defaultFragment = albumFragment;
+    private int defaultItemInNavigation = R.id.albums_nav;
+    private String defaultFragmentTag = ListFragment.ALBUM_FRAGMENT_TAG;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,6 +169,29 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent openIntent = getIntent();
+        if(openIntent != null){
+            String intentdata = openIntent.getStringExtra(LAUNCHER_SHORTCUTS_INTENT_KEY);
+            Log.d(TAG, "onCreate: " + intentdata);
+            if(intentdata != null) {
+                defaultFragmentTag = intentdata;
+                switch (intentdata) {
+                    case ListFragment.ARTIST_FRAGMENT_TAG:
+                        defaultFragment = artistFragment;
+                        defaultItemInNavigation = R.id.artists_nav;
+                        break;
+                    case ListFragment.SONG_FRAGMENT_TAG:
+                        defaultFragment = songsFragment;
+                        defaultItemInNavigation = R.id.songs_nav;
+                        break;
+                    case QueueFragment.QUEUE_FRAGMENT_TAG:
+                        defaultFragment = queueFragment;
+                        defaultItemInNavigation = R.id.queue_nav;
+                        break;
+                }
+            }
+        }
 
 
         if(savedInstanceState != null){
@@ -241,10 +268,10 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             if(!at_least_one_fragment){
 
                 //Update the current item selected in the bottom navigation view
-                ((BottomNavigationView)findViewById(R.id.navigation)).setSelectedItemId(R.id.albums);
+                ((BottomNavigationView)findViewById(R.id.navigation)).setSelectedItemId(defaultItemInNavigation);
 
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, albumFragment, ListFragment.ALBUM_FRAGMENT_TAG)
+                        .replace(R.id.fragment_container, defaultFragment, defaultFragmentTag)
                         .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
             }

@@ -1,10 +1,19 @@
 package com.alebr.muzic;
 
 import android.app.Application;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.os.Build;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
 import androidx.preference.PreferenceManager;
+
+import java.util.Arrays;
 
 public class MuzicApplication extends Application {
 
@@ -12,17 +21,12 @@ public class MuzicApplication extends Application {
     private static final String THEME_DARK_ENTRY = "dark";
     private static final String THEME_DEFAULT_ENTRY = "default";
 
-
-    private void init() {
+    public void onCreate(){
+        super.onCreate();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String themePref = sharedPreferences.getString( getString(R.string.theme_key_shared_prefs), THEME_DEFAULT_ENTRY);
         applyTheme(themePref);
-    }
-
-    public void onCreate(){
-        super.onCreate();
-        init();
     }
 
     public static void applyTheme(String themePref){

@@ -2,6 +2,11 @@
     <string name="app_name">muZic</string>
     <string name="title_activity_settings">SettingsActivity</string>
 
+    <string name="albums_title">Albums</string>
+    <string name="artists_title">Artist</string>
+    <string name="songs_title">Songs</string>
+    <string name="queue_title">Queue</string>
+
     <string name="album_image_description">Album image</string>
     <string name="skip_next_image_description">Skip next</string>
     <string name="skip_previous_image_description">Skip previous</string>
@@ -22,23 +27,24 @@
     <string name="skip_previous_text">Skip previous</string>
     <string name="channel_description">This channel is used by muZic to show on the notification the current media being played</string>
 
+    <!-- Preference Titles-->
+    <string name="customization_header">Customization</string>
+    <string name="app_info_header">App info</string>
+
+    <!-- Customization preferences -->
     <string name="theme_key_shared_prefs">theme_option</string>
+    <string name="theme_title">Application theme</string>
     <string name="theme_light_entry">light</string>
     <string name="theme_dark_entry">dark</string>
     <string name="theme_default_entry">default</string>
-    
-    <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
 
-    <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
+    <string name="launcher_shortcut_key_shared_prefs">shortcut_option</string>
+    <string name="launcher_shortcut_title">Enable launcher shortcuts</string>
+    <string name="launcher_shortcut_summary_on">Tap and hold the launcher icon to see the shortcuts</string>
+    <string name="launcher_shortcut_summary_off">Launcher shortcuts are disabled</string>
+    <string name="launcher_shortcut_summary_not_supported">Only supported on android N or later</string>
 
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <!-- App info preferences -->
+    <string name="app_info_title">muZic (version 1.0)</string>
+
 </resources>

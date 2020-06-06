@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/albums"
+        android:id="@+id/albums_nav"
         android:icon="@drawable/ic_album"
-        android:title="Albums"
-        android:iconTint="@color/colorAccent"/>
+        android:title="@string/albums_title" />
     <item
-        android:id="@+id/artists"
+        android:id="@+id/artists_nav"
         android:icon="@drawable/ic_artist"
-        android:title="Artists" />
+        android:title="@string/artists_title" />
     <item
-        android:id="@+id/songs"
+        android:id="@+id/songs_nav"
         android:icon="@drawable/ic_audiotrack"
-        android:title="Songs" />
+        android:title="@string/songs_title" />
     <item
         android:id="@+id/queue_nav"
         android:icon="@drawable/ic_baseline_queue_music"
-        android:title="Queue" />
+        android:title="@string/queue_title" />
 </menu>
