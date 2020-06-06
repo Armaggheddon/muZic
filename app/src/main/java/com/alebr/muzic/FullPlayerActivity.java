@@ -5,22 +5,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 //import androidx.palette.graphics.Palette;
 import androidx.palette.graphics.Palette;
-import androidx.transition.Fade;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadata;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
@@ -36,19 +29,18 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.concurrent.TimeUnit;
 
-public class FullPlayerActivity extends AppCompatActivity implements QueueFragment.QueueListener{
+public class FullPlayerActivity extends AppCompatActivity implements QueueFragment.QueueFragmentListener {
 
     public static int FULL_PLAYER_ACTIVITY_RESULT = 555;
     public static final String METADATA_NOT_AVAILABLE = "is_metadata_available";
 
     @Override
-    public void onQueueItemClicked(String stringId, long id) {
-        MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToQueueItem(id);
+    public void onQueueItemClicked(long positionInQueue) {
+        MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
         MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().play();
     }
 

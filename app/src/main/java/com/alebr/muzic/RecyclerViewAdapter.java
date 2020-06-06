@@ -14,13 +14,13 @@ import java.util.ArrayList;
  * and {@link QueueFragment}
  */
 
-class ExampleAdapter extends RecyclerView.Adapter<ExampleAdapter.ExampleViewHolder> {
+class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.RecyclerViewHolder> {
 
     /**
      * ArrayList of {@link CustomListItem} that holds the information about the view
      */
     private ArrayList<CustomListItem> mCustomList;
-    private OnItemClickListener mListener;
+    private OnItemClickListener mOnItemClickListener;
 
     /**
      * Interface to send click events received on the view
@@ -35,18 +35,18 @@ class ExampleAdapter extends RecyclerView.Adapter<ExampleAdapter.ExampleViewHold
      *          The listener to be assigned to {@link OnItemClickListener}
      */
     public void setOnItemClickListener(OnItemClickListener listener){
-        mListener = listener;
+        mOnItemClickListener = listener;
     }
 
     /**
      * Class containing the views inside {@link R.layout#media_list_item}
      */
-    public static class ExampleViewHolder extends RecyclerView.ViewHolder{
+    public static class RecyclerViewHolder extends RecyclerView.ViewHolder{
 
         public ImageView mImageView;
         public TextView mTitleTextView;
 
-        public ExampleViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+        public RecyclerViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
             super(itemView);
 
             /* Initialize the views in the layout */
@@ -72,21 +72,21 @@ class ExampleAdapter extends RecyclerView.Adapter<ExampleAdapter.ExampleViewHold
      * @param list
      *          The ArrayList of {@link CustomListItem} with the data to assign to the views
      */
-    public ExampleAdapter(ArrayList<CustomListItem> list){
+    public RecyclerViewAdapter(ArrayList<CustomListItem> list){
         mCustomList = list;
     }
 
     @NonNull
     @Override
-    public ExampleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.media_list_item, parent, false);
 
-        /* Create a new ExampleViewHolder to initialize the views and setting the lister */
-        return new ExampleViewHolder(v, mListener);
+        /* Create a new RecyclerViewHolder to initialize the views and setting the lister */
+        return new RecyclerViewHolder(v, mOnItemClickListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ExampleViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerViewHolder holder, int position) {
 
         /* Set the data in the view */
         CustomListItem currentItem = mCustomList.get(position);
@@ -108,7 +108,7 @@ class ExampleAdapter extends RecyclerView.Adapter<ExampleAdapter.ExampleViewHold
     }
 
     /**
-     * Utility method to add items to {@link ExampleAdapter#mCustomList}
+     * Utility method to add items to {@link RecyclerViewAdapter#mCustomList}
      * @param item
      *          The item to be added
      */

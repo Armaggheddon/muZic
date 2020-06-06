@@ -11,6 +11,7 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -19,13 +20,17 @@ import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
 /**
- * Manages the correct set up of the notification and the building process of the notification itself
+ * Manages the correct set up of the notification and builds the
+ * {@link MediaNotificationManager#createContentIntent()} pending intent that launches
+ * {@link FullPlayerActivity}
  */
 
 public class MediaNotificationManager {
 
-    private static final String TAG = "MediaNotificationManager";
+    /* The maximum TAG length is 23 chars, but the class name has 24, so the "r" is removed  :( */
+    private static final String TAG = "MediaNotificationManage";
     public static final String CHANNEL_ID = "muZic";
+
     /*
     NOTIFICATION_ID cannot be 0
     Since we use only one notification at a time, we don't need to generate the ID,
@@ -34,7 +39,7 @@ public class MediaNotificationManager {
      */
     public static final int NOTIFICATION_ID = 100;
 
-    /* Can ba a random value and it is*/
+    /* Can ba a random value and it is */
     public static final int REQUEST_CODE = 244;
 
     private MusicService mService;
@@ -190,8 +195,12 @@ public class MediaNotificationManager {
      */
 
     private PendingIntent createContentIntent(){
-
-        //TODO : check why creating a back stack causes the activity original stack to be destroyed and recreated
+        /*
+        The default behaviour when creating an intent with TaskStackBuilder destroys the currently
+        visible or available views and recreates them representing the stack described in the
+        manifest of the application. The current stack is, from bottom to top
+        MainActivity --> FullPlayerActivity with FullPlayerActivity being shown on top
+         */
 
         Intent openActivity = new Intent(mService, FullPlayerActivity.class);
 
@@ -204,18 +213,8 @@ public class MediaNotificationManager {
 
         /* Use UPDATE_CURRENT to update the pending intent currently pending if exists */
         return stackBuilder.getPendingIntent(
-                REQUEST_CODE, PendingIntent.FLAG_UPDATE_CURRENT);
+                REQUEST_CODE, PendingIntent.FLAG_CANCEL_CURRENT);
     }
-
-    private PendingIntent createContentIntent2(){
-        Intent openActivity = new Intent(mService, FullPlayerActivity.class);
-        //Open the activity as single top, to prevent the launch of multipla activities on top
-        //of each others
-        openActivity.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return PendingIntent.getActivity(
-                mService, REQUEST_CODE, openActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-    }
-
 
     /**
      * Creates the notification channel for {@value Build.VERSION_CODES#O} and later if it does not
@@ -227,13 +226,16 @@ public class MediaNotificationManager {
         /* If the channel does not exist */
         if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null){
 
+            Log.d(TAG, "createChannel: " +
+                    "creating new notification channel with channelId " + CHANNEL_ID);
+
             /* User visible channel name */
             CharSequence name = mService.getString(R.string.app_name);
 
             /* User visible channel description */
             String description = mService.getString(R.string.channel_description);
 
-            /* Set the importance to LOW to not send notification sound when the notification is pushed or updated */
+            /* Set the importance to LOW to avoid sound when the notification is pushed or updated */
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -242,17 +244,19 @@ public class MediaNotificationManager {
             );
 
             /*
-            In the latest android versions when an application has a notification a dot on the
-            application icon is shown on the launcher telling the user about the event as long
-            as the notification is removed. As a music player the notification
-            would always be available as long as the playback is active so setting the value to
-            false disables this behaviour
+            Starting with Android 8.0, notification badges (also known as notification dots)
+            appear on a launcher icon when the associated app has an active notification.
+            To avoid this behaviour set the value to false since the notification in a media app
+            is showed as long as is in the play state
             */
             channel.setShowBadge(false);
             channel.setDescription(description);
             mNotificationManager.createNotificationChannel(channel);
         }
-        /* Else the channel already exists, no need to create a new one */
+        /* Else the channel already exists, just use the existing one */
+        else
+            Log.d(TAG, "createChannel: " +
+                    "using existing channel with channelId " + CHANNEL_ID);
     }
 
 

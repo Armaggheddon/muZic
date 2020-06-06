@@ -2,24 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.alebr.muzic">
 
+    <!-- FOREGROUND_SERVICE permission used to run the music playback even if the application is not in foreground -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!--READ_EXTERNAL_STORAGE permission used to read the songs in the phone storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:allowBackup="false"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
-        <activity
-            android:name=".FullPlayerActivity"
-            android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/FullPlayerTheme" />
 
         <meta-data
             android:name="com.google.android.gms.car.application"
@@ -38,6 +33,7 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
         <!--
          Main music service, provides media browsing and media playback services to
          consumers through MediaBrowserService and MediaSession. Consumers connect to it through
@@ -51,16 +47,35 @@
             </intent-filter>
         </service>
 
+        <!--
+        The current implementation of the application does not support "landscape" layout
+        so we set "android:screenOrientation" to support only "portrait" on all activities
+        -->
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SplashScreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+        The "parentActivityName" is set to allow MediaNotificationManager to build a back stack
+        of the activity with MainActivity "behind" FullPlayerActivity
+        -->
+        <activity
+            android:name=".FullPlayerActivity"
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullPlayerTheme" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_settings"/>
+
     </application>
 
 </manifest>

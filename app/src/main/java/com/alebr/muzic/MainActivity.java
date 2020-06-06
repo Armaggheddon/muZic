@@ -9,21 +9,17 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -35,37 +31,28 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.transition.Slide;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AnimationUtils;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueListener{
+public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueFragmentListener {
 
     @Override
-    public void onPlayableItemClicked(String caller, String mediaId, long id) {
+    public void onPlayableItemClicked(String parentId, long positionInQueue) {
         //Called when a playable item is clicked on the fragment
-        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(caller, null);
-        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(parentId, null);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
     }
 
     @Override
-    public void onBrowsableItemClicked(String caller, String mediaId, long id) {
+    public void onBrowsableItemClicked(String mediaId) {
 
         ListFragment playableFragment = ListFragment.newInstance(mediaId);
         FragmentManager manager = getSupportFragmentManager();
@@ -90,8 +77,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     }
 
     @Override
-    public void onQueueItemClicked(String stringId, long id) {
-        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(id);
+    public void onQueueItemClicked(long positionInQueue) {
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
     }
 
     @Override
