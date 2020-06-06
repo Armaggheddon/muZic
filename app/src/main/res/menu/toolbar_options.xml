@@ -2,9 +2,10 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Toolbar options -->
     <item
         android:id="@+id/option"
         android:icon="@drawable/ic_settings"
-        android:title="Options"
+        android:title="@string/settings_title"
         app:showAsAction="always"/>
 </menu>

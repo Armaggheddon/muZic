@@ -2,6 +2,8 @@
 <MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- MotionScene file that describes the animation of the QueueFragment being opened -->
+
     <ConstraintSet android:id="@+id/start">
         <Constraint
             android:id="@+id/fragment_container"

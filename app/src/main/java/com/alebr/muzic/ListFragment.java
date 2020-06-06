@@ -1,18 +1,26 @@
 package com.alebr.muzic;
 
 import android.content.Context;
+import android.icu.text.Edits;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Fragment implementation that displays a RecyclerView using {@link RecyclerViewAdapter} and using
@@ -40,7 +48,6 @@ public class ListFragment extends Fragment{
     */
     private String subscribeTo;
 
-    //private RecyclerView mRecyclerView;
     private RecyclerViewAdapter recyclerViewAdapter;
 
     /*
@@ -99,6 +106,7 @@ public class ListFragment extends Fragment{
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
 
         RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView);
@@ -127,6 +135,7 @@ public class ListFragment extends Fragment{
 
         return view;
     }
+
 
     @Override
     public void onStart() {
@@ -169,8 +178,10 @@ public class ListFragment extends Fragment{
                         item.getMediaId(),
                         item.getDescription().getTitle().toString()));
             }
+
             /* When all the data is loaded notify the adapter about the changes */
             recyclerViewAdapter.notifyDataSetChanged();
+
             /* We can now unsubscribe to receive future updates since we just need to load the data once */
             mFragmentListener.getMediaBrowser().unsubscribe(subscribeTo, mSubscriptionCallback);
         }

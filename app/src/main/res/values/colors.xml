@@ -3,4 +3,7 @@
     <color name="colorPrimary">#403F4C</color>
     <color name="colorPrimaryDark">#191924</color>
     <color name="colorAccent">#F9DC5C</color>
+
+    <!-- Color used in the dialog theme for the buttons -->
+    <color name="colorButtonDialog">#403F4C</color>
 </resources>

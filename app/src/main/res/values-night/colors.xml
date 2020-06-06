@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Color for the button is set to the colorAccent color to allow better visibility on dark theme -->
+    <color name="colorButtonDialog">#F9DC5C</color>
+</resources>

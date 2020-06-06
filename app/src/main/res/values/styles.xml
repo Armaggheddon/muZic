@@ -10,18 +10,13 @@
         <item name="alertDialogTheme">@style/DialogStyle</item>
     </style>
 
+    <!-- Customize the colors used by the dialog, colorPrimary is used on buttons, colorAccent on radio buttons -->
     <style name="DialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
-        <item name="colorPrimary">@color/colorAccent</item>
-    </style>
-
-    <style name="FullPlayerTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorButtonDialog</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="fontFamily">@font/dosis_semibold</item>
     </style>
 
-    <!-- Splash screen theme, it allows to not have a white screen on startup -->
+    <!-- Splash screen theme, allows to not have a white screen on startup -->
     <style name="SplashScreenTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:windowBackground">@drawable/splash_screen_art</item>

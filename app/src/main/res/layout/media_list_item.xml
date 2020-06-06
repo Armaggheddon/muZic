@@ -4,6 +4,8 @@
     android:layout_height="50dp"
     android:background="?android:attr/selectableItemBackground">
 
+    <!-- Represents a single item to item to use in a RecyclerView (or ListView) -->
+
     <TextView
         android:id="@+id/title_textview"
         android:layout_width="0dp"

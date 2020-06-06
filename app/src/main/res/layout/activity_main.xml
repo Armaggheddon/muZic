@@ -8,7 +8,6 @@
     app:layoutDescription="@xml/activity_main_scene"
     android:id="@+id/main_layout">
 
-
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"

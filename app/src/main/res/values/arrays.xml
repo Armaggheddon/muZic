@@ -1,6 +1,6 @@
 <resources>
 
-    <!-- See here for the options https://developer.android.com/guide/topics/ui/look-and-feel/darktheme#changing_themes_in-app -->
+    <!-- See here for the theme values https://developer.android.com/guide/topics/ui/look-and-feel/darktheme#changing_themes_in-app -->
 
     <!-- Theme values for android Q and later -->
     <string-array name="theme_q_values">
@@ -16,7 +16,7 @@
         <item>Set by Battery Saver</item>
     </string-array>
 
-    <!-- Values of the theme options -->
+    <!-- Values of the theme options saved in the preferences -->
     <string-array name="theme_entries">
         <item>light</item>
         <item>dark</item>

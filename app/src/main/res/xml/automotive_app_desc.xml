@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <automotiveApp>
+
+    <!-- Current Android Auto allows only two implementation, "media" or "notifications" -->
     <uses name="media" />
 </automotiveApp>

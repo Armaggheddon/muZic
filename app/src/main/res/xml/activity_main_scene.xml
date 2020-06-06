@@ -2,6 +2,8 @@
 <MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- MotionScene file that describes the animation of the small player being opened or closed -->
+
     <ConstraintSet android:id="@+id/start">
         <Constraint android:id="@+id/guideline_bottom" />
         <Constraint

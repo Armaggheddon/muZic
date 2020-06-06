@@ -1,17 +1,11 @@
 package com.alebr.muzic;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.motion.widget.MotionLayout;
-import androidx.palette.graphics.Palette;
-
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadata;
@@ -30,35 +24,78 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.palette.graphics.Palette;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Handles the {@link R.layout#activity_full_player} layout with the controls that allows to
+ * send actions to {@link MusicService}
+ */
 public class FullPlayerActivity extends AppCompatActivity implements QueueFragment.QueueFragmentListener {
 
+    /* Activity result code to publish to MainActivity the result code */
     public static int FULL_PLAYER_ACTIVITY_RESULT = 555;
-    public static final String METADATA_NOT_AVAILABLE = "is_metadata_available";
 
+    /* Key for the argument to send in the activity result */
+    public static final String METADATA_NOT_AVAILABLE_ARGS_KEY = "is_metadata_available";
+
+    /* Activity log tag*/
     private static final String TAG = "FullPlayerActivity";
 
+    /* Views used */
+    /*
+    showQueueButton is used to animate to the end state that shows QueueFragment,
+    hideQueueButton is used to animate to the start state hiding QueueFragment
+    */
     private ImageView albumImage, skipToPreviousButton, skipToNextButton, showQueueButton, hideQueueButton;
+
+    /*
+    elapsedTimeTextView is used to display the current position in the song being played,
+    leftTimeTextView is uset to display the time left to reach the end of the song being played
+    */
     private TextView titleTextView, artistTextView, elapsedTimeTextView, leftTimeTextView;
     private FloatingActionButton playPauseButton;
+
+    /*
+    Value animator used to animate the position update for the seek bar and for the
+    text views that represent the elapsed time and left time
+    */
     private ValueAnimator mSeekBarAnimator;
+
+    /* Flag that allows mSeekBarAnimator to know if the seek bar is being updated by the user to avoid pushing updates */
     private boolean isTracking = false;
     private SeekBar seekBar;
     private MotionLayout motionLayout;
     private MaterialToolbar mToolbar;
     private MediaBrowserCompat mBrowser;
 
+    /* Used to animate from the previous color to the current color for the background */
     private int previousColor;
 
+    /* Listener to listen to new values being updated */
+    private AnimatorUpdateListener mAnimatorListener = new AnimatorUpdateListener();
+
+    /**
+     * Handles the item in the queue being clicked, updates the item being currently played, and
+     * calls skipToQueueItem so {@link MusicService} can update the metadata
+     * @param positionInQueue
+     *          The position of the item clicked. Since the items are shown in the same order as
+     *          they are in the playback queue the position also represents the id of the queue
+     */
     @Override
     public void onQueueItemClicked(long positionInQueue) {
+        /* Update the current position in the queue and play */
         MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
         MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().play();
     }
+
 
     @Override
     public MediaBrowserCompat getMediaBrowser() {
@@ -75,6 +112,21 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
         mToolbar = findViewById(R.id.full_player_toolbar);
 
+        /* Set the back click listener for the back button being clicked in the toolbar */
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                /* Remove the listener to the Animator and delete it */
+                if(mSeekBarAnimator != null){
+                    mSeekBarAnimator.removeAllUpdateListeners();
+                    mSeekBarAnimator.cancel();
+                    mSeekBarAnimator = null;
+                }
+                finish();
+            }
+        });
+
         previousColor = android.R.attr.windowBackground;
 
         mBrowser = new MediaBrowserCompat(
@@ -87,6 +139,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
     }
 
+    /* Callback to receive the onConnected event when the Activity connects to MusicService */
     private final MediaBrowserCompat.ConnectionCallback connectionCallback = new MediaBrowserCompat.ConnectionCallback(){
         @Override
         public void onConnected() {
@@ -101,6 +154,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 Log.e(TAG, "onConnected: ", e);
             }
 
+            /* When we are connected create and add the fragment for viewing the current queue */
             QueueFragment queueFragment = QueueFragment.newInstance(false);
 
             getSupportFragmentManager().beginTransaction()
@@ -111,33 +165,57 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             if(MediaControllerCompat.getMediaController(FullPlayerActivity.this).getMetadata() != null)
                 buildTransportControls();
             else{
+
+                /*
+                If the metadata is not available the service was destroyed and restarted,
+                but no metadata is available so is not possible to use the commands in the activity
+                such as play/pause, so close the activity notifying MainActivity about the event.
+                Set RESULT_OK because the event was correctly handled and the activity did not crash
+                */
                 Intent returnIntent = new Intent();
-                returnIntent.putExtra(METADATA_NOT_AVAILABLE, true);
+                returnIntent.putExtra(METADATA_NOT_AVAILABLE_ARGS_KEY, true);
                 setResult(Activity.RESULT_OK, returnIntent);
                 finish();
             }
         }
     };
 
+    /**
+     * Handles setting up all the views in an initial state that represents the current PlaybackState
+     * and the sets the click listeners
+     */
     /* Suppress because it is a string built to represent time, no need to format for "DefaultLocale" */
     @SuppressLint("DefaultLocale")
     private void buildTransportControls(){
 
+        /* Calling setNavigationOnClickListener again replaces the previous listener in onCreate() */
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if(mSeekBarAnimator != null){
                     mSeekBarAnimator.removeAllUpdateListeners();
                     mSeekBarAnimator.cancel();
                     mSeekBarAnimator = null;
                 }
                 if(MediaControllerCompat.getMediaController(FullPlayerActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_STOPPED){
+
+                    /*
+                    If the state is STATE_STOPPED the MusicService is in STOPPED state wich means
+                    that there is no metadata available and no queue. Return to MainActivity telling
+                    about the event happened to avoid prohibited states for events from the
+                    "small player".
+                    Result code is RESULT_OK because the event has been handled and the activity did
+                    not crash
+                    */
                     Intent returnIntent = new Intent();
-                    returnIntent.putExtra(METADATA_NOT_AVAILABLE, true);
+                    returnIntent.putExtra(METADATA_NOT_AVAILABLE_ARGS_KEY, true);
                     setResult(Activity.RESULT_OK, returnIntent);
                     finish();
                 }
                 else {
+
+                    /* No prohibited states, just close the current activity */
                     finish();
                 }
             }
@@ -148,6 +226,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         skipToPreviousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                /*
+                Skip to the previous track, this happens only if the current item is not the first
+                one, if is the case the track is restarted
+                */
                 MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToPrevious();
             }
         });
@@ -155,6 +238,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         skipToNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                /*
+                Skip to the next track, this happens only if the current item is not the last one,
+                if is the case nothing happens
+                */
                 MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToNext();
             }
         });
@@ -162,6 +250,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         showQueueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                /* Transition to end state to open the QueueFragment and show the queue and the close queue button */
                 motionLayout.transitionToEnd();
             }
         });
@@ -170,7 +260,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         hideQueueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                /* If the current state of the layout is the end state (QueueFragment visible */
                 if(motionLayout.getCurrentState() == motionLayout.getEndState()){
+
+                     /* Then transition to the start state hiding the queue and the close queue button*/
                     motionLayout.transitionToStart();
                 }
             }
@@ -185,7 +279,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                /* Get the current state */
                 int pbState = MediaControllerCompat.getMediaController(FullPlayerActivity.this).getPlaybackState().getState();
+
+                /* If the current state is STATE_PLAYING then the click event represents a pause */
                 if (pbState == PlaybackStateCompat.STATE_PLAYING){
                     MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().pause();
                 }else {
@@ -195,6 +293,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         });
 
         seekBar = findViewById(R.id.seekBar);
+
+        /* Listen for the seek bar being changed by the user */
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -203,27 +303,28 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+
+                /* Set the flag to true so updates to the animator are not applied to the seek bar */
                 isTracking = true;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+
+                /* Set the flag to false since the user has stopped moving the seek bar */
                 isTracking = false;
+
+                /* Seek to the position set from the user and update the MusicService */
                 MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().seekTo(seekBar.getProgress());
-                int currentProgress = seekBar.getProgress();
-                int maxProgress = seekBar.getMax();
 
-                elapsedTimeTextView.setText(String.format("%02d:%02d",
-                        (int) TimeUnit.MILLISECONDS.toMinutes(currentProgress),
-                        (int) TimeUnit.MILLISECONDS.toSeconds(currentProgress) % 60));
-
-                int leftTime = maxProgress - currentProgress;
-
-                leftTimeTextView.setText(String.format("%02d:%02d",
-                        (int) TimeUnit.MILLISECONDS.toMinutes(leftTime),
-                        (int) TimeUnit.MILLISECONDS.toSeconds(leftTime) % 60));
+                /*
+                The new position  for the TextViews and the SeekBar is updated
+                in onPlaybackStateChanged an on onMetadataChanged
+                */
             }
         });
+
+        /* Set the initial state for the views */
 
         MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(FullPlayerActivity.this);
 
@@ -235,90 +336,128 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
         Bitmap albumArt = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
 
+        /* Set the background gradient */
         setBackgroundAsync(albumArt);
 
         titleTextView.setText(title);
         artistTextView.setText(artist);
         albumImage.setImageBitmap(albumArt);
 
+        /* Get the current position and the duration of the song both in milliseconds */
         int currentProgress = (int) pbState.getPosition();
         int maxProgress = (int) (mediaMetadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
-        Log.d(TAG, "buildTransportControls: " + maxProgress);
 
+        /* Format the text as 00:00 as <minutes>:<seconds> */
         elapsedTimeTextView.setText(String.format("%02d:%02d",
                 (int) TimeUnit.MILLISECONDS.toMinutes(currentProgress),
                 (int) TimeUnit.MILLISECONDS.toSeconds(currentProgress) % 60));
 
+        /* Get the left */
         int leftTime = maxProgress - currentProgress;
 
         leftTimeTextView.setText(String.format("%02d:%02d",
                 (int) TimeUnit.MILLISECONDS.toMinutes(leftTime),
                 (int) TimeUnit.MILLISECONDS.toSeconds(leftTime) % 60));
 
+        /* Set the maximum progress to the seek bar as DURATION */
         seekBar.setMax(maxProgress);
         seekBar.setProgress(currentProgress);
+
+        /*
+        If the state is playing set the pause icon on play_pause_button and start the animator
+        for elapsedTimeTextView, leftTimeTextView and seekBar
+        */
         if(pbState.getState() == PlaybackStateCompat.STATE_PLAYING){
             playPauseButton.setImageResource(R.drawable.ic_pause);
 
-            mSeekBarAnimator = ValueAnimator.ofInt((int) pbState.getPosition(), seekBar.getMax())
-                    .setDuration(seekBar.getMax() - pbState.getPosition());
+            /* Animate from current position to the maximum position in (max-current) milliseconds */
+            mSeekBarAnimator = ValueAnimator.ofInt( currentProgress, seekBar.getMax())
+                    .setDuration(seekBar.getMax() - currentProgress);
             mSeekBarAnimator.setInterpolator( new LinearInterpolator());
             mSeekBarAnimator.addUpdateListener(mAnimatorListener);
             mSeekBarAnimator.start();
-        }else {
+        }
+
+        /* Else the current state is PAUSED so set the play_pause_button the play icon */
+        else {
             playPauseButton.setImageResource(R.drawable.ic_play);
         }
+
+        /* Register a callback to receive state updates */
         mediaController.registerCallback(controllerCallback);
     }
 
-
+    /**
+     * Sets the background to the view building a {@link GradientDrawable} from the colors in the
+     * {@param image} given
+     * @param image
+     *              The image used to retrieve the information about the colors to use
+     */
     private void setBackgroundAsync(Bitmap image){
 
+        /* This operation is created in a background thread, onGenerated is called when the data is ready */
         Palette.from(image).generate(new Palette.PaletteAsyncListener() {
             @Override
             public void onGenerated(@Nullable Palette palette) {
 
                 Palette.Swatch vibrantSwatch = palette.getDominantSwatch();
 
+                /*Set the default color to use in the top of the view and for the buttons in case no data is available */
                 int colorTop = android.R.attr.windowBackground;
                 int colorButton = android.R.attr.colorControlNormal;
 
+                /* If the swatch is not null then update the values */
                 if(vibrantSwatch != null){
                     colorTop = palette.getDominantColor(android.R.attr.windowBackground);
                     colorButton = vibrantSwatch.getBodyTextColor();
-
                 }
 
+                /* Get the 2 drawables for the icons that needs to have a proper color to avoid visibility issues */
                 Drawable backIcon = getDrawable(R.drawable.ic_baseline_arrow_black);
                 Drawable closeQueueIcon = getDrawable(R.drawable.ic_baseline_close);
+
+                /* Set tint applies a tint on the drawable, in fact changing the color if the drawable is black */
                 backIcon.setTint(colorButton);
                 closeQueueIcon.setTint(colorButton);
 
+                /* Update the icons */
                 mToolbar.setNavigationIcon(backIcon);
-
                 hideQueueButton.setImageDrawable(closeQueueIcon);
 
-
+                /* Build a value animator to animate the change in color from previous color to the new one */
                 final ValueAnimator colorAnimator = ValueAnimator.ofArgb(previousColor, colorTop);
 
-
+                /* Add a lister on value update */
                 colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator animation) {
+
+                        /* Get the current value being pushed */
                         int updateColor = (int) animation.getAnimatedValue();
+
+                        /*
+                        Build a gradient drawable with top colo the updateColor and mid,bot the
+                        default one of the view in order to achive the start of the fade effect
+                        at 33% from the top of the view
+                        */
                         GradientDrawable gradientDrawable = new GradientDrawable(
                                 GradientDrawable.Orientation.TOP_BOTTOM,
                                 new int[]{updateColor, android.R.attr.windowBackground, android.R.attr.windowBackground});
+
+                        /* Update the layout to achieve a transition effect */
                         motionLayout.setBackground(gradientDrawable);
                     }
                 });
                 colorAnimator.start();
+
+                /* Update the current color used so when a new track is selected we can animate from this color */
                 previousColor = colorTop;
             }
         });
     }
 
-    private AnimatorUpdateListener mAnimatorListener = new AnimatorUpdateListener();
+    //TODO: FINISH COMMENTS FROM HERE
+
     class AnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener{
         //Suppress because it is a string built to represent time, no need to format for "DefaultLocale"
         @SuppressLint("DefaultLocale")

@@ -7,6 +7,8 @@
     android:id="@+id/small_player_layout"
     android:background="@color/colorPrimary">
 
+    <!-- Simple view layout for a small player used in MainActivity when the PlaybackState is STATE_PLAYING -->
+
     <ImageView
         android:id="@+id/album_art_small_player"
         android:layout_width="50dp"
