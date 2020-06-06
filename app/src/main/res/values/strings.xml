@@ -22,8 +22,11 @@
     <string name="skip_previous_text">Skip previous</string>
     <string name="channel_description">This channel is used by muZic to show on the notification the current media being played</string>
 
-
-
+    <string name="theme_key_shared_prefs">theme_option</string>
+    <string name="theme_light_entry">light</string>
+    <string name="theme_dark_entry">dark</string>
+    <string name="theme_default_entry">default</string>
+    
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
     <string name="sync_header">Sync</string>

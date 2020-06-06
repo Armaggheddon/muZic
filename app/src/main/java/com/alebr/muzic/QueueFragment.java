@@ -232,15 +232,19 @@ public class QueueFragment extends Fragment{
     public void onDetach() {
         super.onDetach();
 
-        /* Remove the listener, no need to listen for updates the fragment has been removed from the parent */
-        mQueueFragmentListener = null;
-
-        /* Unregister the callback to stop receiving updates from MediaControllerCompat */
-        MediaControllerCompat.getMediaController(getActivity()).unregisterCallback(mControllerCallback);
+        /* If it is not yet removed remove the listener here as last resource */
+        if(mQueueFragmentListener != null)
+            mQueueFragmentListener = null;
     }
 
     @Override
     public void onStop() {
         super.onStop();
+
+        /* Remove the listener, no need to listen for updates the fragment has been removed from the parent */
+        mQueueFragmentListener = null;
+
+        /* Unregister the callback to stop receiving updates from MediaControllerCompat */
+        MediaControllerCompat.getMediaController(getActivity()).unregisterCallback(mControllerCallback);
     }
 }

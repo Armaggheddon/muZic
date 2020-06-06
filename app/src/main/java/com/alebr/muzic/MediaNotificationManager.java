@@ -29,7 +29,7 @@ public class MediaNotificationManager {
 
     /* The maximum TAG length is 23 chars, but the class name has 24, so the "r" is removed  :( */
     private static final String TAG = "MediaNotificationManage";
-    public static final String CHANNEL_ID = "muZic";
+    public static final String CHANNEL_ID = "MuzicApplication";
 
     /*
     NOTIFICATION_ID cannot be 0

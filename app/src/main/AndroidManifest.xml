@@ -11,6 +11,7 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:name=".MuzicApplication"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:allowBackup="false"
@@ -68,8 +69,7 @@
         <activity
             android:name=".FullPlayerActivity"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/FullPlayerTheme" />
+            android:screenOrientation="portrait" />
 
         <activity
             android:name=".SettingsActivity"

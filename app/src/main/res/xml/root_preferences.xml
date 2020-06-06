@@ -3,11 +3,12 @@
     <PreferenceCategory app:title="Theme">
 
         <ListPreference
+            app:title="Application theme"
             app:icon="@drawable/ic_light_dark_theme"
-            app:defaultValue="System default"
+            app:key="@string/theme_key_shared_prefs"
+            app:entries="@array/theme_before_q_values"
             app:entryValues="@array/theme_entries"
-            app:key="themePref"
-            app:title="Default theme"
+            app:defaultValue="@string/theme_default_entry"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
@@ -15,9 +16,8 @@
     <PreferenceCategory app:title="App info">
 
         <Preference
-            app:title="Version 1.0"/>
-        <Preference
-            app:title="Libraries"/>
+            app:title="muZic 1.0"
+            app:icon="@mipmap/ic_launcher_round"/>
 
     </PreferenceCategory>
 

@@ -5,16 +5,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/full_player_layout"
+    android:id="@+id/full_player_root"
     tools:context=".FullPlayerActivity"
     app:layoutDescription="@xml/activity_full_player_scene">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline_top"
-        android:layout_width="wrap_content"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/full_player_toolbar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.08" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/ic_baseline_arrow_black"/>
 
     <ImageView
         android:id="@+id/album_imageview"
@@ -26,7 +28,7 @@
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline_top"
+        app:layout_constraintTop_toBottomOf="@id/full_player_toolbar"
         app:srcCompat="@drawable/ic_default_album_art_with_bg" />
 
     <androidx.constraintlayout.widget.Guideline
@@ -156,13 +158,12 @@
         android:id="@+id/close_queue_button"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:tint="?attr/colorControlNormal"
         android:layout_marginEnd="24dp"
         android:alpha="0"
         android:contentDescription="@string/close_queue_image_description"
         app:layout_constraintVertical_bias="0.9"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline_top"
+        app:layout_constraintTop_toBottomOf="@id/full_player_toolbar"
         app:layout_constraintBottom_toTopOf="@id/guideline_queue_top"
         app:srcCompat="@drawable/ic_baseline_close" />
 
@@ -177,18 +178,5 @@
         app:layout_constraintTop_toBottomOf="@id/play_pause_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:srcCompat="@drawable/ic_baseline_queue_music" />
-
-    <ImageView
-        android:id="@+id/back_button"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:tint="?attr/colorControlNormal"
-        android:contentDescription="@string/back_image_description"
-        app:srcCompat="@drawable/ic_baseline_arrow_black"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/guideline_top"/>
-
 
 </androidx.constraintlayout.motion.widget.MotionLayout>

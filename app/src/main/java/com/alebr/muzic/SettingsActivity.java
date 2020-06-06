@@ -4,9 +4,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -45,9 +45,18 @@ public class SettingsActivity extends AppCompatActivity {
             }else {
                 themeValues = getResources().getStringArray(R.array.theme_before_q_values);
             }
-            ListPreference themePreferences = findPreference("themePref");
-            themePreferences.setEntries(themeValues);
-
+            ListPreference themePreferences = findPreference(getString(R.string.theme_key_shared_prefs));
+            if(themePreferences != null) {
+                themePreferences.setEntries(themeValues);
+                themePreferences.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener(){
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        String themeOption = (String) newValue;
+                        MuzicApplication.applyTheme(themeOption);
+                        return true;
+                    }
+                });
+            }
         }
     }
 }

@@ -13,11 +13,10 @@
         android:theme="?attr/actionBarTheme"
         app:title="@string/app_name"
         app:navigationIcon="@drawable/ic_baseline_arrow"
-        app:titleTextColor="@color/colorAccent"
-        />
+        app:titleTextColor="@color/colorAccent" />
 
     <FrameLayout
         android:id="@+id/settings"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 </LinearLayout>

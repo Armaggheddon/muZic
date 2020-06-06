@@ -43,6 +43,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueFragmentListener {
 
+    private static final String FRAGMENT_TO_REMOVE_SAVED_STATE_KEY = "fragment_tag_to_remove";
+
     @Override
     public void onPlayableItemClicked(String parentId, long positionInQueue) {
         //Called when a playable item is clicked on the fragment
@@ -57,11 +59,12 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         ListFragment playableFragment = ListFragment.newInstance(mediaId);
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction()
-                .replace(R.id.fragment_container, playableFragment)
+                .replace(R.id.fragment_container, playableFragment, mediaId)
                 .addToBackStack(mediaId)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .commit();
         mToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow);
+        mToolbar.hideOverflowMenu();
     }
 
     @Override
@@ -163,6 +166,18 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        if(savedInstanceState != null){
+            //Remove the fragment that was previously being shown allowing to restart the fragment
+            //and have the content displayed instead of a white/black empty screen to avoid this
+            //remove the fragment that was being displayed before the theme change
+            String fragmentTag = savedInstanceState.getString(FRAGMENT_TO_REMOVE_SAVED_STATE_KEY);
+
+            Fragment fragmentToRemove = getSupportFragmentManager().findFragmentByTag(fragmentTag);
+            if(fragmentToRemove != null)
+                getSupportFragmentManager().beginTransaction().remove(fragmentToRemove).commit();
+        }
+
         mToolbar = findViewById(R.id.toolbar);
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -218,21 +233,22 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 e.printStackTrace();
             }
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
-            boolean at_least_one_fragment = false;
-            for(Fragment fragment : getSupportFragmentManager().getFragments()){
 
-                if(fragment != null){
-                    at_least_one_fragment = true;
-                    break;
-                }
-            }
+            boolean at_least_one_fragment = false;
+            if(getSupportFragmentManager().getFragments().size() != 0)
+                at_least_one_fragment = true;
 
             if(!at_least_one_fragment){
+
+                //Update the current item selected in the bottom navigation view
+                ((BottomNavigationView)findViewById(R.id.navigation)).setSelectedItemId(R.id.albums);
+
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, albumFragment, ListFragment.ALBUM_FRAGMENT_TAG)
                         .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
             }
+
 
             buildTransportControls();
             super.onConnected();
@@ -369,7 +385,28 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        //If a fragment is currently active save its tag in the saved state.
+        //It the user changes theme and the value of the setting is default then the UI will
+        //be redrawn every time the theme changes. To prevent the fragment not being shown due to
+        //the fact that it exist but does not get instantiated again because it is not destroyed
+        //save its tag to allow to remove it in the on create and then can be recreated.
+        String fragmentTag = null;
 
+        //Since at any time we are showing only one fragment, when we find the first fragment we break
+        //because there arent any other fragments
+        for(Fragment fragment : getSupportFragmentManager().getFragments()){
+            fragmentTag = fragment.getTag();
+            break;
+        }
+
+        Log.d(TAG, "onSaveInstanceState: " + fragmentTag);
+
+        outState.putString(FRAGMENT_TO_REMOVE_SAVED_STATE_KEY, fragmentTag);
+
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     protected void onResume() {

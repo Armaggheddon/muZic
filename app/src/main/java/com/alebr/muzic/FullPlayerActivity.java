@@ -3,7 +3,6 @@ package com.alebr.muzic;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
-//import androidx.palette.graphics.Palette;
 import androidx.palette.graphics.Palette;
 
 import android.animation.ValueAnimator;
@@ -12,6 +11,8 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadata;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,20 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
 
     public static int FULL_PLAYER_ACTIVITY_RESULT = 555;
     public static final String METADATA_NOT_AVAILABLE = "is_metadata_available";
+
+    private static final String TAG = "FullPlayerActivity";
+
+    private ImageView albumImage, skipToPreviousButton, skipToNextButton, showQueueButton, hideQueueButton;
+    private TextView titleTextView, artistTextView, elapsedTimeTextView, leftTimeTextView;
+    private FloatingActionButton playPauseButton;
+    private ValueAnimator mSeekBarAnimator;
+    private boolean isTracking = false;
+    private SeekBar seekBar;
+    private MotionLayout motionLayout;
+    private MaterialToolbar mToolbar;
+    private MediaBrowserCompat mBrowser;
+
+    private int previousColor;
 
     @Override
     public void onQueueItemClicked(long positionInQueue) {
@@ -49,26 +65,15 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         return mBrowser;
     }
 
-    private static final String TAG = "FullPlayerActivity";
-
-    private ImageView backButton, albumImage, skipToPreviousButton, skipToNextButton, showQueueButton, hideQueueButton;
-    private TextView titleTextView, artistTextView, elapsedTimeTextView, leftTimeTextView;
-    private FloatingActionButton playPauseButton;
-    private ValueAnimator mSeekBarAnimator;
-    private boolean isTracking = false;
-    private SeekBar seekBar;
-    private MotionLayout motionLayout;
-    private MediaBrowserCompat mBrowser;
-
-    private int previousColor;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_full_player);
 
-        motionLayout = findViewById(R.id.full_player_layout);
+        motionLayout = findViewById(R.id.full_player_root);
+
+        mToolbar = findViewById(R.id.full_player_toolbar);
 
         previousColor = android.R.attr.windowBackground;
 
@@ -114,15 +119,14 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         }
     };
 
-    //Suppress because it is a string built to represent time, no need to format for "DefaultLocale"
+    /* Suppress because it is a string built to represent time, no need to format for "DefaultLocale" */
     @SuppressLint("DefaultLocale")
     private void buildTransportControls(){
 
-        backButton = findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mSeekBarAnimator != null) {
+                if(mSeekBarAnimator != null){
                     mSeekBarAnimator.removeAllUpdateListeners();
                     mSeekBarAnimator.cancel();
                     mSeekBarAnimator = null;
@@ -132,11 +136,13 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                     returnIntent.putExtra(METADATA_NOT_AVAILABLE, true);
                     setResult(Activity.RESULT_OK, returnIntent);
                     finish();
-                }else {
+                }
+                else {
                     finish();
                 }
             }
         });
+
         albumImage = findViewById(R.id.album_imageview);
         skipToPreviousButton = findViewById(R.id.skip_previous_button);
         skipToPreviousButton.setOnClickListener(new View.OnClickListener() {
@@ -278,13 +284,19 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 int colorButton = android.R.attr.colorControlNormal;
 
                 if(vibrantSwatch != null){
-                    colorTop = palette.getDominantColor(android.R.attr.colorControlNormal);
+                    colorTop = palette.getDominantColor(android.R.attr.windowBackground);
                     colorButton = vibrantSwatch.getBodyTextColor();
 
                 }
-                backButton.setColorFilter(colorButton);
 
-                hideQueueButton.setColorFilter(colorButton);
+                Drawable backIcon = getDrawable(R.drawable.ic_baseline_arrow_black);
+                Drawable closeQueueIcon = getDrawable(R.drawable.ic_baseline_close);
+                backIcon.setTint(colorButton);
+                closeQueueIcon.setTint(colorButton);
+
+                mToolbar.setNavigationIcon(backIcon);
+
+                hideQueueButton.setImageDrawable(closeQueueIcon);
 
 
                 final ValueAnimator colorAnimator = ValueAnimator.ofArgb(previousColor, colorTop);
