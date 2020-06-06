@@ -85,12 +85,15 @@ public class QueueFragment extends Fragment{
         return fragment;
     }
 
+    /* Set as a global variable so when the data is loaded is possible to scroll to the right position */
+    private RecyclerView mRecyclerView;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
 
-        RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView);
+        mRecyclerView = view.findViewById(R.id.recyclerView);
 
         /*
         Setting hasFixedSize improves performance on the rendering of the view.
@@ -124,7 +127,7 @@ public class QueueFragment extends Fragment{
             is_main_activity = getArguments().getBoolean(IS_MAIN_ACTIVITY_ARGS_EXTRA);
         }
 
-        MediaBrowserCompat mediaBrowser = null;
+        MediaBrowserCompat mediaBrowser;
         /* Get the MediaBrowser based on the activity that started the fragment */
         if(is_main_activity){
             mediaBrowser = ((MainActivity)getActivity()).getMediaBrowser();
@@ -184,6 +187,15 @@ public class QueueFragment extends Fragment{
 
             /* Update only the view changed */
             recyclerViewAdapter.notifyItemChanged( previousItem);
+
+            /*
+            If the items are more than 10, we scroll the recycler view to the position of the item
+            that is currently being played. This behaviour is applied only when the fragment is
+            opened for the first time.
+            It is possible to implement a smooth scroll behaviour but is only for aesthetics purposes
+            */
+            if(recyclerViewAdapter.getItemCount() > 10)
+                mRecyclerView.scrollToPosition(previousItem);
 
             /* Register a callback to know when the song being currently played changes */
             MediaControllerCompat.getMediaController(getActivity()).registerCallback(mControllerCallback);
