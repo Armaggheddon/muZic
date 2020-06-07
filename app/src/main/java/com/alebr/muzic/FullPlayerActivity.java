@@ -67,9 +67,9 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
     Value animator used to animate the position update for the seek bar and for the
     text views that represent the elapsed time and left time
     */
-    private ValueAnimator mSeekBarAnimator;
+    private ValueAnimator mTimeAnimator;
 
-    /* Flag that allows mSeekBarAnimator to know if the seek bar is being updated by the user to avoid pushing updates */
+    /* Flag that allows mTimeAnimator to know if the seek bar is being updated by the user to avoid pushing updates */
     private boolean isTracking = false;
     private SeekBar seekBar;
     private MotionLayout motionLayout;
@@ -118,10 +118,10 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             public void onClick(View v) {
 
                 /* Remove the listener to the Animator and delete it */
-                if(mSeekBarAnimator != null){
-                    mSeekBarAnimator.removeAllUpdateListeners();
-                    mSeekBarAnimator.cancel();
-                    mSeekBarAnimator = null;
+                if(mTimeAnimator != null){
+                    mTimeAnimator.removeAllUpdateListeners();
+                    mTimeAnimator.cancel();
+                    mTimeAnimator = null;
                 }
                 finish();
             }
@@ -193,10 +193,10 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             @Override
             public void onClick(View v) {
 
-                if(mSeekBarAnimator != null){
-                    mSeekBarAnimator.removeAllUpdateListeners();
-                    mSeekBarAnimator.cancel();
-                    mSeekBarAnimator = null;
+                if(mTimeAnimator != null){
+                    mTimeAnimator.removeAllUpdateListeners();
+                    mTimeAnimator.cancel();
+                    mTimeAnimator = null;
                 }
                 if(MediaControllerCompat.getMediaController(FullPlayerActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_STOPPED){
 
@@ -371,11 +371,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             playPauseButton.setImageResource(R.drawable.ic_pause);
 
             /* Animate from current position to the maximum position in (max-current) milliseconds */
-            mSeekBarAnimator = ValueAnimator.ofInt( currentProgress, seekBar.getMax())
+            mTimeAnimator = ValueAnimator.ofInt( currentProgress, seekBar.getMax())
                     .setDuration(seekBar.getMax() - currentProgress);
-            mSeekBarAnimator.setInterpolator( new LinearInterpolator());
-            mSeekBarAnimator.addUpdateListener(mAnimatorListener);
-            mSeekBarAnimator.start();
+            mTimeAnimator.setInterpolator( new LinearInterpolator());
+            mTimeAnimator.addUpdateListener(mAnimatorListener);
+            mTimeAnimator.start();
         }
 
         /* Else the current state is PAUSED so set the play_pause_button the play icon */
@@ -456,70 +456,109 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         });
     }
 
-    //TODO: FINISH COMMENTS FROM HERE
 
+    /**
+     * The listener for updates on the value to animate
+     */
     class AnimatorUpdateListener implements ValueAnimator.AnimatorUpdateListener{
-        //Suppress because it is a string built to represent time, no need to format for "DefaultLocale"
+        /* Suppress because it is a string built to represent time, no need to format for "DefaultLocale" */
         @SuppressLint("DefaultLocale")
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
+
+            /*
+            If the user is interacting cancel any update on the seek bar because changing the
+            position would cause the seek bar to return back to where it was canceling any user
+            position updates
+            */
             if(isTracking){
-                mSeekBarAnimator.cancel();
+                mTimeAnimator.cancel();
                 return;
             }
             int newValue = (Integer) animation.getAnimatedValue();
-            //The value is not sent constantly for every value, so since we dont need to update the
-            //seconds displayed every second when we are at least 500ms in one seconds update the
-            //values
+            /*
+            Since we need to update the views that represents the time elapsed and time left it is
+            useless to update for every milliseconds because the lowest time unit used in the
+            views is seconds. To avoid overloading the UI Thread that has to redraw the views every
+            time are updated, we just update the values in a smaller window of 200 milliseconds.
+            This choice causes a small delay on the update on the time values but is better for
+            performance
+             */
             if(newValue%1000 >= 800) {
-                //Log.d(TAG, "onAnimationUpdate: " + newValue);
+
+                /* Build the time values to display on the views as 00:00 -> <minutes>:<seconds> */
                 int elapsedSeconds = (int) TimeUnit.MILLISECONDS.toSeconds(newValue) % 60;
                 int elapsedMinutes = (int) TimeUnit.MILLISECONDS.toMinutes(newValue);
                 int leftTime = seekBar.getMax() - newValue;
                 int leftSeconds = (int) TimeUnit.MILLISECONDS.toSeconds(leftTime) % 60;
                 int leftMinutes = (int) TimeUnit.MILLISECONDS.toMinutes(leftTime);
+
+                /* Update the time that has elapsed from the start current song */
                 elapsedTimeTextView.setText(String.format("%02d:%02d", elapsedMinutes, elapsedSeconds));
+
+                /* Update the time tha is left to the end of the current song */
                 leftTimeTextView.setText(String.format("%02d:%02d", leftMinutes, leftSeconds));
             }
+
+            /* Update the current progress of the seek bar */
             seekBar.setProgress(newValue);
         }
     }
 
+    /**
+     * Handles state changes on the session and updates all the views with the right data
+     */
     MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
 
-            if(mSeekBarAnimator != null){
-                mSeekBarAnimator.cancel();
-                mSeekBarAnimator = null;
+            /* A new state is available, so cancel any updates on the views */
+            if(mTimeAnimator != null){
+                mTimeAnimator.cancel();
+                mTimeAnimator = null;
             }
-            seekBar.setProgress((int)state.getPosition());
+
+            /* Get the current position in the song */
+            int currentPosition = (int) state.getPosition();
+
+            /* Update the views with the new value and start the animator */
+            seekBar.setProgress(currentPosition);
+
+            /* If the state is PLAYING change the icon on playPauseButton and start the value animator */
             if(state.getState() == PlaybackStateCompat.STATE_PLAYING){
                 playPauseButton.setImageResource(R.drawable.ic_pause);
-                mSeekBarAnimator = ValueAnimator.ofInt((int) state.getPosition(), seekBar.getMax())
-                        .setDuration(seekBar.getMax()-state.getPosition());
-                mSeekBarAnimator.setInterpolator( new LinearInterpolator());
-                mSeekBarAnimator.addUpdateListener( mAnimatorListener);
-                mSeekBarAnimator.start();
-            }else {
+                mTimeAnimator = ValueAnimator.ofInt( currentPosition, seekBar.getMax())
+                        .setDuration(seekBar.getMax()-currentPosition);
+                mTimeAnimator.setInterpolator( new LinearInterpolator());
+                mTimeAnimator.addUpdateListener( mAnimatorListener);
+                mTimeAnimator.start();
+            }
+
+            /* Else just change the current icon on playPauseButton */
+            else {
                 playPauseButton.setImageResource(R.drawable.ic_play);
             }
         }
+
 
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
 
+            /* Metadata changed, which means that the song changed and the data about it */
             MediaDescriptionCompat description = metadata.getDescription();
 
+            /* Update the maximum value of the seek bar to be the duration of the new song */
             seekBar.setMax((int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
 
+            /* Update the title and the artist name in the text views */
             String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
             String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
 
             Bitmap albumArt = description.getIconBitmap();
 
+            /* Update the background color */
             setBackgroundAsync(albumArt);
 
             titleTextView.setText(title);
@@ -532,6 +571,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
     @Override
     protected void onStart() {
         super.onStart();
+
+        /* On start check if we are connected, iif not connect again */
         if(!mBrowser.isConnected()){
             mBrowser.connect();
         }
@@ -540,15 +581,20 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
     @Override
     protected void onStop() {
         super.onStop();
+
+        /* On stop release the controller and unregister the receiver */
         if(MediaControllerCompat.getMediaController(FullPlayerActivity.this) != null){
             MediaControllerCompat.getMediaController(FullPlayerActivity.this).unregisterCallback(controllerCallback);
         }
+
+        /* Disconnect from the browser */
         mBrowser.disconnect();
 
-        if(mSeekBarAnimator != null){
-            mSeekBarAnimator.cancel();
-            mSeekBarAnimator.removeAllUpdateListeners();
-            mSeekBarAnimator = null;
+        /* Remove the listener to the updates of the value */
+        if(mTimeAnimator != null){
+            mTimeAnimator.cancel();
+            mTimeAnimator.removeAllUpdateListeners();
+            mTimeAnimator = null;
         }
     }
 }

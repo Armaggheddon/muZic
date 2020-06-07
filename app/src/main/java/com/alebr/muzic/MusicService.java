@@ -368,15 +368,15 @@ public class MusicService extends MediaBrowserServiceCompat {
                         mSession.getController().getMetadata(),
                         mSession.getController().getPlaybackState(),
                         mSession.getSessionToken());
-                //If the service is not started
+                /* If the service is not started yet */
                 if (!isServiceStarted) {
-                    //Start the foreground service and update the flag isServiceStarted
+                    /* Start the foreground service fot the background playback and update the flag */
                     ContextCompat.startForegroundService(
                             MusicService.this,
                             new Intent(MusicService.this, MusicService.class));
                     isServiceStarted = true;
                 }
-                //Start the foreground service for the notification
+                /* If the service is already in started state just start it in the foreground */
                 startForeground(MediaNotificationManager.NOTIFICATION_ID, notification);
 
                 //Register the receiver
