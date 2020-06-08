@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     private TextView title_text;
     private ImageView album_image;
     private FloatingActionButton play_pause_button;
-    private ConstraintLayout smallPlayerLayout;
     private MotionLayout motionLayout;
 
     /*
@@ -281,20 +280,22 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 /* Get the fragment data and set it to the default values before removing it */
                 defaultFragment = fragmentToRemove;
                 defaultFragmentTag = defaultFragment.getTag();
-                switch (defaultFragmentTag) {
-                    case ListFragment.ARTIST_FRAGMENT_TAG:
-                        defaultItemInNavigation = R.id.artists_nav;
-                        break;
-                    case ListFragment.SONG_FRAGMENT_TAG:
-                        defaultItemInNavigation = R.id.songs_nav;
-                        break;
-                    case QueueFragment.QUEUE_FRAGMENT_TAG:
-                        defaultItemInNavigation = R.id.queue_nav;
-                        break;
-                }
+                if (defaultFragmentTag != null) {
+                    switch (defaultFragmentTag) {
+                        case ListFragment.ARTIST_FRAGMENT_TAG:
+                            defaultItemInNavigation = R.id.artists_nav;
+                            break;
+                        case ListFragment.SONG_FRAGMENT_TAG:
+                            defaultItemInNavigation = R.id.songs_nav;
+                            break;
+                        case QueueFragment.QUEUE_FRAGMENT_TAG:
+                            defaultItemInNavigation = R.id.queue_nav;
+                            break;
+                    }
 
-                /* Remove the fragment */
-                getSupportFragmentManager().beginTransaction().remove(fragmentToRemove).commit();
+                    /* Remove the fragment */
+                    getSupportFragmentManager().beginTransaction().remove(fragmentToRemove).commit();
+                }
             }
         }
 
@@ -344,7 +345,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationListener);
 
         /* Get a reference to the small player layout */
-        smallPlayerLayout = findViewById(R.id.small_player);
+        ConstraintLayout smallPlayerLayout = findViewById(R.id.small_player);
         smallPlayerLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
