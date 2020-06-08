@@ -304,59 +304,33 @@ public class MusicService extends MediaBrowserServiceCompat {
         else {
 
             /*
-            Detach result to load the data in another thread and send the data when all is loaded,
-            the current implementation uses a simple Runnable that allows Android Auto to show a
-            loading screen while the data is being created avoiding freezing the UI
+            Calling detach() on result to load the data in another thread and send the data when is ready,
+            the current implementation does not use this behaviour because the item are already
+            loaded in the memory and building the item is a fast operation
              */
             switch (parentMediaId) {
                 case MusicLibrary.BROWSER_ROOT:
-
-                    /* For this parentMediaId the items to build are simple, no need to call detach() */
                     mediaItems.addAll(mMusicLibrary.getRootItems());
                     result.sendResult(mediaItems);
                     break;
                 case MusicLibrary.ALBUMS:
 
                     /* The item clicked is the "Albums" category showed in the main screen */
-                    result.detach();
-
-                    /*
-                    Start a new thread to allow more time to build the requested items the data is
-                    published from the thread to the session when is ready
-                    */
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ALBUMS));
-                            result.sendResult(mediaItems);
-                        }
-                    }).start();
+                    mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ALBUMS));
+                    result.sendResult(mediaItems);
 
                     break;
                 case MusicLibrary.ARTISTS:
 
                     /* The item clicked is the "Artists" category showed in the main screen */
-                    result.detach();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ARTISTS));
-                            result.sendResult(mediaItems);
-                        }
-                    }).start();
-
+                    mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.ARTISTS));
+                    result.sendResult(mediaItems);
                     break;
                 case MusicLibrary.SONGS:
 
                     /* The item clicked is the "Songs" category showed in the main screen */
-                    result.detach();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.SONGS));
-                            result.sendResult(mediaItems);
-                        }
-                    }).start();
+                    mediaItems.addAll(mMusicLibrary.getItemsFromParentId(MusicLibrary.SONGS));
+                    result.sendResult(mediaItems);
                     break;
                 default:
 
@@ -365,14 +339,8 @@ public class MusicService extends MediaBrowserServiceCompat {
                     The item clicked can be a specific album such as "Album A" or a specific artist
                     so retrieve the songs in that album or from that artist
                     */
-                    result.detach();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
-                            result.sendResult(mediaItems);
-                        }
-                    }).start();
+                    mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
+                    result.sendResult(mediaItems);
                     break;
             }
             /*
@@ -1019,7 +987,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                 -Song duration
                 -Song Uri to play from
                 -Album art bitmap
-                -TODO: The song position this might change DO NOT USE AS SCREENSHOT
 
             Checks for non-null values on the data to avoid unexpected behaviours
             */
@@ -1029,8 +996,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     (data.getDescription()!=null)?data.getDescription().toString():"",
                     (data.getExtras()!=null)?data.getExtras().getLong(MusicLibrary.DURATION_ARGS_EXTRA):0,
                     (data.getMediaUri()!=null)?data.getMediaUri().toString():"",
-                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString(MusicLibrary.ALBUM_ART_URI_ARGS_EXTRA):null)),
-                    data.getExtras().getLong("POSITION", 0));
+                    mMusicLibrary.loadAlbumArt(Uri.parse((data.getExtras()!=null)?data.getExtras().getString(MusicLibrary.ALBUM_ART_URI_ARGS_EXTRA):null)));
         }
 
         /**
@@ -1048,12 +1014,9 @@ public class MusicService extends MediaBrowserServiceCompat {
          *                 The Uri of the song itself used to play the song by {@link MusicService#mMusicPlayer}
          * @param albumArt
          *                 The album art of the song
-         * @param num_tracks
-         *                   The song position in the queue
-         *                   TODO: this will change maybe DO NOT SCREENSHOT
          *
          */
-        private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt, long num_tracks){
+        private void setMetadata(String title, String artist, String album, long duration, String mediaUri, Bitmap albumArt){
 
             /* Get a metadata builder and put all the data inside */
             MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
@@ -1062,7 +1025,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                     .putText(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                     .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, mediaUri)
-                    .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, num_tracks)
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
 
             /* Update the session metadata */

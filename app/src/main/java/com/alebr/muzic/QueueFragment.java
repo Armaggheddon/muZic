@@ -7,6 +7,8 @@ import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,12 +47,16 @@ public class QueueFragment extends Fragment{
 
     private RecyclerViewAdapter recyclerViewAdapter;
 
-    private QueueFragmentListener mQueueFragmentListener;
-     /* The layout to show if no queue items are available, es empty queue*/
+    /* Set as a global variable so when the data is loaded is possible to scroll to the right position */
+    private RecyclerView mRecyclerView;
+
+    /* The layout to show if no queue items are available, es empty queue*/
     private ConstraintLayout noQueueLayout;
 
     /* Allows to know which was the previously changed item in the RecyclerView to update the items */
     private int previousItem = 0;
+
+    private QueueFragmentListener mQueueFragmentListener;
 
     /*
     Extending MediaBrowserProvider allows to ask for a MediaBrowser object to the class that
@@ -85,9 +91,6 @@ public class QueueFragment extends Fragment{
         return fragment;
     }
 
-    /* Set as a global variable so when the data is loaded is possible to scroll to the right position */
-    private RecyclerView mRecyclerView;
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -109,12 +112,15 @@ public class QueueFragment extends Fragment{
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
+
+                Log.d("queuefragment", "onItemClick: " + position);
                 mQueueFragmentListener.onQueueItemClicked(position);
+
+
             }
         });
 
         noQueueLayout = view.findViewById(R.id.empty_queue);
-
         return view;
     }
 
@@ -177,10 +183,10 @@ public class QueueFragment extends Fragment{
             recyclerViewAdapter.notifyDataSetChanged();
 
             /* Load the metadata of the current item being played */
-            MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();
+            //MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();
 
-            /* Get the item position in the queue */
-            previousItem = (int) metadata.getBundle().getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, 0);
+            /* Get the active item position in the queue */
+            previousItem = (int) MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId();
 
             /* Add a small icon telling the item being currently played */
             recyclerViewAdapter.getItem( previousItem).changeImage(R.drawable.ic_audiotrack);
@@ -189,12 +195,13 @@ public class QueueFragment extends Fragment{
             recyclerViewAdapter.notifyItemChanged( previousItem);
 
             /*
-            If the items are more than 10, we scroll the recycler view to the position of the item
-            that is currently being played. This behaviour is applied only when the fragment is
-            opened for the first time.
+            If the items in the recycler view are more than 5, we scroll the recycler view to the
+            position of the item that is currently being played so the user doesn't have to search
+            for the active item in the queue.
+            This behaviour is applied only when the fragment is opened for the first time.
             It is possible to implement a smooth scroll behaviour but is only for aesthetics purposes
             */
-            if(recyclerViewAdapter.getItemCount() > 10)
+            if( recyclerViewAdapter.getItemCount() > 5)
                 mRecyclerView.scrollToPosition(previousItem);
 
             /* Register a callback to know when the song being currently played changes */
@@ -205,28 +212,55 @@ public class QueueFragment extends Fragment{
     MediaControllerCompat.Callback mControllerCallback = new MediaControllerCompat.Callback() {
 
         @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat state) {
+            super.onPlaybackStateChanged(state);
+
+            /* Get the active item in the queue */
+            int currentItem = (int) state.getActiveQueueItemId();
+
+            updateRecyclerViewPosition(currentItem);
+        }
+
+        @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
             super.onMetadataChanged(metadata);
-            int currentItem = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS);
 
-            /* If the current item is different from the previous one*/
-            if(currentItem != previousItem){
+            /* Get the active item in the queue */
+            int currentItem = (int) MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId();
 
-                /* Remove the icon on the previous item view */
-                recyclerViewAdapter.getItem( previousItem).changeImage(0);
+            updateRecyclerViewPosition(currentItem);
 
-                /* Add the icon on the item that being played */
-                recyclerViewAdapter.getItem( currentItem).changeImage(R.drawable.ic_audiotrack);
-
-                /* Notify the adapter to update the views */
-                recyclerViewAdapter.notifyItemChanged(previousItem);
-                recyclerViewAdapter.notifyItemChanged(currentItem);
-
-                /* Update the previousItem value*/
-                previousItem = currentItem;
-            }
         }
     };
+
+    /**
+     * Updates the recycler view icon {@link R.drawable#ic_audiotrack} showing the icon on the
+     * current active item, if the position passed is the same as {@link QueueFragment#previousItem}
+     * does nothing
+     * @param currentItemPosition
+     *                            The current item in the queue that is in the play state
+     */
+    private void updateRecyclerViewPosition( int currentItemPosition){
+
+        /* If the current item is different from the previous one*/
+        if (currentItemPosition != previousItem) {
+
+            /* Remove the icon on the previous item view */
+            recyclerViewAdapter.getItem(previousItem).changeImage(0);
+
+            /* Add the icon on the item that being played */
+            recyclerViewAdapter.getItem(currentItemPosition).changeImage(R.drawable.ic_audiotrack);
+
+            /* Notify the adapter to update the views */
+            recyclerViewAdapter.notifyItemChanged(previousItem);
+            recyclerViewAdapter.notifyItemChanged(currentItemPosition);
+
+            /* Update the previousItem value*/
+            previousItem = currentItemPosition;
+        }
+    }
+
+    private boolean scroll_to_position = false;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -244,17 +278,9 @@ public class QueueFragment extends Fragment{
     public void onDetach() {
         super.onDetach();
 
-        /* If it is not yet removed remove the listener here as last resource */
+        /* Remove the listener from the fragment */
         if(mQueueFragmentListener != null)
             mQueueFragmentListener = null;
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        /* Remove the listener, no need to listen for updates the fragment has been removed from the parent */
-        mQueueFragmentListener = null;
 
         /* Unregister the callback to stop receiving updates from MediaControllerCompat */
         MediaControllerCompat.getMediaController(getActivity()).unregisterCallback(mControllerCallback);

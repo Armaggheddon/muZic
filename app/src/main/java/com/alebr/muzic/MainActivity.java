@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         Intent openIntent = getIntent();
         if(openIntent != null){
             String intentdata = openIntent.getStringExtra(LAUNCHER_SHORTCUTS_INTENT_KEY);
-            Log.d(TAG, "onCreate: " + intentdata);
+            Log.d(TAG, "onCreate: openIntent" + intentdata);
             if(intentdata != null) {
                 defaultFragmentTag = intentdata;
                 switch (intentdata) {
@@ -193,7 +193,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             }
         }
 
-
         if(savedInstanceState != null){
             //Remove the fragment that was previously being shown allowing to restart the fragment
             //and have the content displayed instead of a white/black empty screen to avoid this
@@ -201,8 +200,27 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             String fragmentTag = savedInstanceState.getString(FRAGMENT_TO_REMOVE_SAVED_STATE_KEY);
 
             Fragment fragmentToRemove = getSupportFragmentManager().findFragmentByTag(fragmentTag);
-            if(fragmentToRemove != null)
+
+            if (fragmentToRemove != null) {
+                Log.d(TAG, "onCreate: fragment not null");
+                defaultFragment = fragmentToRemove;
+                defaultFragmentTag = defaultFragment.getTag();
+                switch (defaultFragmentTag) {
+                    case ListFragment.ARTIST_FRAGMENT_TAG:
+                        defaultFragment = artistFragment;
+                        defaultItemInNavigation = R.id.artists_nav;
+                        break;
+                    case ListFragment.SONG_FRAGMENT_TAG:
+                        defaultFragment = songsFragment;
+                        defaultItemInNavigation = R.id.songs_nav;
+                        break;
+                    case QueueFragment.QUEUE_FRAGMENT_TAG:
+                        defaultFragment = queueFragment;
+                        defaultItemInNavigation = R.id.queue_nav;
+                        break;
+                }
                 getSupportFragmentManager().beginTransaction().remove(fragmentToRemove).commit();
+            }
         }
 
         mToolbar = findViewById(R.id.toolbar);
@@ -414,6 +432,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     }
 
+
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         //If a fragment is currently active save its tag in the saved state.
@@ -424,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         String fragmentTag = null;
 
         //Since at any time we are showing only one fragment, when we find the first fragment we break
-        //because there arent any other fragments
+        //because there are not any other fragments
         for(Fragment fragment : getSupportFragmentManager().getFragments()){
             fragmentTag = fragment.getTag();
             break;
@@ -436,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         super.onSaveInstanceState(outState);
     }
+
 
     @Override
     protected void onResume() {

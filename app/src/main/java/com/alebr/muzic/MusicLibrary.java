@@ -1,6 +1,7 @@
 package com.alebr.muzic;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,6 +13,9 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
@@ -84,6 +88,8 @@ public class MusicLibrary {
 
     private final Context context;
 
+    private Bitmap defaultBitmap;
+
     /**
      * Constructor of the class, it also initialize the media retrieving process to avoid waiting
      * @param context is used to retrieve the data from the memory since we need a contentResolver
@@ -91,6 +97,24 @@ public class MusicLibrary {
     public MusicLibrary(Context context){
         this.context = context;
         initLibrary();
+        initDefaultBitmap( context.getDrawable(R.drawable.ic_default_album_art_with_bg));
+    }
+
+    private void initLibrary(){
+        String[] projection = new String[]{
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.ARTIST_ID,
+                MediaStore.Audio.Media.ALBUM_ID,
+                MediaStore.Audio.Media.DURATION
+        };
+
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "=1";
+
+        StorageLoder storageLoder = new StorageLoder( context.getContentResolver(), projection, selection);
+        storageLoder.run();
     }
 
     /**
@@ -103,7 +127,7 @@ public class MusicLibrary {
      * -ALBUM_ID : unique identifier of the album
      * -DURATION : the length in ms of the song
      */
-    private void initLibrary(){
+    private void initLibrary2(){
 
         //The column DURATION was added back in API level 1, the columns so exists before Q, as shown
         //in the link below.
@@ -119,6 +143,8 @@ public class MusicLibrary {
         };
 
         String selection = MediaStore.Audio.Media.IS_MUSIC + "=1";
+
+        StorageLoder storageLoder = new StorageLoder( context.getContentResolver(), projection, selection);
 
         try(Cursor cursor = context.getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -206,6 +232,112 @@ public class MusicLibrary {
         });
     }
 
+    private Handler dataReadyHandler = new Handler(Looper.getMainLooper());
+
+    private final class StorageLoder implements Runnable{
+
+        private final ContentResolver contentResolver;
+        private final String[] projection;
+        private final String selection;
+
+        private StorageLoder(ContentResolver contentResolver, String[] projection, String selection){
+            this.contentResolver = contentResolver;
+            this.projection = projection;
+            this.selection = selection;
+        }
+
+        @Override
+        public void run() {
+            try(Cursor cursor = contentResolver.query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    projection,
+                    selection,
+                    null,
+                    null)){
+
+                //Cache the column ids since they are always the same and used in every iteration
+                int idCol = cursor.getColumnIndex(MediaStore.Audio.Media._ID);
+                int titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
+                int artistIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST_ID);
+                int artistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+                int albumCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
+                int albumIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+                int durationCol = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+                while(cursor.moveToNext()){
+                    long id = cursor.getLong(idCol);
+                    String title = cursor.getString(titleCol);
+                    String album = cursor.getString(albumCol);
+                    String artist = cursor.getString(artistCol);
+                    long artistId = cursor.getLong(artistIdCol);
+                    long albumId = cursor.getLong(albumIdCol);
+                    long duration = cursor.getLong(durationCol);
+                    //Build the songUri (the song itself to play) and the albumArtUri (the image of the album)
+                    Uri songUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    Uri albumArtUri = ContentUris.withAppendedId(Uri.parse(ALBUM_ART_URI), albumId);
+
+                    //If artistIds doesn't have this artistId add the artist data to a list of
+                    //ArtistItems that contains the artistId (unique) and the artist name.
+                    //The class (ArtistItem) also generates an IdString that is used to understand
+                    // what it is being asked from the MusicService (later in the class).
+                    //The artistId is also added to the list of artistIds for a faster comparison.
+                    //The same applies fot the album data in AlbumItem (+ the Uri of the album art)
+                    if(!artistIds.contains(artistId)){
+                        artists.add(
+                                new ArtistItem(
+                                        artistId,
+                                        artist));
+
+                        artistIds.add(artistId);
+                    }
+                    if(!albumIds.contains(albumId)){
+                        albums.add(new AlbumItem(
+                                albumId,
+                                album));
+                        albumIds.add(albumId);
+                    }
+                    //Add to the songs list a new instance of SongItem that holds all the useful
+                    //information about the song itself
+                    songs.add(
+                            new SongItem(
+                                    id,
+                                    title,
+                                    artist,
+                                    artistId,
+                                    album,
+                                    albumId,
+                                    duration,
+                                    songUri,
+                                    albumArtUri
+                            ));
+                }
+            //Sort the songs, albums and artists alphabetically using a comparator.
+            //Since the comparator is only used at this point there is no need to cache it
+            Collections.sort(songs, new Comparator<SongItem>() {
+                @Override
+                public int compare(SongItem o1, SongItem o2) {
+                    return o1.getTitle().compareToIgnoreCase(o2.getTitle());
+                }
+            });
+            Collections.sort(albums, new Comparator<AlbumItem>() {
+                @Override
+                public int compare(AlbumItem o1, AlbumItem o2) {
+                    return o1.getName().compareToIgnoreCase(o2.getName());
+                }
+            });
+            Collections.sort(artists, new Comparator<ArtistItem>() {
+                @Override
+                public int compare(ArtistItem o1, ArtistItem o2) {
+                    return o1.getName().compareToIgnoreCase(o2.getName());
+                }
+            });
+
+
+            }catch (NullPointerException e){
+                Log.e(TAG, "run: ", e);
+            }
+        }
+    }
+
     /**
      * Returns a bitmap representation of the Uri given as parameter. The image is also resized to
      * be 320x320 to match Android Auto default size
@@ -239,6 +371,9 @@ public class MusicLibrary {
     }
 
     private Bitmap getDefaultLargeIcon(){
+        return defaultBitmap;
+    }
+    private Bitmap getDefaultLargeIcon2(){
         Drawable drawable = context.getResources().getDrawable(R.drawable.ic_default_album_art_with_bg);
 
         Bitmap bitmap = Bitmap.createBitmap(
@@ -250,6 +385,23 @@ public class MusicLibrary {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    private void initDefaultBitmap(final Drawable drawable){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Bitmap bitmap = Bitmap.createBitmap(
+                        drawable.getIntrinsicWidth(),
+                        drawable.getIntrinsicHeight(),
+                        Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
+                drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                drawable.draw(canvas);
+
+                defaultBitmap = bitmap;
+            }
+        }).start();
     }
 
 
@@ -449,7 +601,7 @@ public class MusicLibrary {
             //Add extra data as DURATION and ALBUM_URI
             Bundle extras = new Bundle();
             extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
-            extras.putLong("POSITION", queuePosition);
+            //extras.putLong("POSITION", queuePosition);
             extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
             //Build the queueItem from MediaSessionCompat.Builder()
@@ -483,7 +635,7 @@ public class MusicLibrary {
                 //Create the QueueItem and add some extra data
                 Bundle extras = new Bundle();
                 extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
-                extras.putLong("POSITION", queuePosition);
+                //extras.putLong("POSITION", queuePosition);
                 extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
@@ -543,7 +695,7 @@ public class MusicLibrary {
             if(artistId.equals(String.format("%s%d", ARTIST_, songItem.getArtistId()))) {
                 Bundle extras = new Bundle();
                 extras.putLong( DURATION_ARGS_EXTRA, songItem.getDuration());
-                extras.putLong("POSITION", queuePosition);
+                //extras.putLong("POSITION", queuePosition);
                 extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
@@ -582,7 +734,7 @@ public class MusicLibrary {
                 Bundle extras = new Bundle();
                 //Add the extras for DURATION and ALBUM_URI
                 extras.putLong(DURATION_ARGS_EXTRA, songItem.getDuration());
-                extras.putLong("POSITION", 0);
+                //extras.putLong("POSITION", 0);
                 extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
