@@ -85,7 +85,7 @@ public class ListFragment extends Fragment{
      * Factory method to get a {@link ListFragment} given a mediaId
      * @param mediaId
      *          The string representing what the fragment should subscribe to in
-     *          {@link ListFragment#mSubscriptionCallback}
+     *          {@link ListFragment#mSubscriptionCallback} and what data will be shown to the user
      * @return
      *          Returns a fragment with the arguments set
      */

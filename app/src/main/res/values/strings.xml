@@ -10,6 +10,14 @@
     <string name="custom_action_replay">Replay</string>
     <string name="custom_action_random_song_in_queue">Random</string>
 
+    <string name="permission_denied_title">Permission</string>
+    <string name="permission_denied_message">Try again</string>
+    <string name="permission_denied_button_text">In order to play the music on your device the application requires the permission to read external storage.</string>
+    <string name="permission_denied_never_show_again_message">In order to play the music on your device muZic requires the permission to read external storage.</string>
+    <string name="permission_denied_never_show_again_button_text">Go to settings</string>
+
+    <string name="permission_not_available_auto_error_message">muZic requires media permissions, open the app when safe to set them</string>
+
     <string name="album_image_description">Album image</string>
     <string name="skip_next_image_description">Skip next</string>
     <string name="skip_previous_image_description">Skip previous</string>
