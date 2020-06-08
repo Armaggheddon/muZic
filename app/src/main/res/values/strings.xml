@@ -6,6 +6,9 @@
     <string name="artists_title">Artist</string>
     <string name="songs_title">Songs</string>
     <string name="queue_title">Queue</string>
+    
+    <string name="custom_action_replay">Replay</string>
+    <string name="custom_action_random_song_in_queue">Random</string>
 
     <string name="album_image_description">Album image</string>
     <string name="skip_next_image_description">Skip next</string>

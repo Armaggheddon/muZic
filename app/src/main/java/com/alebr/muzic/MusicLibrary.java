@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
@@ -297,6 +298,7 @@ public class MusicLibrary {
                 //Create the children for ALBUMS, for every album in albums create the item as
                 //BROWSABLE or PLAYLIST, and if is NOT Android Auto assign the iconUri to the item
                 //to allow later retrieving in the UI to show the right album image. Same applies for ARTISTS
+
                 for(AlbumItem album : albums){
                      mediaItems.add(generateBrowsableOrPlaylistItem(
                              album.getIdString(),
@@ -305,6 +307,7 @@ public class MusicLibrary {
                              null,
                              FLAG_PLAYLIST));
                 }
+
                 break;
             case ARTISTS:
                 for(ArtistItem artist : artists){
@@ -348,6 +351,8 @@ public class MusicLibrary {
         //the item clicked, since the ids are in the form "song_id", "album_id", "artist_id"
         //we just need to check what substring id is
 
+        Log.d(TAG, "getMediaItemsFromParentId: " + parentId);
+
         if(parentId.contains(ALBUM_)){
             //Get just the id value (just the number as string)
             String string_id = parentId.substring(ALBUM_.length());
@@ -379,6 +384,7 @@ public class MusicLibrary {
                 }
             }
         }
+        /*
         else{
             //The parent id clicked was a song, just return the song with the id specified
             for(SongItem songItem : songs){
@@ -393,6 +399,8 @@ public class MusicLibrary {
                 }
             }
         }
+
+         */
         return mediaItems;
     }
 

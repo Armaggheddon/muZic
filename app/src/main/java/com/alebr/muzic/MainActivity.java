@@ -282,6 +282,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         }
     };
 
+
+
     private void buildTransportControls(){
 
         album_image = findViewById(R.id.album_art_small_player);

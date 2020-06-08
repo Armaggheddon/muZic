@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.alebr.muzic">
 
     <!-- FOREGROUND_SERVICE permission used to run the music playback even if the application is not in foreground -->
@@ -42,11 +43,14 @@
         -->
         <service
             android:name=".MusicService"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+
 
         <!--
         The current implementation of the application does not support "landscape" layout
