@@ -49,12 +49,11 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
     /* Activity log tag*/
     private static final String TAG = "FullPlayerActivity";
 
-    /* Views used */
     /*
-    showQueueButton is used to animate to the end state that shows QueueFragment,
     hideQueueButton is used to animate to the start state hiding QueueFragment
     */
-    private ImageView albumImage, skipToPreviousButton, skipToNextButton, showQueueButton, hideQueueButton;
+    private ImageView albumImage;
+    private ImageView hideQueueButton;
 
     /*
     elapsedTimeTextView is used to display the current position in the song being played,
@@ -222,7 +221,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         });
 
         albumImage = findViewById(R.id.album_imageview);
-        skipToPreviousButton = findViewById(R.id.skip_previous_button);
+        ImageView skipToPreviousButton = findViewById(R.id.skip_previous_button);
         skipToPreviousButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -234,7 +233,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToPrevious();
             }
         });
-        skipToNextButton = findViewById(R.id.skip_next_button);
+        ImageView skipToNextButton = findViewById(R.id.skip_next_button);
         skipToNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -246,7 +245,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().skipToNext();
             }
         });
-        showQueueButton = findViewById(R.id.open_queue_button);
+        ImageView showQueueButton = findViewById(R.id.open_queue_button);
         showQueueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -325,7 +324,6 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         });
 
         /* Set the initial state for the views */
-
         MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(FullPlayerActivity.this);
 
         MediaMetadataCompat mediaMetadata = mediaController.getMetadata();
@@ -400,16 +398,18 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             @Override
             public void onGenerated(@Nullable Palette palette) {
 
-                Palette.Swatch vibrantSwatch = palette.getDominantSwatch();
+                Palette.Swatch dominantSwatch = null;
+                if(palette != null)
+                    dominantSwatch = palette.getDominantSwatch();
 
                 /*Set the default color to use in the top of the view and for the buttons in case no data is available */
                 int colorTop = android.R.attr.windowBackground;
                 int colorButton = android.R.attr.colorControlNormal;
 
                 /* If the swatch is not null then update the values */
-                if(vibrantSwatch != null){
+                if(dominantSwatch != null){
                     colorTop = palette.getDominantColor(android.R.attr.windowBackground);
-                    colorButton = vibrantSwatch.getBodyTextColor();
+                    colorButton = dominantSwatch.getBodyTextColor();
                 }
 
                 /* Get the 2 drawables for the icons that needs to have a proper color to avoid visibility issues */
@@ -417,8 +417,10 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 Drawable closeQueueIcon = getDrawable(R.drawable.ic_baseline_close);
 
                 /* Set tint applies a tint on the drawable, in fact changing the color if the drawable is black */
-                backIcon.setTint(colorButton);
-                closeQueueIcon.setTint(colorButton);
+                if(backIcon != null)
+                    backIcon.setTint(colorButton);
+                if(closeQueueIcon != null)
+                    closeQueueIcon.setTint(colorButton);
 
                 /* Update the icons */
                 mToolbar.setNavigationIcon(backIcon);

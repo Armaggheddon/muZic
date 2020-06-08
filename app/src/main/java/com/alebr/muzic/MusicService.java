@@ -339,7 +339,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     The item clicked can be a specific album such as "Album A" or a specific artist
                     so retrieve the songs in that album or from that artist
                     */
-                    mediaItems.addAll(mMusicLibrary.getMediaItemsFromParentId(parentMediaId));
+                    mediaItems.addAll(mMusicLibrary.getAlbumArtistItemsFromParentId(parentMediaId));
                     result.sendResult(mediaItems);
                     break;
             }
