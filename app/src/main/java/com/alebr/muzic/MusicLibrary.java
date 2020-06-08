@@ -676,26 +676,91 @@ public class MusicLibrary {
             }
         }
 
-        return (artistId != null) ? getArtistIdQueue(artistId) : null;
+        return (artistId != null) ? getArtistIdQueue(artistId, null) : null;
+    }
+
+    @SuppressLint("DefaultLocale")
+    public List<MediaSessionCompat.QueueItem> getSongsQueueFromQuery(String query){
+
+        SongItem songResult = null;
+
+        for (SongItem songItem : songs){
+            if(query.equalsIgnoreCase(songItem.getTitle())){
+                songResult = songItem;
+                break;
+            }
+        }
+
+        /*
+        Instead of returning a single item in the queue we add to the queue the songs of the same
+        artist. The queue will have in first position the song asked and next the songs the one of
+        the same artist, if any. The list must be created skipping the song asked to avoid issues
+        in the queue screen of Android Auto when selecting a song to play
+        */
+        if (songResult != null) {
+            List<MediaSessionCompat.QueueItem> resultQueue =
+                    getArtistIdQueue(String.format("%s%d", ARTIST_, songResult.getArtistId()), songResult.getIdString());
+
+            /* Build the QueueItem for songResult */
+            Bundle extras = new Bundle();
+            extras.putLong( DURATION_ARGS_EXTRA, songResult.getDuration());
+            extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songResult.getAlbumArtUri().toString());
+
+            MediaSessionCompat.QueueItem queueItemResult =
+                    new MediaSessionCompat.QueueItem(
+                            new MediaDescriptionCompat.Builder().setMediaId(songResult.getIdString())
+                                    .setMediaUri(songResult.getSongUri())
+                                    .setTitle(songResult.getTitle())
+                                    .setSubtitle(songResult.getArtist())
+                                    .setDescription(songResult.getAlbum())
+                                    .setExtras(extras).build(),
+                            0);
+
+            /* Add the songItem in the first position of the list*/
+            resultQueue.add(0, queueItemResult);
+
+            return resultQueue;
+        }
+
+        /* No matches available */
+        return null;
     }
 
     /**
-     * Does the same as getAlbumIdQueue but with the artists (see method above)
-     * @param artistId the artistId string as <artist_id> (es "artist_1")
-     * @return the list of QueueItems with all the songs with artistId as artist
+     * Creates a List containing the queue items that matches a common artist, it also used to create
+     * a custom queue for a song query. If {@param songIdToSkip} is set to null the default behaviour
+     * is applied and a queue with all the songs of an artist is created.
+     * If is not null, set the initial position to be 1 because {@link MusicLibrary#getSongsQueueFromQuery(String)}
+     * will add the search result in the first position, it is also necessary to skip this
+     * {@param songIdToSkip} to avoid setting the wrong position in the QueueItem and causing the queue
+     * to have wrong ids
+     * @param artistId
+     *                 The artistId string as <artist_id> (es "artist_1")
+     * @param songIdToSkip
+     *                     A flag set to true if the method should start assigning the
+     *                     positions starting from 0 or from 1. This last case is useful
+     *                     for building a result queue and allows the caller to add
+     *                     an item in the first position
+     * @return
+     *              The list of QueueItems with all the songs with artistId as artist
      */
-    //Suppress because it is not a user visible string, no need to format to "DefaultLocale"
+    /* Suppress because it is not a user visible string, no need to format to "DefaultLocale" */
     @SuppressLint("DefaultLocale")
-    public List<MediaSessionCompat.QueueItem> getArtistIdQueue(String artistId){
+    public List<MediaSessionCompat.QueueItem> getArtistIdQueue(String artistId, String songIdToSkip){
         List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
         int queuePosition = 0;
+        if(songIdToSkip != null)
+            queuePosition = 1;
         for(SongItem songItem : songs){
+
+            /* If the song item has the same stringId as the one asked to skip, continue */
+            if(songItem.getIdString().equals(songIdToSkip))
+                continue;
             //Check if the song artist matches the same artistId building the artistId string from the
             //songItem as "artist_" + the artistId in the songItem
             if(artistId.equals(String.format("%s%d", ARTIST_, songItem.getArtistId()))) {
                 Bundle extras = new Bundle();
                 extras.putLong( DURATION_ARGS_EXTRA, songItem.getDuration());
-                //extras.putLong("POSITION", queuePosition);
                 extras.putString(ALBUM_ART_URI_ARGS_EXTRA, songItem.getAlbumArtUri().toString());
 
                 queueItems.add(
@@ -724,6 +789,7 @@ public class MusicLibrary {
      * @return a list of QueueItems with all the matches, if no matches an empty list is returned
      */
     //Suppress because it is not a user visible string, no need to format to "DefaultLocale"
+    //TODO: delete this method no longer in use
     @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getSearchResult(String query){
 
@@ -752,7 +818,7 @@ public class MusicLibrary {
                 //album_id build from the match, same applies for the artist match
                 return getAlbumIdQueue(String.format("%s%d", ALBUM_, songItem.getAlbumId()));
             }if(songItem.getArtist().equalsIgnoreCase(query)){
-                 return getArtistIdQueue(String.format("%s%d", ARTIST_, songItem.getArtistId()));
+                 //return getArtistIdQueue(String.format("%s%d", ARTIST_, songItem.getArtistId()));
             }
         }
         //No matches in the library

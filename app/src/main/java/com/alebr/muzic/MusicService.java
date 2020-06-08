@@ -228,7 +228,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     /**
      * Utility method to stop the notification, checks if the notification service is running and
-     * if it is stops the service and updates the flag {@link MusicService#isServiceStarted}
+     * if it is the case stops the service and updates the flag {@link MusicService#isServiceStarted}
      */
     private void stopNotification(){
         if(isServiceStarted){
@@ -426,6 +426,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlay() {
 
+            /* If there is no queue or is empty call onPause to set the current playback state to paused */
             if (mQueue == null || mQueue.size() == 0) {
                 onPause();
                 return;
@@ -531,7 +532,6 @@ public class MusicService extends MediaBrowserServiceCompat {
                 /* If the item asked is the current one, just restart the song */
                 if (mQueuePosition == queueId) {
                     onSeekTo(0);
-
                 }
 
                 /* Else skip to the selected item if the position is not bigger than mQueue.size() */
@@ -602,7 +602,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
                     onPlay();
                 } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
-                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId), true);
+                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId, null), true);
                     onPlay();
                 } else {
                     /* It is a forbidden state for Android Auto clients */
@@ -622,7 +622,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 } else if (mediaId.contains(MusicLibrary.ALBUM_)) {
                     initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
                 } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
-                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId), true);
+                    initQueue(mMusicLibrary.getArtistIdQueue(mediaId, null), true);
                 } else {
 
                     /* This is a forbidden state and should never happen */
@@ -704,7 +704,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         /**
          * Handles the "prepare" request to prepare the session.
          * Creates a queue from {@link MusicLibrary#getSongsQueue()} with all the songs available
-         * and sets the current position in the queue to be a random position and set the current
+         * ,set the current position in the queue to be a random position and set the
          * playback state as {@value PlaybackStateCompat#STATE_PAUSED} as described in the documentation
          * @see "https://developer.android.com/training/cars/media#initial-playback-state"
          */
@@ -724,7 +724,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 initQueue(queueItems, false);
             }
 
-            /* Else the queue is not empty so there is no need to build an default queue */
+            /* Else the queue is not empty so there is no need to build a default queue */
             setCorrectPlaybackState(
                     PlaybackStateCompat.STATE_PAUSED,
                     0,
@@ -810,7 +810,6 @@ public class MusicService extends MediaBrowserServiceCompat {
             }
         }
 
-
         /**
          * Used to respond to custom actions in the Android Auto UI or other clients
          * @param action
@@ -859,19 +858,24 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlayFromSearch(final String query, final Bundle extras) {
 
-            Log.d(TAG, "onPlayFromSearch: " + query);
-            Log.d(TAG, "onPlayFromSearch: " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
+            Log.d(TAG, "onPlayFromSearch: user raw query " + query);
+            Log.d(TAG, "onPlayFromSearch: Assistant parsed query " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
 
             List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
-
 
             if(TextUtils.isEmpty(query)){
 
                 /*
                 The user provided generic string for example "Play music", we then build a queue
-                of all the songs
+                of all the songs, only if the current queue is not null or empty
                  */
-                queueItems.addAll(mMusicLibrary.getSongsQueue());
+                if(mQueue == null || mQueue.size() == 0) {
+                    List<MediaSessionCompat.QueueItem> songQueue = mMusicLibrary.getSongsQueue();
+
+                    /* Only if songQueue is not null */
+                    if (songQueue != null)
+                        queueItems.addAll(mMusicLibrary.getSongsQueue());
+                }
             }else{
 
                 /* Get the extra data about the query */
@@ -880,15 +884,23 @@ public class MusicService extends MediaBrowserServiceCompat {
 
                     /* Build a queue with the songs of the artist queried */
                     String artistQuery = extras.getString(MediaStore.EXTRA_MEDIA_ARTIST);
-                    queueItems.addAll(mMusicLibrary.getArtistQueueFromQuery(artistQuery));
+                    List<MediaSessionCompat.QueueItem> artistQueue = mMusicLibrary.getArtistQueueFromQuery(artistQuery);
+                    if(artistQueue != null)
+                        queueItems.addAll(artistQueue);
                 } else if (TextUtils.equals(mediaFocus, MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)){
 
                     /* Build a queue with the songs of the album queried */
                     String albumQuery = extras.getString(MediaStore.EXTRA_MEDIA_ALBUM);
-                    queueItems.addAll(mMusicLibrary.getAlbumQueueFromQuery(albumQuery));
-                } else {
-                    //TODO: add other case for a specific item being asked
-                    Log.d(TAG, "onPlayFromSearch: " + mediaFocus);
+                    List<MediaSessionCompat.QueueItem> albumQueue = mMusicLibrary.getAlbumQueueFromQuery(albumQuery);
+                    if(albumQueue != null)
+                        queueItems.addAll(albumQueue);
+                } else if(TextUtils.equals(mediaFocus, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)){
+
+                    /* Build a queue with the song asked in the fist position and other songs from the same artist */
+                    String songQuery = extras.getString(MediaStore.EXTRA_MEDIA_TITLE);
+                    List<MediaSessionCompat.QueueItem> songsQueue = mMusicLibrary.getSongsQueueFromQuery(songQuery);
+                    if(songsQueue != null)
+                        queueItems.addAll(mMusicLibrary.getSongsQueueFromQuery(songQuery));
                 }
             }
 

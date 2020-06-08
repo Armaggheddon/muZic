@@ -253,12 +253,10 @@ public class MediaNotificationManager {
             channel.setDescription(description);
             mNotificationManager.createNotificationChannel(channel);
         }
+
         /* Else the channel already exists, just use the existing one */
         else
             Log.d(TAG, "createChannel: " +
-                    "using existing channel with channelId " + CHANNEL_ID);
+                    "using existing notification channel with channelId " + CHANNEL_ID);
     }
-
-
-
 }
