@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/full_player_root"
-    tools:context=".FullPlayerActivity"
+    tools:context=".ui.FullPlayerActivity"
     app:layoutDescription="@xml/activity_full_player_scene">
 
     <com.google.android.material.appbar.MaterialToolbar

@@ -57,7 +57,7 @@
         so we set "android:screenOrientation" to support only "portrait" on all activities
         -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SplashScreenTheme">
             <intent-filter>
@@ -71,12 +71,12 @@
         of the activity with MainActivity "behind" FullPlayerActivity
         -->
         <activity
-            android:name=".FullPlayerActivity"
-            android:parentActivityName=".MainActivity"
+            android:name=".ui.FullPlayerActivity"
+            android:parentActivityName=".ui.MainActivity"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.SettingsActivity"
             android:screenOrientation="portrait"
             android:label="@string/settings_title"/>
 

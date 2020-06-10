@@ -29,6 +29,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 
+import com.alebr.muzic.library.MusicLibrary;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -946,13 +948,13 @@ public class MusicService extends MediaBrowserServiceCompat {
                     List<MediaSessionCompat.QueueItem> albumQueue = mMusicLibrary.getAlbumQueueFromQuery(albumQuery);
                     if (albumQueue != null)
                         queueItems.addAll(albumQueue);
-                } else if (TextUtils.equals(mediaFocus, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)) {
+                } else if (TextUtils.equals(mediaFocus, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)){
 
                     /* Build a queue with the song asked in the fist position and other songs from the same artist */
                     String songQuery = extras.getString(MediaStore.EXTRA_MEDIA_TITLE);
                     List<MediaSessionCompat.QueueItem> songsQueue = mMusicLibrary.getSongsQueueFromQuery(songQuery);
                     if (songsQueue != null)
-                        queueItems.addAll(mMusicLibrary.getSongsQueueFromQuery(songQuery));
+                        queueItems.addAll(songsQueue);
                 }
             }
 

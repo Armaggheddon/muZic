@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.library;
 
 import android.annotation.SuppressLint;
 import android.net.Uri;
@@ -22,7 +22,7 @@ public class SongItem {
 
     /**
      * Constructor of the item. It creates a idString appending {@param id} to
-     * {@value com.alebr.muzic.MusicLibrary#SONG_}
+     * {@value MusicLibrary#SONG_}
      * @param id
      *          The id of the song obtained from {@value android.provider.MediaStore.Audio.Media#_ID}
      * @param title

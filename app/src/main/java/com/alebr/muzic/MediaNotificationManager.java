@@ -19,6 +19,9 @@ import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
+import com.alebr.muzic.ui.FullPlayerActivity;
+import com.alebr.muzic.ui.MainActivity;
+
 /**
  * Manages the correct set up of the notification and builds the
  * {@link MediaNotificationManager#createContentIntent()} pending intent that launches

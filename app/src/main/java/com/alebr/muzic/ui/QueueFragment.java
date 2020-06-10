@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -19,6 +19,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.alebr.muzic.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +64,7 @@ public class QueueFragment extends Fragment{
     Extending MediaBrowserProvider allows to ask for a MediaBrowser object to the class that
     implements it (MainActivity and FullPlayerActivity in this case)
     */
-    public interface QueueFragmentListener extends MediaBrowserProvider{
+    public interface QueueFragmentListener extends MediaBrowserProvider {
         /**
          * Allows to know what is the position of the item clicked
          * @param positionInQueue

@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -12,6 +12,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.alebr.muzic.R;
+import com.alebr.muzic.library.AlbumItem;
+import com.alebr.muzic.library.ArtistItem;
+import com.alebr.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +53,7 @@ public class ListFragment extends Fragment{
     Extending MediaBrowserProvider allows to ask for a MediaBrowser object to the class that
     implements it (MainActivity in this case)
     */
-    public interface FragmentListListener extends MediaBrowserProvider{
+    public interface FragmentListListener extends MediaBrowserProvider {
 
         /**
          * Used when a browsable item is clicked in RecyclerView,
@@ -157,9 +162,10 @@ public class ListFragment extends Fragment{
      */
     public void onConnected(){
 
-        mFragmentListener.getMediaBrowser().subscribe(subscribeTo, mSubscriptionCallback);
+            mFragmentListener.getMediaBrowser().subscribe(subscribeTo, mSubscriptionCallback);
 
     }
+
 
     private final MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback = new MediaBrowserCompat.SubscriptionCallback() {
         @Override
@@ -167,7 +173,7 @@ public class ListFragment extends Fragment{
             super.onChildrenLoaded(parentId, children);
 
             /* For every item in children create a new CustomList instance*/
-            for(MediaBrowserCompat.MediaItem item : children){
+            for (MediaBrowserCompat.MediaItem item : children) {
                 recyclerViewAdapter.add(new CustomListItem(
                         item.getMediaId(),
                         item.getDescription().getTitle().toString()));
@@ -214,4 +220,5 @@ public class ListFragment extends Fragment{
             mediaBrowser.unsubscribe(subscribeTo);
         }
     }
+
 }

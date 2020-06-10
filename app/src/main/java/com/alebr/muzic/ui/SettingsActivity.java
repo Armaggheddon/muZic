@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
 
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
@@ -7,18 +7,23 @@ import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
+
+import com.alebr.muzic.MuzicApplication;
+import com.alebr.muzic.R;
 import com.google.android.material.appbar.MaterialToolbar;
+
 import java.util.Arrays;
 
 
 /**
- * Handles the settings showed to the user and saves them
+ * Handles the settings showed to the user in {@link R.layout#settings_activity} and saves them
  */
 public class SettingsActivity extends AppCompatActivity {
 
@@ -189,9 +194,7 @@ public class SettingsActivity extends AppCompatActivity {
             manager.setDynamicShortcuts(Arrays.asList(queueInfo, songInfo, artistInfo));
         }
 
-        /*
-        Removes any available shortcuts from the launcher icon
-        */
+        /* Removes any available shortcuts from the launcher icon */
         @RequiresApi(Build.VERSION_CODES.N_MR1)
         private void removeShortcuts(){
             ShortcutManager manager = getActivity().getSystemService(ShortcutManager.class);

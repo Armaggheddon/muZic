@@ -1,4 +1,9 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
+
+import com.alebr.muzic.R;
+import com.alebr.muzic.library.AlbumItem;
+import com.alebr.muzic.library.ArtistItem;
+import com.alebr.muzic.library.SongItem;
 
 /**
  * Holds the information to show in the item in the RecyclerView in {@link ListFragment}

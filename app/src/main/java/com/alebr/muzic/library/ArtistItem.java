@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.library;
 
 import android.annotation.SuppressLint;
 
@@ -14,7 +14,7 @@ public class ArtistItem {
 
     /**
      * Constructor of the item. It creates a idString appending {@param id} to
-     * {@value com.alebr.muzic.MusicLibrary#ARTIST_}
+     * {@value MusicLibrary#ARTIST_}
      * @param id
      *          The id of the artist obtained from {@value android.provider.MediaStore.Audio.Media#ARTIST_ID}
      * @param name

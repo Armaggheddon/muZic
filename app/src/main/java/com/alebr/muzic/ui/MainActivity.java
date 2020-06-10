@@ -1,18 +1,4 @@
-package com.alebr.muzic;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.motion.widget.MotionLayout;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
+package com.alebr.muzic.ui;
 
 import android.Manifest;
 import android.app.Activity;
@@ -37,6 +23,23 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.alebr.muzic.MusicService;
+import com.alebr.muzic.R;
+import com.alebr.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -61,9 +64,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     private final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 101;
 
     /* Get the fragments that will ba used from the activity */
-    private final ListFragment albumFragment = ListFragment.newInstance(MusicLibrary.ALBUMS);
-    private final ListFragment artistFragment = ListFragment.newInstance(MusicLibrary.ARTISTS);
-    private final ListFragment songsFragment = ListFragment.newInstance(MusicLibrary.SONGS);
+    private static final ListFragment albumFragment = ListFragment.newInstance(MusicLibrary.ALBUMS);
+    private static final ListFragment artistFragment = ListFragment.newInstance(MusicLibrary.ARTISTS);
+    private static final ListFragment songsFragment = ListFragment.newInstance(MusicLibrary.SONGS);
     private final QueueFragment queueFragment = new QueueFragment();
 
     private MediaBrowserCompat mMediaBrowser;
@@ -162,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
             String FRAGMENT_TAG = null;
             Fragment fragment = null;
-            switch (item.getItemId()){
+            switch (item.getItemId()) {
                 case R.id.albums_nav:
 
                     /* The album icon on the navigation bar is clicked, get the Album fragment */
@@ -194,10 +197,10 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             }
 
             /* If the fragment is not null (one valid item was clicked) */
-            if(fragment != null){
+            if (fragment != null) {
 
                 /* If the new fragment to launch is different from the previous one */
-                if(getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG) != fragment) {
+                if (getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG) != fragment) {
 
                     /* Remove all fragments from the back stack to cancel the navigation */
                     getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -207,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                             .replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
                             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                             .commit();
-                }else
+                } else
                     /* Else we are already on the fragment clicked just pop the back stack to return to the "root" */
                     getSupportFragmentManager().popBackStack();
             }
@@ -216,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             return true;
         }
     };
-
 
 
     @Override
@@ -229,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         /* Get any intent, if it is not null */
         Intent openIntent = getIntent();
-        if(openIntent != null){
+        if (openIntent != null) {
 
             /*
             The user launched the application using a launcher shortcut published get the data in
@@ -238,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             String intentdata = openIntent.getStringExtra(LAUNCHER_SHORTCUTS_INTENT_KEY);
 
             /* If the intent data is not null */
-            if(intentdata != null) {
+            if (intentdata != null) {
 
                 /* Check for what fragment needs to be opened and set the default values */
                 defaultFragmentTag = intentdata;
@@ -263,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         If a configuration changes, such as a theme change we can restore the previous savedState
         that is the current visible fragment.
         */
-        if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             /*
             Remove the fragment that was previously visible allowing to restart the fragment
             and have the content displayed instead of a white/black empty screen. To avoid this
@@ -320,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                if(item.getItemId() == R.id.option){
+                if (item.getItemId() == R.id.option) {
 
                     /* Launch the option activity */
                     startActivity(new Intent(MainActivity.this, SettingsActivity.class));
@@ -334,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         /* If the execution is here the application has the "read external storage permission" */
         mMediaBrowser = new MediaBrowserCompat(
                 this,
-                new ComponentName( this, MusicService.class),
+                new ComponentName(this, MusicService.class),
                 mConnectionCallback,
                 null);
 
@@ -363,17 +365,17 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
     }
 
-    private final MediaBrowserCompat.ConnectionCallback mConnectionCallback = new MediaBrowserCompat.ConnectionCallback(){
+    private final MediaBrowserCompat.ConnectionCallback mConnectionCallback = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
             MediaSessionCompat.Token token = mMediaBrowser.getSessionToken();
             MediaControllerCompat mediaController = null;
-            try{
+            try {
 
                 /* Get a new media controller that allows the activity to send transport controls to the session */
                 mediaController = new MediaControllerCompat(
                         MainActivity.this, token);
-            }catch (RemoteException e){
+            } catch (RemoteException e) {
                 e.printStackTrace();
             }
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
@@ -383,14 +385,14 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             fragment
             */
             boolean at_least_one_fragment = false;
-            if(getSupportFragmentManager().getFragments().size() != 0)
+            if (getSupportFragmentManager().getFragments().size() != 0)
                 at_least_one_fragment = true;
 
             /* If no fragments are active */
-            if(!at_least_one_fragment){
+            if (!at_least_one_fragment) {
 
                 /* Update the current item selected in the bottom navigation view */
-                ((BottomNavigationView)findViewById(R.id.navigation)).setSelectedItemId(defaultItemInNavigation);
+                ((BottomNavigationView) findViewById(R.id.navigation)).setSelectedItemId(defaultItemInNavigation);
 
                 /*
                 Replace the view with the fragment, if savedInstanceState is null the default fragment
@@ -401,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 */
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, defaultFragment, defaultFragmentTag)
-                        .setTransition( FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                         .commit();
             }
 
@@ -414,7 +416,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     /**
      * Initialize the views to match the current playback state and metadata
      */
-    private void buildTransportControls(){
+    private void buildTransportControls() {
 
         album_image = findViewById(R.id.album_art_small_player);
         title_text = findViewById(R.id.title_small_player);
@@ -425,7 +427,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             public void onClick(View v) {
 
                 /* If the current state is PLAYING then the click event represent a pause action */
-                if(MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+                if (MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
                     MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
 
                     /* Update the image on the button to represent the new action */
@@ -433,7 +435,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 }
 
                 /* Else the event is in state PAUSED, then the the click event represent a play action */
-                else{
+                else {
                     MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
 
                     /* Update the image on the button to represent the new action */
@@ -450,7 +452,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         the album image on the image view, se the title of the song and then animate the small
         player to be visible with a slide up animation
         */
-        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING){
+        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
             play_pause_button.setImageResource(R.drawable.ic_pause);
             title_text.setText(mediaController.getMetadata().getDescription().getTitle());
             album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
@@ -462,7 +464,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         (play icon), set the album image on the image view, set the title of the song and then
         animate the small player to be visible with a slide_up_animation
         */
-        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PAUSED){
+        if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PAUSED) {
             MediaMetadataCompat metadata = mediaController.getMetadata();
             if (metadata != null) {
                 play_pause_button.setImageResource(R.drawable.ic_play);
@@ -482,10 +484,10 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             super.onPlaybackStateChanged(state);
 
             /* When the playback state changes update the icons on the play_pause_button */
-            play_pause_button.setImageResource((state.getState()==PlaybackStateCompat.STATE_PLAYING) ? R.drawable.ic_pause : R.drawable.ic_play);
+            play_pause_button.setImageResource((state.getState() == PlaybackStateCompat.STATE_PLAYING) ? R.drawable.ic_pause : R.drawable.ic_play);
 
             /* If the current session state is PAUSED or PLAYING */
-            if(state.getState() == PlaybackStateCompat.STATE_PAUSED || state.getState() == PlaybackStateCompat.STATE_PLAYING) {
+            if (state.getState() == PlaybackStateCompat.STATE_PAUSED || state.getState() == PlaybackStateCompat.STATE_PLAYING) {
 
                 /*
                 If the current state of the layout is in the started state animate the to the end
@@ -496,7 +498,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             }
 
             /* Hide the small player if the session state changes to stopped */
-            if (state.getState() == PlaybackStateCompat.STATE_STOPPED){
+            if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
 
                 /*
                 If the current state of the layout is in the end state animate to the start state
@@ -526,6 +528,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE) {
+
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 /* We have the permission to read to external storage */
@@ -544,7 +547,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 give the permission to read external storage
                 */
                 boolean showRationale = shouldShowRequestPermissionRationale(permissions[0]);
-                if(!showRationale){
+                if (!showRationale) {
 
                     /*
                     The user clicked on the "never show again"
@@ -576,8 +579,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                             })
                             .setCancelable(false);
                     alert.create().show();
-                }
-                else {
+                } else {
 
                     /*
                     It is possible to ask for the permission again, build a dialog informing the
@@ -611,17 +613,16 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         super.onStart();
 
         /* If we dont have the permission */
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_DENIED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     READ_EXTERNAL_STORAGE_REQUEST_CODE);
-        }
-        else{
+        } else {
             /*
             The application has the permission to read external storage so we can connect to the
             MusicService if not already connected
             */
-            if(!mMediaBrowser.isConnected())
+            if (!mMediaBrowser.isConnected())
                 mMediaBrowser.connect();
         }
     }
@@ -643,7 +644,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         Because the application only shows one fragment at a time when the first fragment is found
         the loop can be stopped
         */
-        for(Fragment fragment : getSupportFragmentManager().getFragments()){
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
             fragmentTag = fragment.getTag();
             break;
         }
@@ -670,7 +671,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         super.onStop();
 
         /* If the activity has a media controller, unregister the callback from the session */
-        if(MediaControllerCompat.getMediaController(MainActivity.this) != null){
+        if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(mControllerCallback);
         }
 
@@ -683,12 +684,12 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         super.onActivityResult(requestCode, resultCode, data);
 
         /* When FullPlayerActivity returns false it means the session is disconnected */
-        if(requestCode == FullPlayerActivity.FULL_PLAYER_ACTIVITY_RESULT){
-            if(resultCode == Activity.RESULT_OK){
-                if(data.getBooleanExtra(FullPlayerActivity.METADATA_NOT_AVAILABLE_ARGS_KEY, false)){
+        if (requestCode == FullPlayerActivity.FULL_PLAYER_ACTIVITY_RESULT) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (data.getBooleanExtra(FullPlayerActivity.METADATA_NOT_AVAILABLE_ARGS_KEY, false)) {
 
                     /* Then hide the small player layout if is in end state (small player visible) */
-                    if(motionLayout.getCurrentState() == motionLayout.getEndState())
+                    if (motionLayout.getCurrentState() == motionLayout.getEndState())
                         motionLayout.transitionToStart();
                 }
             }

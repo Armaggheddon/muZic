@@ -1,7 +1,6 @@
-package com.alebr.muzic;
+package com.alebr.muzic.library;
 
 import android.annotation.SuppressLint;
-import android.net.Uri;
 
 /**
  * Holds all the useful information about an album
@@ -15,7 +14,7 @@ public class AlbumItem {
 
     /**
      * Constructor of the item. It creates a idString appending {@param id} to
-     * {@value com.alebr.muzic.MusicLibrary#ALBUM_}
+     * {@value MusicLibrary#ALBUM_}
      * @param id
      *          The id of the album obtained from {@value android.provider.MediaStore.Audio.Media#ARTIST_ID}
      * @param name

@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
@@ -29,6 +29,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.palette.graphics.Palette;
 
+import com.alebr.muzic.MusicService;
+import com.alebr.muzic.R;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 

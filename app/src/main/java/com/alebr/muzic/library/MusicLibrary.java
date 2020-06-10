@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.alebr.muzic.library;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -18,6 +18,9 @@ import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+
+import com.alebr.muzic.MusicService;
+import com.alebr.muzic.R;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -702,8 +705,8 @@ public class MusicLibrary {
         /* Search in the songs */
         for (SongItem songItem : songs) {
 
-            /* If the title matches the query */
-            if (query.equalsIgnoreCase(songItem.getTitle())) {
+            /* If the title matches the query, check for prefix since the song can contain more "data" */
+            if ((songItem.getTitle().toLowerCase()).startsWith(query.toLowerCase())) {
 
                 /* Get the SongItem that represent the song requested */
                 songResult = songItem;
@@ -779,7 +782,7 @@ public class MusicLibrary {
         for (SongItem songItem : songs) {
 
             /* If the song item has the same stringId as the one asked to skip, continue */
-            if (songItem.getIdString().equals(songIdToSkip))
+            if (songItem.getIdString().equalsIgnoreCase(songIdToSkip))
                 continue;
             /*
             Check if the song artist matches the same artistId building the artistId string from the

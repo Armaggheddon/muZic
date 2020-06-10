@@ -1,12 +1,16 @@
-package com.alebr.muzic;
+package com.alebr.muzic.ui;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.alebr.muzic.R;
+
 import java.util.ArrayList;
 
 /**
@@ -16,9 +20,7 @@ import java.util.ArrayList;
 
 class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.RecyclerViewHolder> {
 
-    /**
-     * ArrayList of {@link CustomListItem} that holds the information about the view
-     */
+     /* ArrayList of {@link CustomListItem} that holds the information about the view */
     private ArrayList<CustomListItem> mCustomList;
     private OnItemClickListener mOnItemClickListener;
 
@@ -32,7 +34,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     /**
      * Get a reference to the listener
      * @param listener
-     *          The listener to be assigned to {@link OnItemClickListener}
+     *                  The listener to be assigned to {@link OnItemClickListener}
      */
     public void setOnItemClickListener(OnItemClickListener listener){
         mOnItemClickListener = listener;
@@ -70,7 +72,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     /**
      * Constructor of the class
      * @param list
-     *          The ArrayList of {@link CustomListItem} with the data to assign to the views
+     *              The ArrayList of {@link CustomListItem} with the data to assign to the views
      */
     public RecyclerViewAdapter(ArrayList<CustomListItem> list){
         mCustomList = list;
@@ -108,7 +110,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     }
 
     /**
-     * Utility method to add items to {@link RecyclerViewAdapter#mCustomList}
+     * Add {@param item} to {@link RecyclerViewAdapter#mCustomList}
      * @param item
      *          The item to be added
      */
@@ -117,7 +119,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     }
 
     /**
-     * Utility method to return a {@link CustomListItem} given a position
+     * Return a {@link CustomListItem} given a position
      * @param position
      *          The position in the list that is being asked
      * @return
