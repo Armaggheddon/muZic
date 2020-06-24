@@ -1,2 +1,2 @@
 # muZic
- Applicazione player musicale per Android e Android Auto
+Player musicale per smartphone con supporto ad Android Auto
