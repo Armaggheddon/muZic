@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.armaggheddon.muzic;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+
 import java.io.IOException;
 
 /**

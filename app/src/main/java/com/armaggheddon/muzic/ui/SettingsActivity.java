@@ -1,4 +1,4 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
@@ -15,8 +15,8 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
 
-import com.alebr.muzic.MuzicApplication;
-import com.alebr.muzic.R;
+import com.armaggheddon.muzic.MuzicApplication;
+import com.armaggheddon.muzic.R;
 import com.google.android.material.appbar.MaterialToolbar;
 
 import java.util.Arrays;

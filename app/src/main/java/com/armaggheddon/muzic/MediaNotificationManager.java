@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.armaggheddon.muzic;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -19,8 +19,8 @@ import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
-import com.alebr.muzic.ui.FullPlayerActivity;
-import com.alebr.muzic.ui.MainActivity;
+import com.armaggheddon.muzic.ui.FullPlayerActivity;
+import com.armaggheddon.muzic.ui.MainActivity;
 
 /**
  * Manages the correct set up of the notification and builds the

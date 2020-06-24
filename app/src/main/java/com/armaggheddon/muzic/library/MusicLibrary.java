@@ -1,4 +1,4 @@
-package com.alebr.muzic.library;
+package com.armaggheddon.muzic.library;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -19,8 +19,8 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
-import com.alebr.muzic.MusicService;
-import com.alebr.muzic.R;
+import com.armaggheddon.muzic.MusicService;
+import com.armaggheddon.muzic.R;
 
 import java.io.FileDescriptor;
 import java.io.IOException;

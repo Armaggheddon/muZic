@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.armaggheddon.muzic;
 
 import android.app.Application;
 import android.content.SharedPreferences;

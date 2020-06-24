@@ -1,4 +1,4 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
 import android.Manifest;
 import android.app.Activity;
@@ -37,9 +37,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.alebr.muzic.MusicService;
-import com.alebr.muzic.R;
-import com.alebr.muzic.library.MusicLibrary;
+import com.armaggheddon.muzic.MusicService;
+import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;

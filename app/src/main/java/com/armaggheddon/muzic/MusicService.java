@@ -1,4 +1,4 @@
-package com.alebr.muzic;
+package com.armaggheddon.muzic;
 
 import android.Manifest;
 import android.app.Notification;
@@ -29,7 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 
-import com.alebr.muzic.library.MusicLibrary;
+import com.armaggheddon.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;

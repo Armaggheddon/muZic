@@ -1,4 +1,4 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
 import android.support.v4.media.MediaBrowserCompat;
 

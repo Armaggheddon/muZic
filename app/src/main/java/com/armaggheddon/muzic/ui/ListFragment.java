@@ -1,4 +1,4 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -13,10 +13,10 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.alebr.muzic.R;
-import com.alebr.muzic.library.AlbumItem;
-import com.alebr.muzic.library.ArtistItem;
-import com.alebr.muzic.library.MusicLibrary;
+import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.AlbumItem;
+import com.armaggheddon.muzic.library.ArtistItem;
+import com.armaggheddon.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.alebr.muzic">
+    package="com.armaggheddon.muzic">
 
     <!-- FOREGROUND_SERVICE permission used to run the music playback even if the application is not in foreground -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -12,7 +12,7 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name=".MuzicApplication"
+        android:name="com.armaggheddon.muzic.MuzicApplication"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:allowBackup="false"
@@ -42,7 +42,7 @@
          MediaBrowser (for browsing) and MediaController (for playback control)
         -->
         <service
-            android:name=".MusicService"
+            android:name="com.armaggheddon.muzic.MusicService"
             android:exported="true"
             tools:ignore="ExportedService">
             <intent-filter>
@@ -57,7 +57,7 @@
         so we set "android:screenOrientation" to support only "portrait" on all activities
         -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name="com.armaggheddon.muzic.ui.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SplashScreenTheme">
             <intent-filter>
@@ -71,12 +71,12 @@
         of the activity with MainActivity "behind" FullPlayerActivity
         -->
         <activity
-            android:name=".ui.FullPlayerActivity"
-            android:parentActivityName=".ui.MainActivity"
+            android:name="com.armaggheddon.muzic.ui.FullPlayerActivity"
+            android:parentActivityName="com.armaggheddon.muzic.ui.MainActivity"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name="com.armaggheddon.muzic.ui.SettingsActivity"
             android:screenOrientation="portrait"
             android:label="@string/settings_title"/>
 

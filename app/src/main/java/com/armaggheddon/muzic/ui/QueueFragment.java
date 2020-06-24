@@ -1,4 +1,4 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -20,7 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.alebr.muzic.R;
+import com.armaggheddon.muzic.R;
 
 import java.util.ArrayList;
 import java.util.List;

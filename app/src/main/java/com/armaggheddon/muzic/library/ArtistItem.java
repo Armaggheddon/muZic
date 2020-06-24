@@ -1,4 +1,4 @@
-package com.alebr.muzic.library;
+package com.armaggheddon.muzic.library;
 
 import android.annotation.SuppressLint;
 

@@ -1,9 +1,9 @@
-package com.alebr.muzic.ui;
+package com.armaggheddon.muzic.ui;
 
-import com.alebr.muzic.R;
-import com.alebr.muzic.library.AlbumItem;
-import com.alebr.muzic.library.ArtistItem;
-import com.alebr.muzic.library.SongItem;
+import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.AlbumItem;
+import com.armaggheddon.muzic.library.ArtistItem;
+import com.armaggheddon.muzic.library.SongItem;
 
 /**
  * Holds the information to show in the item in the RecyclerView in {@link ListFragment}
