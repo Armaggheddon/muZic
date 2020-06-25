@@ -17,7 +17,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -532,11 +531,11 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 /* We have the permission to read to external storage */
-                Log.d(TAG, "onRequestPermissionsResult: permission granted");
+                //Log.d(TAG, "onRequestPermissionsResult: permission granted");
                 mMediaBrowser.connect();
             } else {
                 /* The user denied the permission */
-                Log.d(TAG, "onRequestPermissionsResult: permission denied");
+                //Log.d(TAG, "onRequestPermissionsResult: permission denied");
 
                 /*
                 This allows to know if the user clicked on "Never show again" toggle. If it is the
@@ -649,7 +648,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             break;
         }
 
-        Log.d(TAG, "onSaveInstanceState: fragment TAG saved " + fragmentTag);
+        //Log.d(TAG, "onSaveInstanceState: fragment TAG saved " + fragmentTag);
 
         /* Put the fragment TAG in the bundle */
         outState.putString(FRAGMENT_TO_REMOVE_SAVED_STATE_KEY, fragmentTag);

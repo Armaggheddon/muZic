@@ -11,7 +11,6 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -229,9 +228,6 @@ public class MediaNotificationManager {
         /* If the channel does not exist */
         if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null){
 
-            Log.d(TAG, "createChannel: " +
-                    "creating new notification channel with channelId " + CHANNEL_ID);
-
             /* User visible channel name */
             CharSequence name = mService.getString(R.string.app_name);
 
@@ -258,8 +254,5 @@ public class MediaNotificationManager {
         }
 
         /* Else the channel already exists, just use the existing one */
-        else
-            Log.d(TAG, "createChannel: " +
-                    "using existing notification channel with channelId " + CHANNEL_ID);
     }
 }

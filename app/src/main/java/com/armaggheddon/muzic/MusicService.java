@@ -23,7 +23,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -272,7 +271,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         try {
             unregisterReceiver(mNoisyReceiver);
         } catch (IllegalArgumentException e) {
-            Log.d(TAG, "unregisterMNoisyReceiver: mNoisyReceiver was already unregistered");
+            //Log.d(TAG, "unregisterMNoisyReceiver: mNoisyReceiver was already unregistered");
         }
     }
 
@@ -316,18 +315,12 @@ public class MusicService extends MediaBrowserServiceCompat {
                 return new MediaBrowserServiceCompat.BrowserRoot(MusicLibrary.EMPTY_ROOT, null);
             }
 
-            /* Now the client is in the white list */
-            if (mPackageValidator.isValidCarPackage(clientPackageName)) {
-
-                /* The client is Android Auto */
-                Log.d(TAG, "onGetRoot: android auto connected");
-                IS_CAR_CONNECTED = true;
-            } else {
-
-                /* The client is not Android Auto */
-                Log.d(TAG, "onGetRoot: application conneted");
-                IS_CAR_CONNECTED = false;
-            }
+            /*
+            Now the client is in the white list
+            True if the client is Android Auto
+            False if client is not Android Auto
+             */
+            IS_CAR_CONNECTED = mPackageValidator.isValidCarPackage(clientPackageName);
 
             /* Return the valid browser root */
             return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
@@ -658,10 +651,9 @@ public class MusicService extends MediaBrowserServiceCompat {
                 } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
                     initQueue(mMusicLibrary.getArtistIdQueue(mediaId, null), true);
                     onPlay();
-                } else {
-                    /* It is a forbidden state for Android Auto clients */
-                    Log.d(TAG, "onPlayFromMediaId: no matches found for \"" + mediaId + "\"");
                 }
+                /* ELse is a forbidden state for Android Auto clients */
+                //Log.d(TAG, "onPlayFromMediaId: no matches found for \"" + mediaId + "\"");
             } else {
 
                 /*
@@ -677,11 +669,10 @@ public class MusicService extends MediaBrowserServiceCompat {
                     initQueue(mMusicLibrary.getAlbumIdQueue(mediaId), true);
                 } else if (mediaId.contains(MusicLibrary.ARTIST_)) {
                     initQueue(mMusicLibrary.getArtistIdQueue(mediaId, null), true);
-                } else {
-
-                    /* This is a forbidden state and should never happen */
-                    Log.d(TAG, "onPlayFromMediaId: no matches found for \"" + mediaId + "\"");
                 }
+
+                /* Else is a forbidden state and should never happen */
+                //Log.d(TAG, "onPlayFromMediaId: no matches found for \"" + mediaId + "\"");
             }
         }
 
@@ -912,8 +903,8 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlayFromSearch(final String query, final Bundle extras) {
 
-            Log.d(TAG, "onPlayFromSearch: user raw query " + query);
-            Log.d(TAG, "onPlayFromSearch: Assistant parsed query " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
+            //Log.d(TAG, "onPlayFromSearch: user raw query " + query);
+            //Log.d(TAG, "onPlayFromSearch: Assistant parsed query " + extras.get(MediaStore.EXTRA_MEDIA_FOCUS));
 
             List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
 

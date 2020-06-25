@@ -8,7 +8,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -115,7 +114,6 @@ public class QueueFragment extends Fragment{
             @Override
             public void onItemClick(int position) {
 
-                Log.d("queuefragment", "onItemClick: " + position);
                 mQueueFragmentListener.onQueueItemClicked(position);
 
 
