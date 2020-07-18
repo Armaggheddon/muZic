@@ -55,6 +55,9 @@
     <string name="launcher_shortcut_summary_off">Launcher shortcuts are disabled</string>
     <string name="launcher_shortcut_summary_not_supported">Only supported on android N or later</string>
 
+    <string name="equalizer_title">Equalizer</string>
+    <string name="equalizer_summary">Edit equalizer settings of your phone</string>
+
     <!-- App info preferences -->
     <string name="app_info_title">muZic (version 1.0)</string>
 

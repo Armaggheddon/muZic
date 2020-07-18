@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.drawable.Icon;
+import android.media.audiofx.AudioEffect;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -85,6 +86,21 @@ public class SettingsActivity extends AppCompatActivity {
                         MuzicApplication.applyTheme(themeOption);
 
                         /* Return true telling that the event was handled */
+                        return true;
+                    }
+                });
+            }
+
+            //TODO: comment this code
+            Preference equalizer = findPreference("equalizer_option");
+            if(equalizer != null){
+                equalizer.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        Intent intent = new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
+
+                        //--> if(intent.resolveActivity(getPackageManager())!=null)
+                        startActivityForResult(intent, 10);
                         return true;
                     }
                 });
