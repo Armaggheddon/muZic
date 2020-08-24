@@ -31,8 +31,10 @@ import androidx.palette.graphics.Palette;
 
 import com.armaggheddon.muzic.MusicService;
 import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.concurrent.TimeUnit;
 
@@ -97,6 +99,31 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().play();
     }
 
+    //TODO: comment
+    @Override
+    public void onQueueItemLongClicked(int position, String songTitle, String mediaId, boolean isRemoved) {
+        if(!isRemoved){
+            Snackbar.make(findViewById(R.id.full_player_root), songTitle + " can't be removed while playing", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+
+        final Bundle bundle = new Bundle();
+        bundle.putString(MusicLibrary.SONG_, mediaId);
+        MediaControllerCompat.getMediaController(this).getTransportControls().sendCustomAction(
+                MusicService.CUSTOM_ACTION_REMOVE_FROM_QUEUE, bundle);
+
+        Snackbar.make(findViewById(R.id.full_player_root), songTitle + " removed", Snackbar.LENGTH_SHORT).show();
+                /*
+                .setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().sendCustomAction(MusicService.CUSTOM_ACTION_ADD_TO_QUEUE_END, bundle);
+                        //TODO: update the view in QueueFragment
+                        //queueFragment.updateItemPosition(position, mediaId, songTitle);
+                    }
+                }).show();
+                 */
+    }
 
     @Override
     public MediaBrowserCompat getMediaBrowser() {

@@ -24,11 +24,13 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     private ArrayList<CustomListItem> mCustomList;
     private OnItemClickListener mOnItemClickListener;
 
+
     /**
      * Interface to send click events received on the view
      */
     public interface OnItemClickListener{
         void onItemClick(int position);
+        void onItemLongClick(int position);
     }
 
     /**
@@ -64,6 +66,13 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
                             listener.onItemClick(position);
                         }
                     }
+                }
+            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    listener.onItemLongClick(getAbsoluteAdapterPosition());
+                    return true;
                 }
             });
         }
@@ -117,6 +126,14 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     public void add(CustomListItem item){
         mCustomList.add(item);
     }
+
+    //TODO: comments
+    public void addAt(int position, String mediaId, String title) {
+        mCustomList.add(position, new CustomListItem(mediaId, title));
+    }
+
+    //TODO: comments
+    public void removeFromPosition(int position){mCustomList.remove(position);}
 
     /**
      * Return a {@link CustomListItem} given a position

@@ -39,6 +39,7 @@ public class QueueFragment extends Fragment{
     /* Extra arguments string key*/
     public static final String IS_MAIN_ACTIVITY_ARGS_EXTRA = "is_main_activity";
 
+
     /*
     This fragment is used by MainActivity and FullPlayerActivity, this flag allows the fragment
     to know which is the activity to ask the MediaBrowser instance.
@@ -72,6 +73,9 @@ public class QueueFragment extends Fragment{
          *          item to play
          */
         void onQueueItemClicked( long positionInQueue);
+
+        //TODO: comments
+        void onQueueItemLongClicked( int position, String songTitle, String mediaId, boolean isRemoved);
     }
 
     /**
@@ -113,10 +117,23 @@ public class QueueFragment extends Fragment{
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
+                if (position == RecyclerView.NO_POSITION) return;
                 mQueueFragmentListener.onQueueItemClicked(position);
+            }
 
-
+            @Override
+            public void onItemLongClick(int position) {
+                if (position == RecyclerView.NO_POSITION) return;
+                String songTitle = recyclerViewAdapter.getItem(position).getTitle();
+                String mediaId = recyclerViewAdapter.getItem(position).getId();
+                /* Remove the item only if the is not the item being played */
+                if(MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId() != position){
+                    mQueueFragmentListener.onQueueItemLongClicked(position, songTitle, mediaId, true);
+                    recyclerViewAdapter.removeFromPosition(position);
+                    recyclerViewAdapter.notifyItemRemoved(position);
+                }else {
+                    mQueueFragmentListener.onQueueItemLongClicked(position, songTitle, mediaId, false);
+                }
             }
         });
 
@@ -175,8 +192,7 @@ public class QueueFragment extends Fragment{
                 recyclerViewAdapter.add(
                         new CustomListItem(
                                 queueItem.getDescription().getMediaId(),
-                                String.format("%d   %s",
-                                        queueItem.getQueueId()+1,
+                                String.format("%s",
                                         queueItem.getDescription().getTitle().toString())));
             }
             /* When all the data is loaded notify the adapter about the changes */
@@ -227,7 +243,6 @@ public class QueueFragment extends Fragment{
 
             /* Get the active item in the queue */
             int currentItem = (int) MediaControllerCompat.getMediaController(getActivity()).getPlaybackState().getActiveQueueItemId();
-
             updateRecyclerViewPosition(currentItem);
 
         }
@@ -260,7 +275,13 @@ public class QueueFragment extends Fragment{
         }
     }
 
-    private boolean scroll_to_position = false;
+    //TODO: comments
+    public void updateItemPosition(int position, String mediaId, String title){
+        recyclerViewAdapter.addAt(position, mediaId, title);
+        recyclerViewAdapter.notifyItemChanged(position);
+    }
+
+
 
     @Override
     public void onAttach(@NonNull Context context) {

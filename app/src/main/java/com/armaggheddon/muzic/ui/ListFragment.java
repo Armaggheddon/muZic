@@ -84,6 +84,15 @@ public class ListFragment extends Fragment{
          *          The title to set in the toolbar in {@link MainActivity} for navigation purposes
          */
         void setToolbarTitle(String title);
+
+        /**
+         * Used to tell MainActivity that a playable item has been long clicked
+         * @param songTitle
+         *          The title of the song
+         * @param mediaId
+         *          The media ID of the item clicked
+         */
+        void onPlayableItemLongClick(String songTitle, String mediaId);
     }
 
     /**
@@ -129,6 +138,17 @@ public class ListFragment extends Fragment{
                 else {
                     mFragmentListener.onBrowsableItemClicked(mediaId);
                     mFragmentListener.setToolbarTitle(recyclerViewAdapter.getItem(position).getTitle());
+                }
+            }
+
+            //TODO: comments
+            @Override
+            public void onItemLongClick(int position) {
+                String mediaId = recyclerViewAdapter.getItem(position).getId();
+                String songTitle = recyclerViewAdapter.getItem(position).getTitle();
+                /* If the item is a playable one allow to add to queue */
+                if(mediaId.contains(MusicLibrary.SONG_)){
+                    mFragmentListener.onPlayableItemLongClick(songTitle, mediaId);
                 }
             }
         });

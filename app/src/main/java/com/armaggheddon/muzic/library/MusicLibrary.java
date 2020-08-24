@@ -849,4 +849,27 @@ public class MusicLibrary {
 
         return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }
+
+    /* Public utility methods*/
+    public MediaSessionCompat.QueueItem createQueueItemFromMediaId(String mediaId, int queueSize){
+        for(SongItem song : songs){
+            if(song.getIdString().equalsIgnoreCase(mediaId)) {
+
+                Bundle extras = new Bundle();
+
+                /* Add extra data as DURATION and ALBUM_URI */
+                extras.putLong(DURATION_ARGS_EXTRA, song.getDuration());
+                extras.putString(ALBUM_ART_URI_ARGS_EXTRA, song.getAlbumArtUri().toString());
+
+                return buildQueueItem(song.getIdString(),
+                        song.getSongUri(),
+                        song.getTitle(),
+                        song.getArtist(),
+                        song.getAlbum(),
+                        extras,
+                        queueSize);
+            }
+        }
+        return null;
+    }
 }

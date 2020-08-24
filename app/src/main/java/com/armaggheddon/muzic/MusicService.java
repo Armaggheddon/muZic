@@ -93,6 +93,9 @@ public class MusicService extends MediaBrowserServiceCompat {
     private static final String CUSTOM_ACTION_REPLAY = "replay";
 
     private static final String CUSTOM_ACTION_RANDOM_SONG_IN_QUEUE = "random";
+    public static final String CUSTOM_ACTION_ADD_TO_QUEUE_END = "end_of_queue";
+    public static final String CUSTOM_ACTION_ADD_TO_QUEUE_NEXT = "next_of_queue";
+    public static final String CUSTOM_ACTION_REMOVE_FROM_QUEUE = "remove_from_queue";
 
     private MediaSessionCompat mSession;
 
@@ -397,6 +400,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             */
         }
     }
+
 
     /**
      * Callback of MediaSession that handles all the actions passed by
@@ -889,6 +893,38 @@ public class MusicService extends MediaBrowserServiceCompat {
                         /* Delegate the work to do to onSkipToQueueItem */
                         onSkipToQueueItem(randomPosition);
                     }
+                    break;
+                case CUSTOM_ACTION_ADD_TO_QUEUE_END:
+                    /* Get the mediaId as "song_x" and add the queue item obtained from MusicLibrary */
+                    String mediaId = extras.getString(MusicLibrary.SONG_);
+                    mQueue.add(mMusicLibrary.createQueueItemFromMediaId(mediaId, mQueue.size()));
+                    /* Tell the session that the queue has been updated */
+                    mSession.setQueue(mQueue);
+                    break;
+                case CUSTOM_ACTION_ADD_TO_QUEUE_NEXT:
+                    mediaId = extras.getString(MusicLibrary.SONG_);
+                    mQueue.add(mMusicLibrary.createQueueItemFromMediaId(mediaId, mQueuePosition));
+                    mSession.setQueue(mQueue);
+                    break;
+                    /* TODO: implement a method that allows to restore a deleted item
+                case "position":
+                    mediaId = extras.getString(MusicLibrary.SONG_);
+                    int position = extras.getInt("position");
+                    mQueue.add(position, mMusicLibrary.createQueueItemFromMediaId(mediaId, position));
+                    mSession.setQueue(mQueue);
+                    break;
+
+                     */
+                case CUSTOM_ACTION_REMOVE_FROM_QUEUE:
+                    mediaId = extras.getString(MusicLibrary.SONG_);
+                    for(MediaSessionCompat.QueueItem item : mQueue){
+                        if(item.getDescription().getMediaId().equalsIgnoreCase(mediaId)){
+                            mQueue.remove(item);
+                            break;
+                        }
+                    }
+                    mSession.setQueue(mQueue);
+                    break;
             }
         }
 
