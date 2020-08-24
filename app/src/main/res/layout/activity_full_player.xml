@@ -7,7 +7,8 @@
     android:layout_height="match_parent"
     android:id="@+id/full_player_root"
     tools:context=".ui.FullPlayerActivity"
-    app:layoutDescription="@xml/activity_full_player_scene">
+    app:layoutDescription="@xml/activity_full_player_scene"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/full_player_toolbar"
@@ -135,7 +136,8 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginStart="32dp"
-        android:tint="?attr/colorControlNormal"
+        app:tint="?attr/colorControlNormal"
+        android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="@string/skip_next_image_description"
         app:layout_constraintBottom_toBottomOf="@+id/play_pause_button"
         app:layout_constraintStart_toEndOf="@+id/play_pause_button"
@@ -147,7 +149,8 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginEnd="32dp"
-        android:tint="?attr/colorControlNormal"
+        app:tint="?attr/colorControlNormal"
+        android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="@string/skip_previous_image_description"
         app:layout_constraintBottom_toBottomOf="@+id/play_pause_button"
         app:layout_constraintEnd_toStartOf="@+id/play_pause_button"
@@ -161,6 +164,7 @@
         android:layout_marginEnd="24dp"
         android:alpha="0"
         android:contentDescription="@string/close_queue_image_description"
+        android:background="?selectableItemBackgroundBorderless"
         app:layout_constraintVertical_bias="0.9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/full_player_toolbar"
@@ -171,7 +175,8 @@
         android:id="@+id/open_queue_button"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:tint="?attr/colorControlNormal"
+        app:tint="?attr/colorControlNormal"
+        android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="@string/open_queue_image_description"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

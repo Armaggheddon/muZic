@@ -113,6 +113,7 @@ public class ListFragment extends Fragment{
         /* Setting hasFixedSize improves performance on the rendering of the view */
         mRecyclerView.setHasFixedSize(true);
         recyclerViewAdapter = new RecyclerViewAdapter(new ArrayList<CustomListItem>());
+        recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
@@ -220,5 +221,4 @@ public class ListFragment extends Fragment{
             mediaBrowser.unsubscribe(subscribeTo);
         }
     }
-
 }

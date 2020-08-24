@@ -73,6 +73,7 @@
         <activity
             android:name="com.armaggheddon.muzic.ui.FullPlayerActivity"
             android:parentActivityName="com.armaggheddon.muzic.ui.MainActivity"
+            android:theme="@style/FullScreenPlayer"
             android:screenOrientation="portrait" />
 
         <activity

@@ -41,7 +41,6 @@ import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 /**
  * MainActivity, handles the {@link R.layout#activity_main} layout with the controls for
@@ -74,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     private MaterialToolbar mToolbar;
     private TextView title_text;
     private ImageView album_image;
-    private FloatingActionButton play_pause_button;
+    private ImageView play_pause_button;
     private MotionLayout motionLayout;
 
     /*
