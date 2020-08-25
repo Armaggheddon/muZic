@@ -59,7 +59,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
                 @Override
                 public void onClick(View v) {
                     if(listener != null){
-                        int position = getAdapterPosition();
+                        int position = getAbsoluteAdapterPosition();
                         if(position != RecyclerView.NO_POSITION){
                             listener.onItemClick(position);
                         }

@@ -27,6 +27,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.core.content.ContextCompat;
 import androidx.palette.graphics.Palette;
 
 import com.armaggheddon.muzic.MusicService;
@@ -409,19 +410,19 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
                 int colorButton = android.R.attr.colorControlNormal;
 
                 /* If the swatch is not null then update the values */
-                if(dominantSwatch != null){
+                if (dominantSwatch != null) {
                     colorTop = palette.getDominantColor(android.R.attr.windowBackground);
                     colorButton = dominantSwatch.getBodyTextColor();
                 }
 
                 /* Get the 2 drawables for the icons that needs to have a proper color to avoid visibility issues */
-                Drawable backIcon = getDrawable(R.drawable.ic_baseline_arrow_black);
-                Drawable closeQueueIcon = getDrawable(R.drawable.ic_baseline_close);
+                Drawable backIcon = ContextCompat.getDrawable(FullPlayerActivity.this, R.drawable.ic_baseline_arrow_black);
+                Drawable closeQueueIcon = ContextCompat.getDrawable(FullPlayerActivity.this, R.drawable.ic_baseline_close);
 
                 /* Set tint applies a tint on the drawable, in fact changing the color if the drawable is black */
-                if(backIcon != null)
+                if (backIcon != null)
                     backIcon.setTint(colorButton);
-                if(closeQueueIcon != null)
+                if (closeQueueIcon != null)
                     closeQueueIcon.setTint(colorButton);
 
                 /* Update the icons */
