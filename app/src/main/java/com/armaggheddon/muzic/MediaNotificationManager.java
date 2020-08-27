@@ -53,7 +53,9 @@ public class MediaNotificationManager {
     private final NotificationCompat.Action mSkipNextAction;
     private final NotificationCompat.Action mSkipPreviousAction;
 
-    public MediaNotificationManager(MusicService service){
+    private final NotificationCompat.Action mRewindAction;
+
+    public MediaNotificationManager(MusicService service) {
         mService = service;
         mNotificationManager = (NotificationManager) mService.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -82,6 +84,12 @@ public class MediaNotificationManager {
                 MediaButtonReceiver.buildMediaButtonPendingIntent(
                         mService,
                         PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
+        mRewindAction = new NotificationCompat.Action(
+                R.drawable.ic_replay,
+                mService.getString(R.string.rewind_text),
+                MediaButtonReceiver.buildMediaButtonPendingIntent(
+                        mService,
+                        PlaybackStateCompat.ACTION_REWIND));
 
         /* Cancel all notifications already to handle the case where the service was killed and restarted by the system*/
         mNotificationManager.cancelAll();
@@ -151,9 +159,9 @@ public class MediaNotificationManager {
         /* Set the style to set the appearance of the notification based on the album art being played */
         builder.setStyle(
                 new androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(token)
-                /* The number 1 represent the action play/pause, 0 for skip previous, 2 for skip next */
-                .setShowActionsInCompactView(1)
+                        .setMediaSession(token)
+                        /* The number 1 represent the action play/pause, 0 for skip previous, 2 for skip next */
+                        .setShowActionsInCompactView(0, 1, 2)
                 /* For android L set the cancel button for the notification (notifications were not swipable) */
                 .setShowCancelButton(true)
                         /* When the cancel button is clicked call ACTION_STOP on the MusicService */
@@ -184,6 +192,7 @@ public class MediaNotificationManager {
                         mPlayAction
         );
         builder.addAction(mSkipNextAction);
+        builder.addAction(mRewindAction);
         return builder;
     }
 

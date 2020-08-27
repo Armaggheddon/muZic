@@ -23,6 +23,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -148,7 +149,8 @@ public class MusicService extends MediaBrowserServiceCompat {
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
                                 PlaybackStateCompat.ACTION_SEEK_TO |
                                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID |
-                                PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                                PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH |
+                                PlaybackStateCompat.ACTION_REWIND
                 )
                 .setState(PlaybackStateCompat.STATE_PAUSED,
                         PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
@@ -890,6 +892,13 @@ public class MusicService extends MediaBrowserServiceCompat {
                         onSkipToQueueItem(randomPosition);
                     }
             }
+        }
+
+        @Override
+        public void onRewind() {
+            super.onRewind();
+            onSeekTo(0);
+            Log.d(TAG, "onRewind: ");
         }
 
         /**
