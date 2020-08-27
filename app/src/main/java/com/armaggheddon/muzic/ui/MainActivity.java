@@ -41,7 +41,6 @@ import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.snackbar.Snackbar;
 
 /**
  * MainActivity, handles the {@link R.layout#activity_main} layout with the controls for
@@ -119,20 +118,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         mToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow);
     }
 
-    //TODO: comments
-    @Override
-    public void onPlayableItemLongClick(String songTitle, String mediaId) {
-        /*
-        Called when a playable item has been long clicked in the list, show an UI that allows to add
-        the item to the queue
-         */
-        Bundle bundle = new Bundle();
-        bundle.putString(MusicLibrary.SONG_, mediaId);
-        MediaControllerCompat.getMediaController(this).getTransportControls().sendCustomAction(
-                MusicService.CUSTOM_ACTION_ADD_TO_QUEUE_END, bundle);
-        Snackbar.make(findViewById(R.id.main_layout), songTitle + " added to queue", Snackbar.LENGTH_SHORT).show();
-    }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -157,35 +142,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         /* Called when an item in the QueueFragment is clicked. Skip to the queue item clicked */
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
-    }
-
-    //TODO: comments
-    @Override
-    public void onQueueItemLongClicked(final int position, final String songTitle, final String mediaId, boolean isRemoved) {
-        /* If the item is not removed (isRemoved = false) then it means that is currently being played */
-        /*
-        if(!isRemoved){
-            Snackbar.make(findViewById(R.id.main_layout), songTitle + " can't be removed while playing", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-         */
-
-        final Bundle bundle = new Bundle();
-        bundle.putString(MusicLibrary.SONG_, mediaId);
-        MediaControllerCompat.getMediaController(this).getTransportControls().sendCustomAction(
-                MusicService.CUSTOM_ACTION_REMOVE_FROM_QUEUE, bundle);
-
-        Snackbar.make(findViewById(R.id.main_layout), songTitle + " removed", Snackbar.LENGTH_SHORT).show();
-                /*
-                .setAction("UNDO", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().sendCustomAction(MusicService.CUSTOM_ACTION_ADD_TO_QUEUE_END, bundle);
-                        //TODO: update the view in QueueFragment
-                        //queueFragment.updateItemPosition(position, mediaId, songTitle);
-                    }
-                }).show();
-                 */
     }
 
     @Override
