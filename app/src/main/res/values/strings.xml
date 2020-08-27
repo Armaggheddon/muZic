@@ -36,6 +36,7 @@
     <string name="pause_text">Pause</string>
     <string name="skip_next_text">Skip next</string>
     <string name="skip_previous_text">Skip previous</string>
+    <string name="rewind_text">Rewind</string>
     <string name="channel_description">This channel is used by muZic to show on the notification the current media being played</string>
 
     <!-- Preference Titles-->

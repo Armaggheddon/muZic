@@ -19,6 +19,8 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
 import com.armaggheddon.muzic.MusicService;
 import com.armaggheddon.muzic.R;
 
@@ -118,7 +120,7 @@ public class MusicLibrary {
     public MusicLibrary(Context context) {
         this.context = context;
         initLibrary();
-        initDefaultBitmap(context.getDrawable(R.drawable.ic_default_album_art_with_bg));
+        initDefaultBitmap(ContextCompat.getDrawable(context, R.drawable.ic_default_album_art_with_bg));
     }
 
     /**

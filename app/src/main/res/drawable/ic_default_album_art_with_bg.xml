@@ -10,11 +10,12 @@
         <color android:color="@color/colorPrimary"/>
     </item>
 
-    <item android:drawable="@drawable/ic_default_album_art"
+    <item
+        android:drawable="@drawable/ic_default_album_art"
         android:gravity="center"
         android:bottom="20dp"
-        android:start="20dp"
-        android:end="20dp"
-        android:top="20dp"/>
+        android:left="20dp"
+        android:right="20dp"
+        android:top="20dp" />
 
 </layer-list>
