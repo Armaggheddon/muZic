@@ -61,5 +61,6 @@
 
     <!-- App info preferences -->
     <string name="app_info_title">muZic (version 1.1)</string>
+    <string name="small_player_play_description">Play pause button</string>
 
 </resources>

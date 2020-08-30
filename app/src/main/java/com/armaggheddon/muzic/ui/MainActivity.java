@@ -17,6 +17,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -418,6 +419,12 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         album_image = findViewById(R.id.album_art_small_player);
         title_text = findViewById(R.id.title_small_player);
+
+        /* Set the text in the text view to auto scroll if the text is too long to fit */
+        title_text.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        title_text.setSelected(true);
+        title_text.setSingleLine();
+
         play_pause_button = findViewById(R.id.play_pause_small_player);
 
         play_pause_button.setOnClickListener(new View.OnClickListener() {
@@ -452,7 +459,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         */
         if (mediaController.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
             play_pause_button.setImageResource(R.drawable.ic_pause);
-            title_text.setText(mediaController.getMetadata().getDescription().getTitle());
+            String text = mediaController.getMetadata().getDescription().getTitle() + "  -  " +
+                    mediaController.getMetadata().getDescription().getSubtitle();
+            title_text.setText(text);
             album_image.setImageBitmap(mediaController.getMetadata().getDescription().getIconBitmap());
             motionLayout.transitionToEnd();
         }
@@ -466,7 +475,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
             MediaMetadataCompat metadata = mediaController.getMetadata();
             if (metadata != null) {
                 play_pause_button.setImageResource(R.drawable.ic_play);
-                title_text.setText(metadata.getDescription().getTitle());
+                String text = metadata.getDescription().getTitle() + "  -  " +
+                        mediaController.getMetadata().getDescription().getSubtitle();
+                title_text.setText(text);
                 album_image.setImageBitmap(metadata.getDescription().getIconBitmap());
                 motionLayout.transitionToEnd();
             }
@@ -513,7 +524,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
             /* When the metadata changes update the title and the album art */
             album_image.setImageBitmap(metadata.getDescription().getIconBitmap());
-            title_text.setText(metadata.getDescription().getTitle());
+            String text = metadata.getDescription().getTitle() + "  -  " +
+                    metadata.getDescription().getSubtitle();
+            title_text.setText(text);
 
         }
 
