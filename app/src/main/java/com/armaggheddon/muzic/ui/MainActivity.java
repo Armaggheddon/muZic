@@ -17,10 +17,10 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -421,9 +421,23 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         title_text = findViewById(R.id.title_small_player);
 
         /* Set the text in the text view to auto scroll if the text is too long to fit */
-        title_text.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         title_text.setSelected(true);
-        title_text.setSingleLine();
+
+        /*
+        Set the layout parameters of the text view to be fixed or te animation will restart
+        every time a click event happens
+        */
+        title_text.post(new Runnable() {
+            @Override
+            public void run() {
+                title_text.setLayoutParams(
+                        new LinearLayout.LayoutParams(
+                                title_text.getWidth(),
+                                title_text.getHeight()
+                        ));
+            }
+        });
+
 
         play_pause_button = findViewById(R.id.play_pause_small_player);
 

@@ -20,22 +20,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <TextView
-        android:id="@+id/title_small_player"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:textSize="16sp"
-        android:text="@string/title_text_placeholder"
-        android:gravity="center_vertical"
-        android:textColor="@android:color/white"
+        android:orientation="horizontal"
         android:layout_marginStart="@dimen/text_margin"
         android:layout_marginEnd="@dimen/text_margin"
-        android:marqueeRepeatLimit="marquee_forever"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toEndOf="@id/album_art_small_player"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/play_pause_small_player"/>
+        app:layout_constraintEnd_toStartOf="@id/play_pause_small_player">
+
+        <TextView
+            android:id="@+id/title_small_player"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="16sp"
+            android:text="@string/title_text_placeholder"
+            android:gravity="center_vertical"
+            android:textColor="@android:color/white"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:fadingEdge="horizontal" />
+
+    </LinearLayout>
+
 
     <ImageView
         android:id="@+id/play_pause_small_player"
