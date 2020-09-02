@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         Artist. When called starts the playback with all the songs under the specified mediaId
         */
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(mediaId, null);
-        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(0);
+        //MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(0);
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
     }
 

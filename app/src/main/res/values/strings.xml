@@ -64,4 +64,8 @@
     <string name="small_player_play_description">Play pause button</string>
     <string name="shared_prefs_equalizer_option">equalizer_option</string>
 
+
+    <!-- First time tutorial shared preference -->
+    <string name="display_tutorial_option">display_tutorial</string>
+
 </resources>

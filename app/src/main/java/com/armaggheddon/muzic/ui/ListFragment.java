@@ -1,6 +1,7 @@
 package com.armaggheddon.muzic.ui;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.armaggheddon.muzic.MuzicApplication;
 import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.AlbumItem;
 import com.armaggheddon.muzic.library.ArtistItem;
@@ -22,6 +24,9 @@ import com.armaggheddon.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import me.toptas.fancyshowcase.FancyShowCaseView;
+import me.toptas.fancyshowcase.FocusShape;
 
 /**
  * Fragment implementation that displays a RecyclerView using {@link RecyclerViewAdapter} and using
@@ -122,7 +127,7 @@ public class ListFragment extends Fragment{
 
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
 
-        RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView);
+        final RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView);
 
         /* Setting hasFixedSize improves performance on the rendering of the view */
         mRecyclerView.setHasFixedSize(true);
@@ -135,18 +140,41 @@ public class ListFragment extends Fragment{
         mRecyclerView.addItemDecoration( new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
+
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                String mediaId = recyclerViewAdapter.getItem(position).getId();
-                /* If the mediaId of the item has "song_" than is a playable item */
-                if (mediaId.contains(MusicLibrary.SONG_)) {
-                    mFragmentListener.onPlayableItemClicked(subscribeTo, position);
-                }
-                /* Else the item has "album_" or "artist_" so is a browsable item */
-                else {
-                    mFragmentListener.onBrowsableItemClicked(mediaId);
-                    mFragmentListener.setToolbarTitle(recyclerViewAdapter.getItem(position).getTitle());
+
+
+                if(MuzicApplication.IS_FIRST_TIME &&
+                        (subscribeTo.equalsIgnoreCase(MusicLibrary.ALBUMS)||
+                                subscribeTo.equalsIgnoreCase(MusicLibrary.ARTISTS))) {
+                    String itemClicked = recyclerViewAdapter.getItem(position).getTitle();
+                    String display = "Tap and hold " + itemClicked + " to get more options";
+                    new FancyShowCaseView.Builder(getActivity())
+                            .focusOn(mRecyclerView.getChildAt(position))
+                            .title(display)
+                            .enableAutoTextPosition()
+                            .disableFocusAnimation()
+                            .focusShape(FocusShape.ROUNDED_RECTANGLE)
+                            .build()
+                            .show();
+                    SharedPreferences.Editor editor = getContext().getSharedPreferences(getString(R.string.display_tutorial_option), Context.MODE_PRIVATE).edit();
+                    editor.putBoolean(getString(R.string.display_tutorial_option), false);
+                    editor.commit();
+                    MuzicApplication.showAgain(false);
+                }else {
+
+                    String mediaId = recyclerViewAdapter.getItem(position).getId();
+                    /* If the mediaId of the item has "song_" than is a playable item */
+                    if (mediaId.contains(MusicLibrary.SONG_)) {
+                        mFragmentListener.onPlayableItemClicked(subscribeTo, position);
+                    }
+                    /* Else the item has "album_" or "artist_" so is a browsable item */
+                    else {
+                        mFragmentListener.onBrowsableItemClicked(mediaId);
+                        mFragmentListener.setToolbarTitle(recyclerViewAdapter.getItem(position).getTitle());
+                    }
                 }
             }
 
@@ -213,18 +241,9 @@ public class ListFragment extends Fragment{
             for (MediaBrowserCompat.MediaItem item : children) {
 
                 Uri image = item.getDescription().getIconUri();
-                 if(image == null){
-                    switch (subscribeTo){
-                        case MusicLibrary.ARTISTS:
-                            image = Uri.parse(MusicLibrary.ARTISTS);
-                            break;
-                        case MusicLibrary.ALBUMS:
-                            image = Uri.parse(MusicLibrary.ALBUMS);
-                            break;
-                        default:
-                            image = Uri.parse(MusicLibrary.SONGS);
-                            break;
-                    }
+                /* If we are displaying the artist tab tell the adapter to load the default icons */
+                 if(image == null && subscribeTo.equalsIgnoreCase(MusicLibrary.ARTISTS)){
+                    image = Uri.parse(MusicLibrary.ARTISTS);
                  }
                 recyclerViewAdapter.add(new CustomListItem(
                         item.getMediaId(),
