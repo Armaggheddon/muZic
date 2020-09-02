@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -85,6 +86,18 @@ public class ListFragment extends Fragment{
          *          The title to set in the toolbar in {@link MainActivity} for navigation purposes
          */
         void setToolbarTitle(String title);
+
+        /**
+         * Handles long click events on the items of the recycler view
+         * @param mediaId
+         *          The mediaId for which we are asking to play the songs, representing an Album or
+         *          an Artist
+         * @param title
+         *          The title of the element clicked
+         * @param art
+         *          The Uri of the album art to display
+         */
+        void onBrowsableItemLongClicked(String mediaId, String title, Uri art);
     }
 
     /**
@@ -119,6 +132,7 @@ public class ListFragment extends Fragment{
         recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.addItemDecoration( new MarginItemDecorator((int) getResources().getDimension(R.dimen.text_margin)));
+        mRecyclerView.addItemDecoration( new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
@@ -134,6 +148,24 @@ public class ListFragment extends Fragment{
                     mFragmentListener.onBrowsableItemClicked(mediaId);
                     mFragmentListener.setToolbarTitle(recyclerViewAdapter.getItem(position).getTitle());
                 }
+            }
+
+            @Override
+            public void onItemLongClick(int position) {
+                /*
+                If we subscribed to Albums or Artists when the user long clicks tell MainActivity
+                to display the bottom sheet dialog with the option to play all the songs for that
+                album/artist
+                */
+                if(subscribeTo.equalsIgnoreCase(MusicLibrary.ALBUMS) || subscribeTo.equalsIgnoreCase(MusicLibrary.ARTISTS)){
+                    CustomListItem item = recyclerViewAdapter.getItem(position);
+                    mFragmentListener.onBrowsableItemLongClicked(
+                            item.getId(),
+                            item.getTitle(),
+                            item.getArt()
+                    );
+                }
+
             }
         });
 

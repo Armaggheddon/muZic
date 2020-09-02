@@ -19,4 +19,12 @@
         android:layout_marginHorizontal="16dp"
         tools:listitem="@layout/media_list_item"/>
 
+    <!-- To enable customized scroll bar in recycler view add this code in it
+        app:fastScrollEnabled="true"
+        app:fastScrollHorizontalThumbDrawable="@drawable/thumb_drawable"
+        app:fastScrollHorizontalTrackDrawable="@drawable/line_drawable"
+        app:fastScrollVerticalThumbDrawable="@drawable/thumb_drawable"
+        app:fastScrollVerticalTrackDrawable="@drawable/line_drawable"
+        -->
+
 </LinearLayout>

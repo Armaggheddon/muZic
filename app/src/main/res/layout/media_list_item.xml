@@ -12,6 +12,7 @@
         android:id="@+id/art_image_view"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:contentDescription="@string/album_image_description"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -25,6 +26,7 @@
         android:fontFamily="@font/dosis_semibold"
         android:gravity="center_vertical"
         android:text="@string/title_text_placeholder"
+        android:textSize="16sp"
         android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
 
     <ImageView

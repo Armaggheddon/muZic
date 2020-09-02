@@ -32,6 +32,8 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String ARTIST_SHORTCUT_ID = "shortcut_artist_id";
     private static final String SONG_SHORTCUT_ID = "shortcut_song_id";
     private static final String QUEUE_SHORTCUT_ID = "shortcut_queue_id";
+
+    /* If TRUE the device has built-in equalizer, else it does not have one */
     private static boolean IS_EQ_AVAILABLE = false;
 
     @Override
@@ -50,6 +52,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        /* Check if the equalizer is available for the device since not avery device has one */
         if( new Intent( AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).resolveActivity(getPackageManager()) != null)
             IS_EQ_AVAILABLE = true;
 
@@ -65,7 +68,7 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
-            String[] themeValues = null;
+            String[] themeValues;
 
             /* Load the appropriate theme settings based on the device OS version */
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
@@ -94,10 +97,14 @@ public class SettingsActivity extends AppCompatActivity {
                 });
             }
 
-            //TODO: comment this code
+            /*
+            If IS_EQ_AVAILABLE is false then hide the setting to launch the equalizer, since the
+            click event will result in an app crash
+             */
             Preference equalizer = findPreference(getString(R.string.shared_prefs_equalizer_option));
             if (!IS_EQ_AVAILABLE && equalizer != null)
                 equalizer.setVisible(false);
+            /* If is available then open the default equalizer */
             if(IS_EQ_AVAILABLE && equalizer != null){
                 equalizer.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                     @Override

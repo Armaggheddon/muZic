@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.MusicLibrary;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.util.ArrayList;
 
@@ -26,12 +27,14 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
      /* ArrayList of {@link CustomListItem} that holds the information about the view */
     private ArrayList<CustomListItem> mCustomList;
     private OnItemClickListener mOnItemClickListener;
+    private final RequestOptions defaultSizeOption = new RequestOptions().override(500, 500);
 
     /**
      * Interface to send click events received on the view
      */
     public interface OnItemClickListener{
         void onItemClick(int position);
+        void onItemLongClick(int position);
     }
 
     /**
@@ -70,6 +73,16 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
                             listener.onItemClick(position);
                         }
                     }
+                }
+            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    int position = getBindingAdapterPosition();
+                    if( position != RecyclerView.NO_POSITION){
+                        listener.onItemLongClick(position);
+                    }
+                    return true;
                 }
             });
         }
@@ -113,15 +126,16 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
 
         holder.mTitleTextView.setText(currentItem.getTitle());
 
+        /* Load and display the album art for the item */
         Uri art = currentItem.getArt();
 
-        //TODO: add logic to handle where art = SONG, ALBUM, ... for empty data on item
-
+        /* If art is "ARTISTS" then load a default image, else load the one available */
         if(art.equals(Uri.parse(MusicLibrary.ARTISTS))){
             holder.mArtImageView.setImageResource(R.drawable.ic_shortcut_artist);
         }else{
             Glide.with(holder.mArtImageView)
                     .load(art)
+                    .apply( defaultSizeOption)
                     .error(R.drawable.ic_default_album_art_with_bg)
                     .into(holder.mArtImageView);
         }

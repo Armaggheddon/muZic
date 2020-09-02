@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -114,15 +115,21 @@ public class QueueFragment extends Fragment{
 
         mRecyclerView.setLayoutManager( new LinearLayoutManager(getContext()));
         mRecyclerView.addItemDecoration( new MarginItemDecorator((int) getResources().getDimension( R.dimen.text_margin)));
+        mRecyclerView.addItemDecoration( new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-
                 mQueueFragmentListener.onQueueItemClicked(position);
+            }
 
-
+            @Override
+            public void onItemLongClick(int position) {
+                /*
+                Not used for queue since all items are only playable items and no extra data is
+                currently available
+                */
             }
         });
 

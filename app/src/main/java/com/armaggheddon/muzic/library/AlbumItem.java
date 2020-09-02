@@ -21,8 +21,9 @@ public class AlbumItem {
      *          The id of the album obtained from {@value android.provider.MediaStore.Audio.Media#ARTIST_ID}
      * @param name
      *          The name of the artist
+     * @param albumArt
+     *          The Uri representing the album art
      */
-    //TODO: comment
     /* Suppress because it is not a user visible string, no need to format to "DefaultLocale" */
     @SuppressLint("DefaultLocale")
     public AlbumItem(long id, String name, Uri albumArt){

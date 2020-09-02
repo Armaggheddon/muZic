@@ -49,7 +49,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
  * {@link ListFragment} and one of type {@link QueueFragment}
  */
 
-public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueFragmentListener {
+public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueFragmentListener, PlayAlbumArtistBottomSheet.BottomSheetListener {
 
     private static final String TAG = "MainActivity";
 
@@ -117,6 +117,27 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         /* Show on the toolbar a back button that allows to pop the back stack */
         mToolbar.setNavigationIcon(R.drawable.ic_baseline_arrow);
+
+    }
+
+    @Override
+    public void onBrowsableItemLongClicked(String mediaId, String title, Uri art) {
+        /*
+        Shows the bottom sheet dialog that represent the album or artist
+        */
+        PlayAlbumArtistBottomSheet playAlbumArtistBottomSheet = PlayAlbumArtistBottomSheet.PlayAlbumArtistBottomSheetFactory(mediaId, title, art);
+        playAlbumArtistBottomSheet.show(getSupportFragmentManager(), null);
+    }
+
+    @Override
+    public void onBottomSheetButtonClicked(String mediaId) {
+        /*
+        Initialize the queue to play the songs that are under mediaId that represents an Album or an
+        Artist. When called starts the playback with all the songs under the specified mediaId
+        */
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(mediaId, null);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(0);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
     }
 
     @Override
