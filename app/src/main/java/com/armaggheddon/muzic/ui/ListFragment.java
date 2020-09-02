@@ -1,8 +1,8 @@
 package com.armaggheddon.muzic.ui;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,11 +48,6 @@ public class ListFragment extends Fragment{
     */
     private String subscribeTo;
 
-    /*
-    Recycler view variables, state allows to restore the last recyclerview position
-    */
-    private Parcelable state;
-    private RecyclerView mRecyclerView;
     private RecyclerViewAdapter recyclerViewAdapter;
 
     /*
@@ -114,14 +109,16 @@ public class ListFragment extends Fragment{
 
         View view = inflater.inflate(R.layout.fragment_list_layout, container, false);
 
-        mRecyclerView = view.findViewById(R.id.recyclerView);
+        RecyclerView mRecyclerView = view.findViewById(R.id.recyclerView);
 
         /* Setting hasFixedSize improves performance on the rendering of the view */
         mRecyclerView.setHasFixedSize(true);
         recyclerViewAdapter = new RecyclerViewAdapter(new ArrayList<CustomListItem>());
-        //TODO: when reaches stable release can restore recyclerview position automatically
-        //recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
+
+        /* Restore the recycler view position when the data has been loaded */
+        recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.addItemDecoration( new MarginItemDecorator((int) getResources().getDimension(R.dimen.text_margin)));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
@@ -182,18 +179,29 @@ public class ListFragment extends Fragment{
 
             /* For every item in children create a new CustomList instance*/
             for (MediaBrowserCompat.MediaItem item : children) {
+
+                Uri image = item.getDescription().getIconUri();
+                 if(image == null){
+                    switch (subscribeTo){
+                        case MusicLibrary.ARTISTS:
+                            image = Uri.parse(MusicLibrary.ARTISTS);
+                            break;
+                        case MusicLibrary.ALBUMS:
+                            image = Uri.parse(MusicLibrary.ALBUMS);
+                            break;
+                        default:
+                            image = Uri.parse(MusicLibrary.SONGS);
+                            break;
+                    }
+                 }
                 recyclerViewAdapter.add(new CustomListItem(
                         item.getMediaId(),
-                        item.getDescription().getTitle().toString()));
+                        item.getDescription().getTitle().toString(),
+                        image));
             }
 
             /* When all the data is loaded notify the adapter about the changes */
             recyclerViewAdapter.notifyDataSetChanged();
-
-            RecyclerView.LayoutManager lm = mRecyclerView.getLayoutManager();
-
-            /* If the state is not null, restore the previous state, including the latest position */
-            if (state != null) lm.onRestoreInstanceState(state);
 
             /* We can now unsubscribe to receive future updates since we just need to load the data once */
             mFragmentListener.getMediaBrowser().unsubscribe(subscribeTo, mSubscriptionCallback);
@@ -232,12 +240,5 @@ public class ListFragment extends Fragment{
         if (mediaBrowser != null && mediaBrowser.isConnected()) {
             mediaBrowser.unsubscribe(subscribeTo);
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        /* Save the layout state, including its latest position */
-        state = mRecyclerView.getLayoutManager().onSaveInstanceState();
     }
 }

@@ -22,10 +22,10 @@
             app:icon="@drawable/ic_launch"/>
 
         <Preference
-            app:key="equalizer_option"
+            app:key="@string/shared_prefs_equalizer_option"
             app:title="@string/equalizer_title"
             app:summary="@string/equalizer_summary"
-            app:icon="@drawable/ic_equalizer"/>
+            app:icon="@drawable/ic_equalizer" />
 
     </PreferenceCategory>
 

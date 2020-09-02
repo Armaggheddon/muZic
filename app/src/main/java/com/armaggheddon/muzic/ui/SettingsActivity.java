@@ -32,6 +32,7 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String ARTIST_SHORTCUT_ID = "shortcut_artist_id";
     private static final String SONG_SHORTCUT_ID = "shortcut_song_id";
     private static final String QUEUE_SHORTCUT_ID = "shortcut_queue_id";
+    private static boolean IS_EQ_AVAILABLE = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,11 +50,13 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        if( new Intent( AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).resolveActivity(getPackageManager()) != null)
+            IS_EQ_AVAILABLE = true;
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.settings, new SettingsFragment())
                 .commit();
-
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
@@ -92,14 +95,14 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
             //TODO: comment this code
-            Preference equalizer = findPreference("equalizer_option");
-            if(equalizer != null){
+            Preference equalizer = findPreference(getString(R.string.shared_prefs_equalizer_option));
+            if (!IS_EQ_AVAILABLE && equalizer != null)
+                equalizer.setVisible(false);
+            if(IS_EQ_AVAILABLE && equalizer != null){
                 equalizer.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
                         Intent intent = new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
-
-                        //--> if(intent.resolveActivity(getPackageManager())!=null)
                         startActivityForResult(intent, 10);
                         return true;
                     }

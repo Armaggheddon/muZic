@@ -210,6 +210,7 @@ public class MusicLibrary {
                     Uri songUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                     Uri albumArtUri = ContentUris.withAppendedId(Uri.parse(ALBUM_ART_URI), albumId);
 
+
                     /*
                     If artistIds dont have this artistId add the artist data to a list of
                     ArtistItems that contains the artistId (unique) and the artist name.
@@ -229,7 +230,8 @@ public class MusicLibrary {
                     if (!albumIds.contains(albumId)) {
                         albums.add(new AlbumItem(
                                 albumId,
-                                album));
+                                album,
+                                albumArtUri));
                         albumIds.add(albumId);
                     }
 
@@ -394,7 +396,7 @@ public class MusicLibrary {
                             album.getIdString(),
                             album.getName(),
                             "",
-                            null,
+                            album.getAlbumArt(),
                             FLAG_PLAYLIST));
                 }
                 break;

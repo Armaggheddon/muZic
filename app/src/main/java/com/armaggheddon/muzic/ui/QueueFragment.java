@@ -2,6 +2,7 @@ package com.armaggheddon.muzic.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -20,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +109,11 @@ public class QueueFragment extends Fragment{
         mRecyclerView.setHasFixedSize(true);
         recyclerViewAdapter = new RecyclerViewAdapter( new ArrayList<CustomListItem>());
 
+        /* Restore the recycler view position only when the data has been loaded */
+        recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
+
         mRecyclerView.setLayoutManager( new LinearLayoutManager(getContext()));
+        mRecyclerView.addItemDecoration( new MarginItemDecorator((int) getResources().getDimension( R.dimen.text_margin)));
         mRecyclerView.setAdapter(recyclerViewAdapter);
 
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
@@ -171,13 +177,15 @@ public class QueueFragment extends Fragment{
             /* For every QueueItem in queueItems add it to the adapter */
             for (MediaSessionCompat.QueueItem queueItem : queueItems) {
 
+                String artUri = queueItem.getDescription().getExtras().getString(MusicLibrary.ALBUM_ART_URI_ARGS_EXTRA);
+
                 /* Change the title adding the item position as "1   Song" (3 spaces) */
                 recyclerViewAdapter.add(
                         new CustomListItem(
                                 queueItem.getDescription().getMediaId(),
                                 String.format("%d   %s",
                                         queueItem.getQueueId()+1,
-                                        queueItem.getDescription().getTitle().toString())));
+                                        queueItem.getDescription().getTitle().toString()), Uri.parse(artUri)));
             }
             /* When all the data is loaded notify the adapter about the changes */
             recyclerViewAdapter.notifyDataSetChanged();

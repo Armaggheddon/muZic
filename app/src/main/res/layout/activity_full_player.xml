@@ -136,13 +136,13 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginStart="32dp"
-        app:tint="?attr/colorControlNormal"
         android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="@string/skip_next_image_description"
         app:layout_constraintBottom_toBottomOf="@+id/play_pause_button"
         app:layout_constraintStart_toEndOf="@+id/play_pause_button"
         app:layout_constraintTop_toTopOf="@+id/play_pause_button"
-        app:srcCompat="@drawable/ic_skip_next" />
+        app:srcCompat="@drawable/ic_skip_next"
+        app:tint="?attr/colorControlNormal" />
 
     <ImageView
         android:id="@+id/skip_previous_button"

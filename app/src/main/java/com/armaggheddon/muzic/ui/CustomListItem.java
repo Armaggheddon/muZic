@@ -1,5 +1,7 @@
 package com.armaggheddon.muzic.ui;
 
+import android.net.Uri;
+
 import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.AlbumItem;
 import com.armaggheddon.muzic.library.ArtistItem;
@@ -15,6 +17,7 @@ class CustomListItem {
     private String id;
     private String title;
     private int imageRes;
+    private Uri art;
 
     /**
      * Constructor of the item
@@ -25,9 +28,10 @@ class CustomListItem {
      *          name or {@link AlbumItem} name
      */
 
-    public CustomListItem(String id, String title) {
+    public CustomListItem(String id, String title, Uri art) {
         this.id = id;
         this.title = title;
+        this.art = art;
     }
 
     /**
@@ -49,4 +53,6 @@ class CustomListItem {
     }
 
     public int getImageRes(){return imageRes;}
+
+    public Uri getArt(){return art;}
 }

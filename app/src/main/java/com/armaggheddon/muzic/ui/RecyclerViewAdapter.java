@@ -1,5 +1,6 @@
 package com.armaggheddon.muzic.ui;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.MusicLibrary;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -47,19 +50,22 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
 
         public ImageView mImageView;
         public TextView mTitleTextView;
+        public ImageView mArtImageView;
 
         public RecyclerViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
             super(itemView);
 
             /* Initialize the views in the layout */
+            mArtImageView = itemView.findViewById(R.id.art_image_view);
             mImageView = itemView.findViewById(R.id.now_playing_imageview);
             mTitleTextView = itemView.findViewById(R.id.title_textview);
+
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if(listener != null){
-                        int position = getAdapterPosition();
+                        int position = getBindingAdapterPosition();
                         if(position != RecyclerView.NO_POSITION){
                             listener.onItemClick(position);
                         }
@@ -107,6 +113,18 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
 
         holder.mTitleTextView.setText(currentItem.getTitle());
 
+        Uri art = currentItem.getArt();
+
+        //TODO: add logic to handle where art = SONG, ALBUM, ... for empty data on item
+
+        if(art.equals(Uri.parse(MusicLibrary.ARTISTS))){
+            holder.mArtImageView.setImageResource(R.drawable.ic_shortcut_artist);
+        }else{
+            Glide.with(holder.mArtImageView)
+                    .load(art)
+                    .error(R.drawable.ic_default_album_art_with_bg)
+                    .into(holder.mArtImageView);
+        }
     }
 
     /**

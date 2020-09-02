@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Toolbar options -->
+
     <item
         android:id="@+id/option"
         android:icon="@drawable/ic_settings"
