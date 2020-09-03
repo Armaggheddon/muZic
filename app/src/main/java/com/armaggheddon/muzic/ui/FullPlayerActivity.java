@@ -108,7 +108,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_full_player);
+        setContentView(R.layout.activity_full_player_test);
 
         motionLayout = findViewById(R.id.full_player_root);
 

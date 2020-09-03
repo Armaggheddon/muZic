@@ -241,10 +241,6 @@ public class ListFragment extends Fragment{
             for (MediaBrowserCompat.MediaItem item : children) {
 
                 Uri image = item.getDescription().getIconUri();
-                /* If we are displaying the artist tab tell the adapter to load the default icons */
-                 if(image == null && subscribeTo.equalsIgnoreCase(MusicLibrary.ARTISTS)){
-                    image = Uri.parse(MusicLibrary.ARTISTS);
-                 }
                 recyclerViewAdapter.add(new CustomListItem(
                         item.getMediaId(),
                         item.getDescription().getTitle().toString(),

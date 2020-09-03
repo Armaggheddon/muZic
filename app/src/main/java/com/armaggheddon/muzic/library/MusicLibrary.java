@@ -222,7 +222,8 @@ public class MusicLibrary {
                         artists.add(
                                 new ArtistItem(
                                         artistId,
-                                        artist));
+                                        artist,
+                                        albumArtUri));
 
                         /* Add this artist id so we can know what items we already added */
                         artistIds.add(artistId);
@@ -408,7 +409,7 @@ public class MusicLibrary {
                             artist.getIdString(),
                             artist.getName(),
                             "",
-                            null,
+                            artist.getAlbumArt(),
                             FLAG_PLAYLIST));
                 }
                 break;

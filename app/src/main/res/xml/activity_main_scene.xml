@@ -56,7 +56,7 @@
         <Constraint
             android:id="@+id/small_player"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_height="50dp"
+            android:layout_height="60dp"
             android:layout_width="match_parent"
             app:layout_constraintBottom_toTopOf="@id/navigation"
             app:layout_constraintStart_toStartOf="parent" />

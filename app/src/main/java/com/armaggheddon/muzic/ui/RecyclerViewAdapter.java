@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.armaggheddon.muzic.R;
-import com.armaggheddon.muzic.library.MusicLibrary;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
@@ -128,17 +127,11 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
 
         /* Load and display the album art for the item */
         Uri art = currentItem.getArt();
-
-        /* If art is "ARTISTS" then load a default image, else load the one available */
-        if(art.equals(Uri.parse(MusicLibrary.ARTISTS))){
-            holder.mArtImageView.setImageResource(R.drawable.ic_shortcut_artist);
-        }else{
-            Glide.with(holder.mArtImageView)
+        Glide.with(holder.mArtImageView)
                     .load(art)
                     .apply( defaultSizeOption)
                     .error(R.drawable.ic_default_album_art_with_bg)
                     .into(holder.mArtImageView);
-        }
     }
 
     /**

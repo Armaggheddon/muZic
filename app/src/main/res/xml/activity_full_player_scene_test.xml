@@ -9,9 +9,8 @@
             android:id="@+id/fragment_container"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="@id/guideline_middle"
-            app:layout_constraintTop_toBottomOf="@id/guideline_middle"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
         <Constraint
             android:id="@+id/title_textview"
@@ -22,7 +21,7 @@
             app:layout_constraintTop_toBottomOf="@+id/guideline_middle"
             android:layout_marginStart="16dp"
             app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp" ></Constraint>
         <Constraint
             android:id="@+id/close_queue_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -49,8 +48,20 @@
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toTopOf="@id/guideline_middle"
             app:layout_constraintTop_toBottomOf="@id/full_player_toolbar"
-            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintDimensionRatio="1"
             app:layout_constraintStart_toStartOf="parent" />
+        <Constraint
+            android:id="@+id/text_bg"
+            app:layout_constraintEnd_toEndOf="@id/album_imageview"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@id/album_imageview"
+            app:layout_constraintTop_toTopOf="@id/album_imageview"
+            app:layout_constraintStart_toStartOf="@id/album_imageview" >
+            <CustomAttribute
+                app:attributeName="alpha"
+                app:customFloatValue="0.5" />
+        </Constraint>
     </ConstraintSet>
 
     <ConstraintSet android:id="@+id/end">
@@ -59,10 +70,10 @@
             android:id="@+id/fragment_container"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="@id/guideline_queue_bottom"
-            app:layout_constraintTop_toBottomOf="@id/guideline_queue_top"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/play_pause_button"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="32dp" />
         <Constraint
             android:id="@+id/open_queue_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -82,14 +93,68 @@
             android:alpha="1" />
         <Constraint
             android:id="@+id/title_textview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@+id/album_imageview"
+            android:layout_marginStart="16dp"
+            app:layout_constraintEnd_toEndOf="@+id/text_bg"
+            app:flow_horizontalAlign="start"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toBottomOf="@+id/album_imageview"
+            app:layout_constraintTop_toTopOf="@+id/album_imageview"
+            app:layout_constraintVertical_bias="0.0"
+            android:layout_marginTop="8dp" ></Constraint>
+        <Constraint
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/guideline_queue_top"
+            android:layout_width="0dp"
+            app:layout_constraintTop_toBottomOf="@id/full_player_toolbar"
+            app:layout_constraintDimensionRatio="1"
+            app:layout_constraintStart_toStartOf="parent"
+            android:id="@+id/album_imageview"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp" />
+        <Constraint
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_width="0dp"
+            app:layout_constraintTop_toBottomOf="@+id/title_textview"
+            android:id="@+id/artist_textview"
+            app:layout_constraintStart_toStartOf="@+id/title_textview"
+            app:layout_constraintEnd_toEndOf="@id/text_bg" />
+        <Constraint
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_width="wrap_content"
+            android:id="@+id/play_pause_button"
+            app:layout_constraintTop_toBottomOf="@+id/seekBar"
+            android:layout_marginTop="32dp" />
+        <Constraint
+            android:layout_marginEnd="24dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintTop_toBottomOf="@+id/guideline_queue_bottom"
-            android:layout_marginStart="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="0dp"
             app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="24dp"
+            android:id="@+id/seekBar"
+            app:layout_constraintTop_toBottomOf="@id/guideline_queue_top"
             android:layout_marginTop="16dp" />
+        <Constraint
+            android:id="@+id/text_bg"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@id/album_imageview"
+            app:layout_constraintTop_toTopOf="@id/album_imageview"
+            app:layout_constraintStart_toStartOf="@id/album_imageview"
+            app:layout_constraintEnd_toStartOf="@+id/close_queue_button"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp" >
+            <CustomAttribute
+                app:attributeName="alpha"
+                app:customFloatValue="0.6" />
+        </Constraint>
     </ConstraintSet>
 
     <Transition

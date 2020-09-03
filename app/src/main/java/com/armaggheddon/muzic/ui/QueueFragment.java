@@ -23,9 +23,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.MusicLibrary;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Fragment implementation that displays a RecyclerView using {@link RecyclerViewAdapter} and using
@@ -53,6 +55,8 @@ public class QueueFragment extends Fragment{
 
     /* Set as a global variable so when the data is loaded is possible to scroll to the right position */
     private RecyclerView mRecyclerView;
+
+    private MaterialButton mRandomQueueButton;
 
     /* The layout to show if no queue items are available, es empty queue*/
     private ConstraintLayout noQueueLayout;
@@ -114,6 +118,7 @@ public class QueueFragment extends Fragment{
         recyclerViewAdapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
 
         mRecyclerView.setLayoutManager( new LinearLayoutManager(getContext()));
+
         mRecyclerView.addItemDecoration( new MarginItemDecorator((int) getResources().getDimension( R.dimen.text_margin)));
         mRecyclerView.addItemDecoration( new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(recyclerViewAdapter);
@@ -134,6 +139,8 @@ public class QueueFragment extends Fragment{
         });
 
         noQueueLayout = view.findViewById(R.id.empty_queue);
+
+        mRandomQueueButton = view.findViewById(R.id.button_queue_random);
         return view;
     }
 
@@ -196,6 +203,16 @@ public class QueueFragment extends Fragment{
             }
             /* When all the data is loaded notify the adapter about the changes */
             recyclerViewAdapter.notifyDataSetChanged();
+
+            mRandomQueueButton.setVisibility(View.VISIBLE);
+            mRandomQueueButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int size = recyclerViewAdapter.getItemCount();
+                    MediaControllerCompat.getMediaController(getActivity())
+                            .getTransportControls().skipToQueueItem( new Random().nextInt(size));
+                }
+            });
 
             /* Load the metadata of the current item being played */
             //MediaMetadataCompat metadata = MediaControllerCompat.getMediaController(getActivity()).getMetadata();

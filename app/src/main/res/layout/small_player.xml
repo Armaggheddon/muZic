@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="50dp"
+    android:layout_height="60dp"
     android:id="@+id/small_player_layout"
     android:background="@color/colorPrimary">
 
@@ -11,8 +11,8 @@
 
     <ImageView
         android:id="@+id/album_art_small_player"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:contentDescription="@string/album_image_description"
         app:srcCompat="@drawable/ic_album"
         app:layout_constraintDimensionRatio="1:1"
@@ -51,8 +51,9 @@
     <ImageView
         android:id="@+id/play_pause_small_player"
         android:contentDescription="@string/small_player_play_description"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:scaleType="centerInside"
         android:src="@drawable/ic_play"
         app:tint="@android:color/white"
         android:background="?selectableItemBackgroundBorderless"
