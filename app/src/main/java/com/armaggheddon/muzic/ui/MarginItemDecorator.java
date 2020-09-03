@@ -34,7 +34,15 @@ class MarginItemDecorator extends RecyclerView.ItemDecoration {
                 outRect.top = spaceHeight;
          }
          */
-        outRect.top = spaceHeight/2;
-        outRect.bottom = spaceHeight/2;
+        /* If the layout is scrolling horizontally apply margin only on left - right */
+        if( parent.getLayoutManager().canScrollHorizontally()){
+            outRect.left = spaceHeight/2;
+            outRect.right = spaceHeight/2;
+        }
+        /* Else the layout is scrolling vertically then apply margin on top and bottom */
+        else {
+            outRect.top = spaceHeight / 2;
+            outRect.bottom = spaceHeight / 2;
+        }
     }
 }

@@ -3,9 +3,10 @@
     <string name="settings_title">Settings</string>
 
     <string name="albums_title">Albums</string>
-    <string name="artists_title">Artist</string>
+    <string name="artists_title">Artists</string>
     <string name="songs_title">Songs</string>
     <string name="queue_title">Queue</string>
+    <string name="search_title">Search</string>
     
     <string name="custom_action_replay">Replay</string>
     <string name="custom_action_random_song_in_queue">Random</string>

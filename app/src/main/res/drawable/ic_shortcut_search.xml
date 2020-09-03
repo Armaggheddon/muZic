@@ -9,7 +9,7 @@
     </item>
 
     <item
-        android:drawable="@drawable/ic_baseline_queue_music"
+        android:drawable="@drawable/ic_search"
         android:left="5dp"
         android:right="5dp"
         android:top="5dp"

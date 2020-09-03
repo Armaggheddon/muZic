@@ -46,10 +46,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 /**
  * MainActivity, handles the {@link R.layout#activity_main} layout with the controls for
  * {@link R.layout#small_player} and a 4 tab navigation with fragments, 3 of type
- * {@link ListFragment} and one of type {@link QueueFragment}
+ * {@link ListFragment} and one of type {@link SearchFragment}
  */
 
-public class MainActivity extends AppCompatActivity implements MediaBrowserProvider, ListFragment.FragmentListListener, QueueFragment.QueueFragmentListener, PlayAlbumArtistBottomSheet.BottomSheetListener {
+public class MainActivity extends AppCompatActivity implements MediaBrowserProvider,
+        ListFragment.FragmentListListener,
+        PlayAlbumArtistBottomSheet.BottomSheetListener, SearchFragment.FragmentListListener{
 
     private static final String TAG = "MainActivity";
 
@@ -66,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
     private static final ListFragment albumFragment = ListFragment.newInstance(MusicLibrary.ALBUMS);
     private static final ListFragment artistFragment = ListFragment.newInstance(MusicLibrary.ARTISTS);
     private static final ListFragment songsFragment = ListFragment.newInstance(MusicLibrary.SONGS);
-    private final QueueFragment queueFragment = new QueueFragment();
+    private final SearchFragment searchFragment = new SearchFragment();
 
     private MediaBrowserCompat mMediaBrowser;
 
@@ -136,7 +138,19 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         Artist. When called starts the playback with all the songs under the specified mediaId
         */
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(mediaId, null);
-        //MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(0);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+    }
+
+    @Override
+    public void onSongSearchItemClicked(String mediaId, long position) {
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(MusicLibrary.SONGS, null);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(position);
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+    }
+
+    @Override
+    public void onAlbumArtistSongItemClicked(String mediaId) {
+        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().playFromMediaId(mediaId, null);
         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
     }
 
@@ -157,13 +171,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
 
         /* Return the MediaBrowserCompat that the activity has */
         return mMediaBrowser;
-    }
-
-    @Override
-    public void onQueueItemClicked(long positionInQueue) {
-
-        /* Called when an item in the QueueFragment is clicked. Skip to the queue item clicked */
-        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToQueueItem(positionInQueue);
     }
 
     @Override
@@ -207,11 +214,11 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                     FRAGMENT_TAG = ListFragment.SONG_FRAGMENT_TAG;
 
                     break;
-                case R.id.queue_nav:
+                case R.id.search_nav:
 
-                    /* The queue icon on the navigation bar is clicked, get the Queue fragment */
-                    fragment = queueFragment;
-                    FRAGMENT_TAG = QueueFragment.QUEUE_FRAGMENT_TAG;
+                    /* The search icon on the navigation bar is clicked, get the Search fragment */
+                    fragment = searchFragment;
+                    FRAGMENT_TAG = SearchFragment.SEARCH_FRAGMENT_TAG;
 
                     break;
             }
@@ -273,9 +280,9 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                         defaultFragment = songsFragment;
                         defaultItemInNavigation = R.id.songs_nav;
                         break;
-                    case QueueFragment.QUEUE_FRAGMENT_TAG:
-                        defaultFragment = queueFragment;
-                        defaultItemInNavigation = R.id.queue_nav;
+                    case SearchFragment.SEARCH_FRAGMENT_TAG:
+                        defaultFragment = searchFragment;
+                        defaultItemInNavigation = R.id.search_nav;
                         break;
                 }
             }
@@ -310,8 +317,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                         case ListFragment.SONG_FRAGMENT_TAG:
                             defaultItemInNavigation = R.id.songs_nav;
                             break;
-                        case QueueFragment.QUEUE_FRAGMENT_TAG:
-                            defaultItemInNavigation = R.id.queue_nav;
+                        case SearchFragment.SEARCH_FRAGMENT_TAG:
+                            defaultItemInNavigation = R.id.search_nav;
                             break;
                     }
 
@@ -320,6 +327,8 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 }
             }
         }
+
+        final BottomNavigationView navigationView = findViewById(R.id.navigation);
 
         mToolbar = findViewById(R.id.toolbar);
 
@@ -360,8 +369,6 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 mConnectionCallback,
                 null);
 
-
-        final BottomNavigationView navigationView = findViewById(R.id.navigation);
 
         /* Set the onClick listener for the items in the view */
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationListener);
@@ -419,7 +426,7 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
                 launched is AlbumFragment (ListFragment) but if the activity was destroyed and
                 recreated (for example a theme change) then the default fragment is the last active
                 fragment. Default fragment can also be the fragment that represent the launcher
-                shortcut clicked ( Artist, Songs, Queue)
+                shortcut clicked ( Artist, Songs, Search)
                 */
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, defaultFragment, defaultFragmentTag)

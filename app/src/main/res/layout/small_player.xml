@@ -55,9 +55,9 @@
         android:layout_height="60dp"
         android:scaleType="centerInside"
         android:src="@drawable/ic_play"
+        android:layout_marginEnd="16dp"
         app:tint="@android:color/white"
         android:background="?selectableItemBackgroundBorderless"
-        android:layout_marginEnd="24dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

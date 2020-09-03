@@ -31,7 +31,7 @@ public class SettingsActivity extends AppCompatActivity {
     /* IDs of the shortcuts published */
     private static final String ARTIST_SHORTCUT_ID = "shortcut_artist_id";
     private static final String SONG_SHORTCUT_ID = "shortcut_song_id";
-    private static final String QUEUE_SHORTCUT_ID = "shortcut_queue_id";
+    private static final String SEARCH_SHORTCUT_ID = "shortcut_search_id";
 
     /* If TRUE the device has built-in equalizer, else it does not have one */
     private static boolean IS_EQ_AVAILABLE = false;
@@ -173,7 +173,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             /*
             Build the intents for the shortcuts to open the related fragment when the app is opened.
-            The same applies for songsIntent and queueIntent
+            The same applies for songsIntent and searchIntent
             */
             Intent artistsIntent = new Intent( getActivity(), MainActivity.class);
             artistsIntent.setAction(Intent.ACTION_VIEW);
@@ -189,10 +189,10 @@ public class SettingsActivity extends AppCompatActivity {
             songsIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             songsIntent.putExtra(MainActivity.LAUNCHER_SHORTCUTS_INTENT_KEY, ListFragment.SONG_FRAGMENT_TAG);
 
-            Intent queueIntent = new Intent( getActivity(), MainActivity.class);
-            queueIntent.setAction(Intent.ACTION_VIEW);
-            queueIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            queueIntent.putExtra(MainActivity.LAUNCHER_SHORTCUTS_INTENT_KEY, QueueFragment.QUEUE_FRAGMENT_TAG);
+            Intent searchIntent = new Intent( getActivity(), MainActivity.class);
+            searchIntent.setAction(Intent.ACTION_VIEW);
+            searchIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            searchIntent.putExtra(MainActivity.LAUNCHER_SHORTCUTS_INTENT_KEY, SearchFragment.SEARCH_FRAGMENT_TAG);
 
             /* Build the ShortcutInfo object that represent the shortcut */
             ShortcutInfo artistInfo = new ShortcutInfo.Builder(getContext(), ARTIST_SHORTCUT_ID)
@@ -209,15 +209,15 @@ public class SettingsActivity extends AppCompatActivity {
                     .setIntent(songsIntent)
                     .build();
 
-            ShortcutInfo queueInfo = new ShortcutInfo.Builder(getContext(), QUEUE_SHORTCUT_ID)
-                    .setShortLabel(getString(R.string.queue_title))
-                    .setLongLabel(getString(R.string.queue_title))
-                    .setIcon(Icon.createWithResource( getContext(), R.drawable.ic_shortcut_queue))
-                    .setIntent(queueIntent)
+            ShortcutInfo searchInfo = new ShortcutInfo.Builder(getContext(), SEARCH_SHORTCUT_ID)
+                    .setShortLabel(getString(R.string.search_title))
+                    .setLongLabel(getString(R.string.search_title))
+                    .setIcon(Icon.createWithResource( getContext(), R.drawable.ic_shortcut_search))
+                    .setIntent(searchIntent)
                     .build();
 
-            /* The items are showed from top to bottom as "artistInfo", "songInfo" and "queueInfo" */
-            manager.setDynamicShortcuts(Arrays.asList(queueInfo, songInfo, artistInfo));
+            /* The items are showed from top to bottom as "artistInfo", "songInfo" and "searchInfo" */
+            manager.setDynamicShortcuts(Arrays.asList(searchInfo, songInfo, artistInfo));
         }
 
         /* Removes any available shortcuts from the launcher icon */
