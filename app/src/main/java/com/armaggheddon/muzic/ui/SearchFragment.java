@@ -287,6 +287,12 @@ public class SearchFragment extends Fragment{
 
             }
 
+            /*
+            Reset the static variable in CustomSearchItem otherwise when the items will be recreated
+            the number assigned will be incremented and will exceed the number of items
+            */
+            CustomSearchItem.resetPosition();
+
             /* For every item in children create a new CustomList instance*/
             for (MediaBrowserCompat.MediaItem item : children) {
 

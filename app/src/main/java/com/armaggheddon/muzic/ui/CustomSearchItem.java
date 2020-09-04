@@ -51,4 +51,6 @@ class CustomSearchItem {
     public Uri getArt(){return art;}
 
     public int getElementPosition(){return elementPosition;}
+
+    public static void resetPosition(){position = 0;}
 }
