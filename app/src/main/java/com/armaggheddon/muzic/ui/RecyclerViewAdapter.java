@@ -60,7 +60,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
             /* Initialize the views in the layout */
             mArtImageView = itemView.findViewById(R.id.art_image_view);
             mImageView = itemView.findViewById(R.id.now_playing_imageview);
-            mTitleTextView = itemView.findViewById(R.id.title_textview);
+            mTitleTextView = itemView.findViewById(R.id.now_playing_title);
 
 
             itemView.setOnClickListener(new View.OnClickListener() {

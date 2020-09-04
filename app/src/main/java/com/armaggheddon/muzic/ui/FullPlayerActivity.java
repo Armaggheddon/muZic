@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.media.MediaMetadata;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
@@ -558,7 +557,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             seekBar.setMax((int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
 
             /* Update the title and the artist name in the text views */
-            String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
+            String title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
             String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
 
             Bitmap albumArt = description.getIconBitmap();
@@ -569,9 +568,9 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             titleTextView.setText(title);
             artistTextView.setText(artist);
             albumImage.setImageBitmap(albumArt);
-
         }
     };
+
 
     @Override
     protected void onStart() {
