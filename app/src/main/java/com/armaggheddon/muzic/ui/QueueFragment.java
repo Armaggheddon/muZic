@@ -41,16 +41,6 @@ public class QueueFragment extends Fragment{
     /* The TAG assigned to FragmentManager to search for specific fragments */
     public static final String QUEUE_FRAGMENT_TAG = "queue_fragment";
 
-    /* Extra arguments string key*/
-    public static final String IS_MAIN_ACTIVITY_ARGS_EXTRA = "is_main_activity";
-
-    /*
-    This fragment is used by MainActivity and FullPlayerActivity, this flag allows the fragment
-    to know which is the activity to ask the MediaBrowser instance.
-    The default value is true because the QueueFragment is always displayed in MainActivity
-    */
-    private boolean is_main_activity = true;
-
     private RecyclerViewAdapter recyclerViewAdapter;
 
     /* Set as a global variable so when the data is loaded is possible to scroll to the right position */
@@ -83,20 +73,16 @@ public class QueueFragment extends Fragment{
 
     /**
      * Factory method to get a {@link ListFragment} given a mediaId
-     * @param is_main_activity
-     *          Is set to true if the activity calling the fragment is {@link MainActivity},
-     *          false if is {@link FullPlayerActivity}. The current implementation uses a boolean
-     *          flag since only 2 activities are calling this fragment. To add more activities is
-     *          necessary to change {@link QueueFragment#is_main_activity}
      * @return
-     *          Returns a fragment with the arguments set
+     *          Returns a new QueueFragment
      */
-    public static QueueFragment newInstance(boolean is_main_activity){
+    public static QueueFragment newInstance(){
+        /* Use to set additional arguments to fragment
         QueueFragment fragment = new QueueFragment();
         Bundle args = new Bundle();
-        args.putBoolean(IS_MAIN_ACTIVITY_ARGS_EXTRA, is_main_activity);
         fragment.setArguments(args);
-        return fragment;
+         */
+        return new QueueFragment();
     }
 
     @Nullable
@@ -148,18 +134,10 @@ public class QueueFragment extends Fragment{
     public void onStart() {
         super.onStart();
 
-        /* Get the arguments set on fragment creation */
-        if(getArguments() != null){
-            is_main_activity = getArguments().getBoolean(IS_MAIN_ACTIVITY_ARGS_EXTRA);
-        }
-
         MediaBrowserCompat mediaBrowser;
+
         /* Get the MediaBrowser based on the activity that started the fragment */
-        if(is_main_activity){
-            mediaBrowser = ((MainActivity)getActivity()).getMediaBrowser();
-        }else{
-            mediaBrowser = ((FullPlayerActivity)getActivity()).getMediaBrowser();
-        }
+        mediaBrowser = ((FullPlayerActivity)getActivity()).getMediaBrowser();
 
         /*
         If mediaBrowser is not null and is connected.

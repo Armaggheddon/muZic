@@ -13,6 +13,7 @@
         android:id="@+id/album_art_small_player"
         android:layout_width="60dp"
         android:layout_height="60dp"
+        android:scaleType="centerCrop"
         android:contentDescription="@string/album_image_description"
         app:srcCompat="@drawable/ic_album"
         app:layout_constraintDimensionRatio="1:1"

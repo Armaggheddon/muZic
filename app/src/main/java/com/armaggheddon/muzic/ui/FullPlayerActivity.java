@@ -156,7 +156,7 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             }
 
             /* When we are connected create and add the fragment for viewing the current queue */
-            QueueFragment queueFragment = QueueFragment.newInstance(false);
+            QueueFragment queueFragment = QueueFragment.newInstance();
 
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, queueFragment)

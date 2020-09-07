@@ -19,7 +19,6 @@ public class MuzicApplication extends Application {
     private static final String THEME_LIGHT_ENTRY = "light";
     private static final String THEME_DARK_ENTRY = "dark";
     private static final String THEME_DEFAULT_ENTRY = "default";
-    public static boolean IS_FIRST_TIME = true;
 
     public void onCreate(){
         super.onCreate();
@@ -35,12 +34,6 @@ public class MuzicApplication extends Application {
         editor.putBoolean("display_tutorial", true);
         editor.commit();
          */
-        SharedPreferences preferences = getSharedPreferences(getString(R.string.display_tutorial_option), MODE_PRIVATE);
-        IS_FIRST_TIME = preferences.getBoolean(getString(R.string.display_tutorial_option), true);
-    }
-
-    public static void showAgain(boolean NEW_IS_FIRST_TIME){
-        IS_FIRST_TIME = NEW_IS_FIRST_TIME;
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.armaggheddon.muzic.ui;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
@@ -16,7 +15,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.armaggheddon.muzic.MuzicApplication;
 import com.armaggheddon.muzic.R;
 import com.armaggheddon.muzic.library.AlbumItem;
 import com.armaggheddon.muzic.library.ArtistItem;
@@ -24,9 +22,6 @@ import com.armaggheddon.muzic.library.MusicLibrary;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import me.toptas.fancyshowcase.FancyShowCaseView;
-import me.toptas.fancyshowcase.FocusShape;
 
 /**
  * Fragment implementation that displays a RecyclerView using {@link RecyclerViewAdapter} and using
@@ -145,26 +140,6 @@ public class ListFragment extends Fragment{
             @Override
             public void onItemClick(int position) {
 
-
-                if(MuzicApplication.IS_FIRST_TIME &&
-                        (subscribeTo.equalsIgnoreCase(MusicLibrary.ALBUMS)||
-                                subscribeTo.equalsIgnoreCase(MusicLibrary.ARTISTS))) {
-                    String itemClicked = recyclerViewAdapter.getItem(position).getTitle();
-                    String display = "Tap and hold " + itemClicked + " to get more options";
-                    new FancyShowCaseView.Builder(getActivity())
-                            .focusOn(mRecyclerView.getChildAt(position))
-                            .title(display)
-                            .enableAutoTextPosition()
-                            .disableFocusAnimation()
-                            .focusShape(FocusShape.ROUNDED_RECTANGLE)
-                            .build()
-                            .show();
-                    SharedPreferences.Editor editor = getContext().getSharedPreferences(getString(R.string.display_tutorial_option), Context.MODE_PRIVATE).edit();
-                    editor.putBoolean(getString(R.string.display_tutorial_option), false);
-                    editor.commit();
-                    MuzicApplication.showAgain(false);
-                }else {
-
                     String mediaId = recyclerViewAdapter.getItem(position).getId();
                     /* If the mediaId of the item has "song_" than is a playable item */
                     if (mediaId.contains(MusicLibrary.SONG_)) {
@@ -174,7 +149,6 @@ public class ListFragment extends Fragment{
                     else {
                         mFragmentListener.onBrowsableItemClicked(mediaId);
                         mFragmentListener.setToolbarTitle(recyclerViewAdapter.getItem(position).getTitle());
-                    }
                 }
             }
 
