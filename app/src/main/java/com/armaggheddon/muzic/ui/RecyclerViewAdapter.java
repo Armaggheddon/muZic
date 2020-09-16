@@ -54,7 +54,7 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
         public TextView mTitleTextView;
         public ImageView mArtImageView;
 
-        public RecyclerViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+        public RecyclerViewHolder(@NonNull final View itemView, final OnItemClickListener listener) {
             super(itemView);
 
             /* Initialize the views in the layout */
@@ -153,6 +153,8 @@ class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Recyc
     public CustomListItem getItem(int position){
         return mCustomList.get(position);
     }
+
+    public void removeItem(int position){ mCustomList.remove(position);}
 
     @Override
     public int getItemCount() {

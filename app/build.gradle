@@ -8,8 +8,8 @@ android {
         applicationId "com.armaggheddon.muzic"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 6
-        versionName "1.2"
+        versionCode 7
+        versionName "1.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

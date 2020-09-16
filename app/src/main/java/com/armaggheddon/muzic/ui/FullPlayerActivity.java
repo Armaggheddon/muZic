@@ -31,8 +31,10 @@ import androidx.palette.graphics.Palette;
 
 import com.armaggheddon.muzic.MusicService;
 import com.armaggheddon.muzic.R;
+import com.armaggheddon.muzic.library.MusicLibrary;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.concurrent.TimeUnit;
 
@@ -97,6 +99,22 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
         MediaControllerCompat.getMediaController(FullPlayerActivity.this).getTransportControls().play();
     }
 
+    @Override
+    public void onQueueItemRemoved(long positionInQueue, String title) {
+        Bundle extra = new Bundle();
+        extra.putInt( MusicLibrary.POSITION, (int)positionInQueue);
+        MediaControllerCompat.getMediaController(FullPlayerActivity.this).removeQueueItem(
+                new MediaDescriptionCompat.Builder().setTitle(title).setExtras(extra).build()
+        );
+        Snackbar.make(findViewById(R.id.full_player_root), "Removed " + title, Snackbar.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onPlayingItemRemoved(String title) {
+        Snackbar.make(findViewById(R.id.full_player_root), "Cant remove " + title + " while is playing", Snackbar.LENGTH_SHORT).show();
+
+    }
 
     @Override
     public MediaBrowserCompat getMediaBrowser() {

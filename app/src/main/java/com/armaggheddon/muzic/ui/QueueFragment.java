@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -69,6 +70,9 @@ public class QueueFragment extends Fragment{
          *          item to play
          */
         void onQueueItemClicked( long positionInQueue);
+
+        void onQueueItemRemoved( long positionInQueue, String title);
+        void onPlayingItemRemoved(String title);
     }
 
     /**
@@ -97,7 +101,6 @@ public class QueueFragment extends Fragment{
         Even on FullPlayerActivity where the RecyclerView is being animated, its size does not
         changes
         */
-        mRecyclerView.setHasFixedSize(true);
         recyclerViewAdapter = new RecyclerViewAdapter( new ArrayList<CustomListItem>());
 
         /* Restore the recycler view position only when the data has been loaded */
@@ -124,11 +127,46 @@ public class QueueFragment extends Fragment{
             }
         });
 
+        new ItemTouchHelper(itemHelper).attachToRecyclerView(mRecyclerView);
+
         noQueueLayout = view.findViewById(R.id.empty_queue);
 
         mRandomQueueButton = view.findViewById(R.id.button_queue_random);
         return view;
     }
+
+    private final ItemTouchHelper.SimpleCallback itemHelper = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT|ItemTouchHelper.LEFT) {
+        @Override
+        public boolean onMove (@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder
+        viewHolder, @NonNull RecyclerView.ViewHolder target){
+        return false;
+    }
+
+        @Override
+        public void onSwiped (@NonNull RecyclerView.ViewHolder viewHolder,int direction){
+        if (direction == ItemTouchHelper.RIGHT || direction == ItemTouchHelper.LEFT) {
+            CustomListItem item = recyclerViewAdapter.getItem(viewHolder.getAbsoluteAdapterPosition());
+            String title = item.getTitle();
+            int position = viewHolder.getAbsoluteAdapterPosition();
+
+            /* If the item swiped is not the one being played */
+            if(!MediaControllerCompat.getMediaController(getActivity()).getMetadata().getDescription().getTitle().toString().equalsIgnoreCase(title)) {
+
+                /* Remove the item from the adapter, notify about the change and tell FullPlayerActivity */
+                recyclerViewAdapter.removeItem(position);
+                recyclerViewAdapter.notifyItemRemoved(position);
+                mQueueFragmentListener.onQueueItemRemoved(position, title);
+            }else {
+
+                /* Tell FullPlayerActivity about the action not being performed */
+                mQueueFragmentListener.onPlayingItemRemoved(title);
+
+                /* Redraw the item in the recyclerview*/
+                recyclerViewAdapter.notifyItemChanged(position);
+            }
+        }
+    }
+    };
 
     @Override
     public void onStart() {
@@ -171,13 +209,12 @@ public class QueueFragment extends Fragment{
 
                 String artUri = queueItem.getDescription().getExtras().getString(MusicLibrary.ALBUM_ART_URI_ARGS_EXTRA);
 
+                CustomListItem item = new CustomListItem(
+                        queueItem.getDescription().getMediaId(),
+                        queueItem.getDescription().getTitle().toString(),
+                        Uri.parse(artUri));
                 /* Change the title adding the item position as "1   Song" (3 spaces) */
-                recyclerViewAdapter.add(
-                        new CustomListItem(
-                                queueItem.getDescription().getMediaId(),
-                                String.format("%d   %s",
-                                        queueItem.getQueueId()+1,
-                                        queueItem.getDescription().getTitle().toString()), Uri.parse(artUri)));
+                recyclerViewAdapter.add(item);
             }
             /* When all the data is loaded notify the adapter about the changes */
             recyclerViewAdapter.notifyDataSetChanged();
@@ -269,8 +306,6 @@ public class QueueFragment extends Fragment{
             previousItem = currentItemPosition;
         }
     }
-
-    private boolean scroll_to_position = false;
 
     @Override
     public void onAttach(@NonNull Context context) {

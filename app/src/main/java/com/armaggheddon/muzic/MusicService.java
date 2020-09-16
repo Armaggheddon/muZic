@@ -23,7 +23,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -178,6 +177,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         is no need to set these flags
         mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
          */
+        mSession.setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS);
         mSession.setPlaybackState(mStateBuilder.build());
         mSession.setCallback(new MediaSessionCallback());
         setSessionToken(mSession.getSessionToken());
@@ -894,11 +894,19 @@ public class MusicService extends MediaBrowserServiceCompat {
             }
         }
 
+        /* When an item is is asked to be removed from the queue */
+        @Override
+        public void onRemoveQueueItem(MediaDescriptionCompat description) {
+            super.onRemoveQueueItem(description);
+            int position = description.getExtras().getInt(MusicLibrary.POSITION);
+            mQueue.remove(position);
+            mSession.setQueue(mQueue);
+        }
+
         @Override
         public void onRewind() {
             super.onRewind();
             onSeekTo(0);
-            Log.d(TAG, "onRewind: ");
         }
 
         /**

@@ -49,6 +49,7 @@ public class MusicLibrary {
     public static final String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
     public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
      */
+    public static final String POSITION = "position";
 
     /*
     Cache the FLAGS since they are used often, also creates a custom flag FLAG_PLAYLIST holding
