@@ -324,9 +324,17 @@ public class MusicService extends MediaBrowserServiceCompat {
              */
             IS_CAR_CONNECTED = mPackageValidator.isValidCarPackage(clientPackageName);
 
+            String CONTENT_STYLE_SUPPORTED =
+                    "android.media.browse.CONTENT_STYLE_SUPPORTED";
+            String CONTENT_STYLE_BROWSABLE_HINT =
+                    "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
+            int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
+            Bundle extras = new Bundle();
+            extras.putBoolean(CONTENT_STYLE_SUPPORTED, true);
+            extras.putInt(CONTENT_STYLE_BROWSABLE_HINT, CONTENT_STYLE_GRID_ITEM_HINT_VALUE);
 
             /* Return the valid browser root */
-            return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
+            return new BrowserRoot(MusicLibrary.BROWSER_ROOT, extras);
         }
         return new BrowserRoot(MusicLibrary.EMPTY_ROOT, null);
     }

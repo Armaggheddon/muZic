@@ -54,7 +54,7 @@
         <provider
             android:authorities="com.armaggheddon.muzic"
             android:name=".ArtProvider"
-            android:exported="false"/>
+            android:exported="true"/>
 
 
         <!--
