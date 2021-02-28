@@ -397,14 +397,10 @@ public class MainActivity extends AppCompatActivity implements MediaBrowserProvi
         public void onConnected() {
             MediaSessionCompat.Token token = mMediaBrowser.getSessionToken();
             MediaControllerCompat mediaController = null;
-            try {
 
-                /* Get a new media controller that allows the activity to send transport controls to the session */
-                mediaController = new MediaControllerCompat(
-                        MainActivity.this, token);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
+            /* Get a new media controller that allows the activity to send transport controls to the session */
+            mediaController = new MediaControllerCompat(
+                    MainActivity.this, token);
             MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
 
             /*

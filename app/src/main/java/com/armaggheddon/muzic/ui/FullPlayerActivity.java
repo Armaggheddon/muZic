@@ -165,13 +165,8 @@ public class FullPlayerActivity extends AppCompatActivity implements QueueFragme
             MediaSessionCompat.Token token = mBrowser.getSessionToken();
 
             MediaControllerCompat mediaControllerCompat = null;
-            try {
-                mediaControllerCompat = new MediaControllerCompat(
-                        FullPlayerActivity.this, token);
-
-            }catch (RemoteException e){
-                Log.e(TAG, "onConnected: ", e);
-            }
+            mediaControllerCompat = new MediaControllerCompat(
+                    FullPlayerActivity.this, token);
 
             /* When we are connected create and add the fragment for viewing the current queue */
             QueueFragment queueFragment = QueueFragment.newInstance();

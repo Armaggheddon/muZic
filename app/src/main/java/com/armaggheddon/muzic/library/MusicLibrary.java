@@ -21,6 +21,7 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
+import com.armaggheddon.muzic.ArtProvider;
 import com.armaggheddon.muzic.MusicService;
 import com.armaggheddon.muzic.R;
 
@@ -129,7 +130,7 @@ public class MusicLibrary {
      * Builds the projection array for the elements to retrieve and a selection string to restrict
      * the search only on the elements that are flagged as music.
      * Creates a new thread to load the data. The thread will publish the results as they are available
-     *
+     * <p>
      * Retrieves the data for all the songs in the device storage
      * -ID : unique identifier of the song
      * -TITLE : the title of the song
@@ -138,10 +139,11 @@ public class MusicLibrary {
      * -ARTIST_ID : unique identifier of the artist
      * -ALBUM_ID : unique identifier of the album
      * -DURATION : the length in milliseconds of the song
-     *
+     * <p>
      * The column {@value android.provider.MediaStore.Audio.Media#DURATION}
      * was added back in API level 1, the columns so exists before Q, as shown
      * in the link below despite on what the warning it shows
+     *
      * @see "https://github.com/AndroidSDKSources/android-sdk-sources-for-api-level-1/blob/c77731af5068b85a350e768757d229cae00f8098/android/provider/MediaStore.java#L292"
      */
     private void initLibrary() {
@@ -197,6 +199,7 @@ public class MusicLibrary {
                 int albumIdCol = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
                 int durationCol = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
+
                 /* While a row is available */
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idCol);
@@ -210,7 +213,6 @@ public class MusicLibrary {
                     /* Build the songUri (the song itself to play) and the albumArtUri (the image of the album) */
                     Uri songUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                     Uri albumArtUri = ContentUris.withAppendedId(Uri.parse(ALBUM_ART_URI), albumId);
-
 
                     /*
                     If artistIds dont have this artistId add the artist data to a list of
@@ -285,12 +287,10 @@ public class MusicLibrary {
     /**
      * Returns a bitmap representation of the Uri given as parameter. The image is also resized to
      * be 320x320 to match Android Auto default size
-     * @see "https://developer.android.com/guide/topics/media-apps/working-with-a-media-session#maintain-state"
      *
-     * @param albumArtUri
-     *                    The uri that points to the album art image in the storage
-     * @return
-     *              The bitmap created from the URI given, null if an IOException occurs
+     * @param albumArtUri The uri that points to the album art image in the storage
+     * @return The bitmap created from the URI given, null if an IOException occurs
+     * @see "https://developer.android.com/guide/topics/media-apps/working-with-a-media-session#maintain-state"
      */
     public Bitmap loadAlbumArt(Uri albumArtUri) {
         //If albumArtUri is null return the default album icon
@@ -341,8 +341,7 @@ public class MusicLibrary {
      * Creates the root elements using
      * {@link MusicLibrary#generateBrowsableOrPlaylistItem(String, String, String, Uri, int)}
      *
-     * @return
-     *              A list of mediaItems that holds the information of all the categories
+     * @return A list of mediaItems that holds the information of all the categories
      */
     public List<MediaBrowserCompat.MediaItem> getRootItems() {
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
@@ -380,12 +379,10 @@ public class MusicLibrary {
      * For default clients returns the {@value MusicLibrary#SONGS} MediaItems
      * (with the image Uri for the artist) and the flag set to {@value MusicLibrary#FLAG_PLAYABLE}
      *
-     * @param parentId
-     *                 The parent ID clicked to get in this category which can be ALBUMS or ARTISTS
+     * @param parentId The parent ID clicked to get in this category which can be ALBUMS or ARTISTS
      *                 or SONGS
-     * @return
-     *              The mediaItems as {@value MusicLibrary#FLAG_PLAYABLE}, {@link MusicLibrary#FLAG_PLAYLIST}
-     *              or an empty list if the parentId does not exist or is unknown
+     * @return The mediaItems as {@value MusicLibrary#FLAG_PLAYABLE}, {@link MusicLibrary#FLAG_PLAYLIST}
+     * or an empty list if the parentId does not exist or is unknown
      */
     public List<MediaBrowserCompat.MediaItem> getItemsFromParentId(String parentId) {
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
@@ -437,10 +434,8 @@ public class MusicLibrary {
     /**
      * Called when a specific album or artist is asked, build a playlist from {@param parentId}
      *
-     * @param parentId
-     *                 The parentId as a String, it is the unique identifier of the item
-     * @return
-     *              A list of MediaItems with the children of {@param parentId}
+     * @param parentId The parentId as a String, it is the unique identifier of the item
+     * @return A list of MediaItems with the children of {@param parentId}
      */
     public List<MediaBrowserCompat.MediaItem> getAlbumArtistItemsFromParentId(String parentId) {
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
@@ -487,21 +482,14 @@ public class MusicLibrary {
     /**
      * Creates a MediaItem with the flag {@value MusicLibrary#FLAG_PLAYLIST} from all the parameters given
      *
-     * @param id
-     *           The unique id of the playable item, since is a song is in the form <song_id> (es "song_1")
-     * @param title
-     *              The title of the song
-     * @param artist
-     *               The name of the artist
-     * @param album
-     *              The name of the album
-     * @param albumUri
-     *                 The Uri to the album image
-     * @param mediaUri
-     *                 The Uri to the song itself
-     * @return
-     *              Returns a MediaItem with all the data given with the flag
-     *              {@value MusicLibrary#FLAG_PLAYLIST}
+     * @param id       The unique id of the playable item, since is a song is in the form <song_id> (es "song_1")
+     * @param title    The title of the song
+     * @param artist   The name of the artist
+     * @param album    The name of the album
+     * @param albumUri The Uri to the album image
+     * @param mediaUri The Uri to the song itself
+     * @return Returns a MediaItem with all the data given with the flag
+     * {@value MusicLibrary#FLAG_PLAYLIST}
      */
     private MediaBrowserCompat.MediaItem generatePlayableItem(String id, String title, String artist, String album, Uri albumUri, Uri mediaUri) {
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
@@ -510,6 +498,8 @@ public class MusicLibrary {
         Dont set mediaDescriptionBuilder.setIconBitmap() to preserve resource consumption, it can
         loaded from the memory one at a time when needed, just set the uri to get the image
          */
+
+
         mediaDescriptionBuilder.setMediaId(id)
                 /* Set the title of the song */
                 .setTitle(title)
@@ -531,8 +521,7 @@ public class MusicLibrary {
     /**
      * Creates the QueueItem for {@link MusicService} for all the songs
      *
-     * @return
-     *              A list of QueueItems that holds the information of all the songs
+     * @return A list of QueueItems that holds the information of all the songs
      */
     public List<MediaSessionCompat.QueueItem> getSongsQueue() {
 
@@ -556,7 +545,7 @@ public class MusicLibrary {
                             songItem.getTitle(),
                             songItem.getArtist(),
                             songItem.getAlbum(),
-                            extras,queuePosition));
+                            extras, queuePosition));
 
             /* Increment the current item that is added */
             queuePosition++;
@@ -566,31 +555,25 @@ public class MusicLibrary {
 
     /**
      * Helper method that builds a QueueItem
-     * @param idString
-     *                 The stringId of the song from {@link SongItem}
-     * @param songUri
-     *                The song uri
-     * @param title
-     *              The title of the song
-     * @param artist
-     *               The name of the artist
-     * @param album
-     *              The name of the album
-     * @param extras
-     *               A Bundle with more data to assign
-     * @param queuePosition
-     *                      The queue position to assign to the QueueItem
+     *
+     * @param idString      The stringId of the song from {@link SongItem}
+     * @param songUri       The song uri
+     * @param title         The title of the song
+     * @param artist        The name of the artist
+     * @param album         The name of the album
+     * @param extras        A Bundle with more data to assign
+     * @param queuePosition The queue position to assign to the QueueItem
      * @return a
-     *              The QueueItem
+     * The QueueItem
      */
-    private MediaSessionCompat.QueueItem buildQueueItem(String idString, Uri songUri, String title, String artist, String album, Bundle extras, int queuePosition){
+    private MediaSessionCompat.QueueItem buildQueueItem(String idString, Uri songUri, String title, String artist, String album, Bundle extras, int queuePosition) {
         return new MediaSessionCompat.QueueItem(
                 new MediaDescriptionCompat.Builder().setMediaId(idString)
-                .setMediaUri(songUri)
-                .setTitle(title)
-                .setSubtitle(artist)
-                .setDescription(album)
-                .setExtras(extras).build(),
+                        .setMediaUri(songUri)
+                        .setTitle(title)
+                        .setSubtitle(artist)
+                        .setDescription(album)
+                        .setExtras(extras).build(),
                 queuePosition
         );
     }
@@ -598,10 +581,8 @@ public class MusicLibrary {
     /**
      * Creates the queue for a specific album
      *
-     * @param albumId
-     *                The albumId string as <album_id> (es "album_1")
-     * @return
-     *          The list of QueueItems with all the songs in the albumId album
+     * @param albumId The albumId string as <album_id> (es "album_1")
+     * @return The list of QueueItems with all the songs in the albumId album
      */
     /* Suppress because it is not a user visible string, no need to format to "DefaultLocale" */
     @SuppressLint("DefaultLocale")
@@ -638,11 +619,10 @@ public class MusicLibrary {
     /**
      * Search in {@link MusicLibrary#albums} for {@link AlbumItem} name and builds a queue with the
      * songs in the album
-     * @param query
-     *              The query string parsed
-     * @return
-     *              The list of QueueItem with the songs in the album requested, null if the album
-     *              does not exist
+     *
+     * @param query The query string parsed
+     * @return The list of QueueItem with the songs in the album requested, null if the album
+     * does not exist
      */
     public List<MediaSessionCompat.QueueItem> getAlbumQueueFromQuery(String query) {
         String albumId = null;
@@ -666,11 +646,10 @@ public class MusicLibrary {
     /**
      * Search in {@link MusicLibrary#artists} for {@link ArtistItem} name and builds a queue with
      * the songs of the same artist
-     * @param query
-     *              The query string parsed
-     * @return
-     *              The list of QueueItems with the songs that share the same artist, null if the
-     *              artist does not exist
+     *
+     * @param query The query string parsed
+     * @return The list of QueueItems with the songs that share the same artist, null if the
+     * artist does not exist
      */
     public List<MediaSessionCompat.QueueItem> getArtistQueueFromQuery(String query) {
         String artistId = null;
@@ -697,11 +676,11 @@ public class MusicLibrary {
     /**
      * Search in {@link MusicLibrary#songs} for {@link SongItem} title and builds a queue with the
      * song queried in the first position and the songs of the same artist in the following positions
+     *
      * @param query t
      *              The query string parsed
-     * @return
-     *              The list of QueueItems with the song queried and the songs from the same artist,
-     *              null if the song does not exist
+     * @return The list of QueueItems with the song queried and the songs from the same artist,
+     * null if the song does not exist
      */
     @SuppressLint("DefaultLocale")
     public List<MediaSessionCompat.QueueItem> getSongsQueueFromQuery(String query) {
@@ -764,17 +743,14 @@ public class MusicLibrary {
      * {@param songIdToSkip} to avoid setting the wrong position in the QueueItem and causing the queue
      * to have wrong ids and presenting unexpected behaviours
      *
-     * @param artistId
-     *                 The artistId string as <artist_id> (es "artist_1")
-     * @param songIdToSkip
-     *                    A string representing the song item to skip when building the queue.
-     *                    If is null nothing is done. If is no null then the first item is assigned to
-     *                    position 1 and in the loop when the current songItem matches {@param songIdToSkip}
-     *                    is skipped and the current position not updated to avoid having duplicates
-     *                    when later {@link MusicLibrary#getSongsQueueFromQuery(String)} will add
-     *                    the query result to the first position
-     * @return
-     *              The list of QueueItems with all the songs with artistId as artist
+     * @param artistId     The artistId string as <artist_id> (es "artist_1")
+     * @param songIdToSkip A string representing the song item to skip when building the queue.
+     *                     If is null nothing is done. If is no null then the first item is assigned to
+     *                     position 1 and in the loop when the current songItem matches {@param songIdToSkip}
+     *                     is skipped and the current position not updated to avoid having duplicates
+     *                     when later {@link MusicLibrary#getSongsQueueFromQuery(String)} will add
+     *                     the query result to the first position
+     * @return The list of QueueItems with all the songs with artistId as artist
      */
     /* Suppress because it is not a user visible string, no need to format to "DefaultLocale" */
     @SuppressLint("DefaultLocale")
@@ -821,26 +797,20 @@ public class MusicLibrary {
      * handles correctly only the items with {@value MusicLibrary#FLAG_BROWSABLE} or
      * {@value MusicLibrary#FLAG_PLAYLIST}
      *
-     * @param id
-     *           The id to assign to the item ( as seen before built as "<name>_id")
-     * @param title
-     *              The title to give to the item
-     * @param subtitle
-     *                 The text to show under the title, currently represent the number of items in
+     * @param id       The id to assign to the item ( as seen before built as "<name>_id")
+     * @param title    The title to give to the item
+     * @param subtitle The text to show under the title, currently represent the number of items in
      *                 {@value MusicLibrary#ALBUMS}, {@value MusicLibrary#ARTISTS} and
      *                 {@value MusicLibrary#SONGS}
-     * @param iconUri
-     *                The icon Uri for the icon ( it is used for {@value MusicLibrary#ALBUMS},
-     *                {@value MusicLibrary#ARTISTS} and {@value MusicLibrary#SONGS}
-     * @param flag
-     *             The flags to use to build the MediaItem as shown in the top of the class it is
-     *             {@value MusicLibrary#FLAG_PLAYLIST} or {@value MusicLibrary#FLAG_BROWSABLE}
-     * @return
-     *              The MediaItem built from the data given
+     * @param iconUri  The icon Uri for the icon ( it is used for {@value MusicLibrary#ALBUMS},
+     *                 {@value MusicLibrary#ARTISTS} and {@value MusicLibrary#SONGS}
+     * @param flag     The flags to use to build the MediaItem as shown in the top of the class it is
+     *                 {@value MusicLibrary#FLAG_PLAYLIST} or {@value MusicLibrary#FLAG_BROWSABLE}
+     * @return The MediaItem built from the data given
      */
     private MediaBrowserCompat.MediaItem generateBrowsableOrPlaylistItem(String id, String title, String subtitle, Uri iconUri, int flag) {
 
-        if(flag != FLAG_PLAYLIST && flag != FLAG_BROWSABLE)
+        if (flag != FLAG_PLAYLIST && flag != FLAG_BROWSABLE)
             return null;
         MediaDescriptionCompat.Builder mediaDescriptionBuilder = new MediaDescriptionCompat.Builder();
 
@@ -850,8 +820,11 @@ public class MusicLibrary {
                 .setSubtitle(subtitle);
 
         /* If is not null assign the uri to the MediaItem */
-        if (iconUri != null)
-            mediaDescriptionBuilder.setIconUri(iconUri);
+        if (iconUri != null) {
+
+            /* If is a car client give the iconUri formatted in order to be read from our content provider */
+            mediaDescriptionBuilder.setIconUri((MusicService.IS_CAR_CONNECTED)? ArtProvider.mapUri(iconUri) : iconUri);
+        }
 
         return new MediaBrowserCompat.MediaItem(mediaDescriptionBuilder.build(), flag);
     }

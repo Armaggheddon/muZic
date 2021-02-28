@@ -108,7 +108,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     private PackageValidator mPackageValidator;
 
     /* True if the client connected to the session is Android Auto */
-    private boolean IS_CAR_CONNECTED;
+    public static boolean IS_CAR_CONNECTED;
 
     /* If true tells the session that the user has not granted the permission to read external storage */
     private boolean PERMISSION_NOT_GRANTED = false;
@@ -323,6 +323,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             False if client is not Android Auto
              */
             IS_CAR_CONNECTED = mPackageValidator.isValidCarPackage(clientPackageName);
+
 
             /* Return the valid browser root */
             return new BrowserRoot(MusicLibrary.BROWSER_ROOT, null);
@@ -956,7 +957,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                     List<MediaSessionCompat.QueueItem> albumQueue = mMusicLibrary.getAlbumQueueFromQuery(albumQuery);
                     if (albumQueue != null)
                         queueItems.addAll(albumQueue);
-                } else if (TextUtils.equals(mediaFocus, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)){
+                } else if (TextUtils.equals(mediaFocus, MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)) {
 
                     /* Build a queue with the song asked in the fist position and other songs from the same artist */
                     String songQuery = extras.getString(MediaStore.EXTRA_MEDIA_TITLE);

@@ -50,6 +50,11 @@
             </intent-filter>
         </service>
 
+        <!-- Gives a content provider to read the icon uris of the album arts -->
+        <provider
+            android:authorities="com.armaggheddon.muzic"
+            android:name=".ArtProvider"
+            android:exported="false"/>
 
 
         <!--
