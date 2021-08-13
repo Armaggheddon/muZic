@@ -1,4 +1,7 @@
 # muZic
+⚠️This repository is no longer up to date.<br/>
+🧑‍🔧I am currently porting the existing code to Kotlin.<br/>
+<br/>
 Player musicale per smartphone con supporto ad Android Auto
 
 The Android Developer site give a guide on how to set up the Android Auto DHU on 
