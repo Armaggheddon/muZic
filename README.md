@@ -1,6 +1,9 @@
 # muZic
-⚠️This repository is no longer up to date.<br/>
-🧑‍🔧I am currently porting the existing code to Kotlin.<br/>
+![ic_launcher-playstore](https://user-images.githubusercontent.com/47779194/129397976-154b9ac6-bd61-4610-ae0d-2c715d5ab250.png)
+
+### ⚠️This repository is no longer up to date.<br/>
+### 🧑‍🔧I am currently porting the existing code to Kotlin.<br/>
+### 📱 You can check out the application on the Google Play store [HERE](https://play.google.com/store/apps/details?id=com.armaggheddon.muzic&gl=IT)<br/>
 <br/>
 Player musicale per smartphone con supporto ad Android Auto
 
