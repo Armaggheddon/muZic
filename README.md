@@ -5,7 +5,7 @@
 ### 🧑‍🔧I am currently porting the existing code to Kotlin.<br/>
 ### 📱 You can check out the application on the Google Play store [HERE](https://play.google.com/store/apps/details?id=com.armaggheddon.muzic&gl=IT)<br/>
 <br/>
-Player musicale per smartphone con supporto ad Android Auto
+
 
 The Android Developer site give a guide on how to set up the Android Auto DHU on 
 the computer. However here I provide a quick summary with some troubleshooting i went into.
@@ -21,16 +21,16 @@ For the third step it is necessary to do:
 	"Settings", scroll to "About and tap "Version" to display all the 
 	version information. Then tap the "Version and permission info"
 	10 times. Now developer options should be enabled. 
-	
-	-Click on the overflow menu "Start head unit server" and make sure
-	that "Add new cars to Android Auto" is enabled in "Settings"->"Connected cars"
 
-	-Go in the directory install of Android Studio (if adb command is not in PATH),
-	for windows default install directory is in "C:\Users\<USER_NAME>\AppData\Local\Android\Sdk"
+* Click on the overflow menu "Start head unit server" and make sure that 
+  "Add new cars to Android Auto" is enabled in "Settings"->"Connected cars"
+
+* Go in the directory install of Android Studio (if adb command is not in PATH), 
+	for windows default install directory is in "C:\Users\<USER_NAME>\AppData\Local\Android\Sdk" 
 	and navigate to "platform-tools" from there the "adb.exe" should be visible and can
 	be launched by typing in the path box "cmd"
-
-	-To start the DHU on the computer navigate back from "platform-tools" and navigate to
+	
+* To start the DHU on the computer navigate back from "platform-tools" and navigate to
 	"extras" -> "google" -> "auto" and the file "desktop-head-unit.exe" should be there 
 	if selected in the Android Studio install options.
 
